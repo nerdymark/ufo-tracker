@@ -24,6 +24,12 @@ function initializeDashboard() {
     // Initialize live streams
     initializeLiveStreams();
     
+    // Initialize status bar immediately
+    refreshSystemStatus();
+    
+    // Set up periodic status updates (every 5 seconds)
+    setInterval(refreshSystemStatus, 5000);
+    
     console.log('Dashboard initialized');
 }
 
@@ -95,6 +101,75 @@ function initializeStepSize() {
             }
         }
     }
+}
+
+// Refresh system status bar
+function refreshSystemStatus() {
+    // Fetch system status from API
+    fetch('/api/system_status')
+        .then(response => response.json())
+        .then(data => {
+            // Update IR camera status
+            const irStatus = document.getElementById('ir-status-bar');
+            const irIndicator = document.getElementById('ir-indicator-bar');
+            if (irStatus && data.cameras) {
+                const irActive = data.cameras.ir && data.cameras.ir.active;
+                irStatus.textContent = irActive ? 'Active' : 'Inactive';
+                if (irIndicator) {
+                    irIndicator.style.backgroundColor = irActive ? '#4CAF50' : '#666';
+                }
+            }
+            
+            // Update HQ camera status
+            const hqStatus = document.getElementById('hq-status-bar');
+            const hqIndicator = document.getElementById('hq-indicator-bar');
+            if (hqStatus && data.cameras) {
+                const hqActive = data.cameras.hq && data.cameras.hq.active;
+                hqStatus.textContent = hqActive ? 'Active' : 'Inactive';
+                if (hqIndicator) {
+                    hqIndicator.style.backgroundColor = hqActive ? '#4CAF50' : '#666';
+                }
+            }
+            
+            // Update Motion detection status
+            const motionStatus = document.getElementById('motion-status-bar');
+            const motionIndicator = document.getElementById('motion-indicator-bar');
+            if (motionStatus) {
+                // Check if motion detection is active (client-side)
+                const motionActive = window.motionDetectionActive || false;
+                motionStatus.textContent = motionActive ? 'Tracking' : 'Idle';
+                if (motionIndicator) {
+                    motionIndicator.style.backgroundColor = motionActive ? '#ffa500' : '#666';
+                }
+            }
+            
+            // Update Storage status
+            const storageStatus = document.getElementById('storage-status-bar');
+            const storageIndicator = document.getElementById('storage-indicator-bar');
+            if (storageStatus && data.storage) {
+                const usedPercent = Math.round((data.storage.used / data.storage.total) * 100);
+                storageStatus.textContent = `${usedPercent}%`;
+                if (storageIndicator) {
+                    // Color code based on usage
+                    let color = '#4CAF50'; // Green
+                    if (usedPercent > 80) color = '#ff6b6b'; // Red
+                    else if (usedPercent > 60) color = '#ffa500'; // Orange
+                    storageIndicator.style.backgroundColor = color;
+                }
+            }
+        })
+        .catch(error => {
+            console.error('Error fetching system status:', error);
+            // Set all to error state
+            ['ir-status-bar', 'hq-status-bar', 'motion-status-bar', 'storage-status-bar'].forEach(id => {
+                const element = document.getElementById(id);
+                if (element) element.textContent = 'Error';
+            });
+            ['ir-indicator-bar', 'hq-indicator-bar', 'motion-indicator-bar', 'storage-indicator-bar'].forEach(id => {
+                const element = document.getElementById(id);
+                if (element) element.style.backgroundColor = '#ff6b6b';
+            });
+        });
 }
 
 // Initialize the dashboard when DOM is loaded

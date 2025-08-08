@@ -33,77 +33,23 @@ function startStacking(camera) {
     const button = document.getElementById(`${camera}-start-stacking`);
     const status = document.getElementById(`${camera}-stacking-status`);
     
-    if (button) {
-        button.disabled = true;
-        button.textContent = 'Starting...';
-    }
+    console.log(`Starting client-side stacking for ${camera} camera`);
+    showMessage(`Image stacking started for ${camera.toUpperCase()} camera`, 'success');
+    updateStackingButton(camera, true);
+    updateStackingStatus(camera, 'Active');
     
-    if (status) {
-        status.textContent = 'Initializing...';
-        status.style.color = '#ffa500';
-    }
-    
-    fetch('/api/stacking/start/' + camera, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        }
-    })
-    .then(response => response.json())
-    .then(data => {
-        console.log('Stacking start response:', data);
-        if (data.success) {
-            showMessage(`Image stacking started for ${camera.toUpperCase()} camera`, 'success');
-            updateStackingButton(camera, true);
-            updateStackingStatus(camera, 'Active');
-        } else {
-            showMessage('Stacking failed: ' + (data.error || 'Unknown error'), 'error');
-            updateStackingButton(camera, false);
-            updateStackingStatus(camera, 'Error');
-        }
-    })
-    .catch(error => {
-        showMessage('Error starting stacking: ' + error, 'error');
-        console.error('Stacking error:', error);
-        updateStackingButton(camera, false);
-        updateStackingStatus(camera, 'Error');
-    });
+    // Start auto-stacking for this camera
+    startAutoStackingForCamera(camera);
 }
 
 function stopStacking(camera) {
-    const button = document.getElementById(`${camera}-start-stacking`);
-    const status = document.getElementById(`${camera}-stacking-status`);
+    console.log(`Stopping client-side stacking for ${camera} camera`);
+    showMessage(`Image stacking stopped for ${camera.toUpperCase()} camera`, 'success');
+    updateStackingButton(camera, false);
+    updateStackingStatus(camera, 'Stopped');
     
-    if (button) {
-        button.disabled = true;
-        button.textContent = 'Stopping...';
-    }
-    
-    fetch('/api/stacking/stop/' + camera, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        }
-    })
-    .then(response => response.json())
-    .then(data => {
-        console.log('Stacking stop response:', data);
-        if (data.success) {
-            showMessage(`Image stacking stopped for ${camera.toUpperCase()} camera`, 'success');
-            updateStackingButton(camera, false);
-            updateStackingStatus(camera, 'Stopped');
-        } else {
-            showMessage('Stop stacking failed: ' + (data.error || 'Unknown error'), 'error');
-            updateStackingButton(camera, false);
-            updateStackingStatus(camera, 'Error');
-        }
-    })
-    .catch(error => {
-        showMessage('Error stopping stacking: ' + error, 'error');
-        console.error('Stacking error:', error);
-        updateStackingButton(camera, false);
-        updateStackingStatus(camera, 'Error');
-    });
+    // Stop auto-stacking for this camera
+    stopAutoStackingForCamera(camera);
 }
 
 function updateStackingButton(camera, isActive) {
@@ -148,29 +94,11 @@ function updateStackingStatus(camera, status) {
 
 // Image alignment
 function alignImages(camera) {
-    showMessage(`Starting image alignment for ${camera.toUpperCase()} camera...`, 'info');
+    showMessage(`Image alignment is handled automatically during client-side stacking for ${camera.toUpperCase()} camera`, 'info');
+    console.log(`Client-side alignment for ${camera} camera - no server call needed`);
     
-    fetch('/api/alignment/start/' + camera, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        }
-    })
-    .then(response => response.json())
-    .then(data => {
-        console.log('Alignment response:', data);
-        if (data.success) {
-            showMessage(`Image alignment completed for ${camera.toUpperCase()} camera`, 'success');
-            // Refresh stacked preview if available
-            refreshStackedPreview(camera);
-        } else {
-            showMessage('Alignment failed: ' + (data.error || 'Unknown error'), 'error');
-        }
-    })
-    .catch(error => {
-        showMessage('Error during alignment: ' + error, 'error');
-        console.error('Alignment error:', error);
-    });
+    // Refresh stacked preview
+    refreshStackedPreview(camera);
 }
 
 function refreshStackedPreview(camera) {
@@ -193,28 +121,11 @@ function refreshStackedPreview(camera) {
 
 // Advanced processing
 function enhanceImages(camera) {
-    showMessage(`Starting image enhancement for ${camera.toUpperCase()} camera...`, 'info');
+    showMessage(`Image enhancement is handled automatically during client-side stacking for ${camera.toUpperCase()} camera`, 'info');
+    console.log(`Client-side enhancement for ${camera} camera - no server call needed`);
     
-    fetch('/api/processing/enhance/' + camera, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        }
-    })
-    .then(response => response.json())
-    .then(data => {
-        console.log('Enhancement response:', data);
-        if (data.success) {
-            showMessage(`Image enhancement completed for ${camera.toUpperCase()} camera`, 'success');
-            refreshStackedPreview(camera);
-        } else {
-            showMessage('Enhancement failed: ' + (data.error || 'Unknown error'), 'error');
-        }
-    })
-    .catch(error => {
-        showMessage('Error during enhancement: ' + error, 'error');
-        console.error('Enhancement error:', error);
-    });
+    // Refresh stacked preview
+    refreshStackedPreview(camera);
 }
 
 function saveStackedImage(camera) {
@@ -278,53 +189,19 @@ function updateStackingSettings(camera) {
         stacking_mode: stackingMode || 'average'
     };
     
-    fetch('/api/stacking/settings/' + camera, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(settings)
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            showMessage(`Stacking settings updated for ${camera.toUpperCase()} camera`, 'success');
-        } else {
-            showMessage('Settings update failed: ' + (data.error || 'Unknown error'), 'error');
-        }
-    })
-    .catch(error => {
-        showMessage('Error updating stacking settings: ' + error, 'error');
-        console.error('Stacking settings error:', error);
-    });
+    // Update local settings (client-side only)
+    stackingSettings[camera].count = settings.frame_count;
+    
+    console.log(`Updated stacking settings for ${camera}:`, settings);
+    showMessage(`Stacking settings updated for ${camera.toUpperCase()} camera`, 'success');
 }
 
 // Clear stacked images
 function clearStackedImages(camera) {
     if (confirm(`Clear all stacked images for ${camera.toUpperCase()} camera?`)) {
-        fetch('/api/stacking/clear/' + camera, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            }
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                showMessage(`Stacked images cleared for ${camera.toUpperCase()} camera`, 'success');
-                // Clear preview
-                const img = document.getElementById(`${camera}-stacked-preview`);
-                if (img) {
-                    img.src = '';
-                }
-            } else {
-                showMessage('Clear failed: ' + (data.error || 'Unknown error'), 'error');
-            }
-        })
-        .catch(error => {
-            showMessage('Error clearing stacked images: ' + error, 'error');
-            console.error('Clear error:', error);
-        });
+        // Clear the stacking buffer
+        clearStackingBuffer(camera);
+        showMessage(`Stacked images cleared for ${camera.toUpperCase()} camera`, 'success');
     }
 }
 
@@ -550,6 +427,32 @@ function startAutoStacking() {
     setTimeout(() => updateStackedImage('hq'), 1000);
     
     showMessage('Auto-stacking started for both cameras', 'info');
+}
+
+function startAutoStackingForCamera(camera) {
+    console.log(`Starting auto-stacking for ${camera} camera`);
+    
+    // Clear any existing interval for this camera
+    if (stackingIntervals[camera]) {
+        clearInterval(stackingIntervals[camera]);
+    }
+    
+    // Start auto-stacking for this camera every 3 seconds
+    stackingIntervals[camera] = setInterval(() => {
+        updateStackedImage(camera);
+    }, 3000);
+    
+    // Take initial frame immediately
+    setTimeout(() => updateStackedImage(camera), 500);
+}
+
+function stopAutoStackingForCamera(camera) {
+    console.log(`Stopping auto-stacking for ${camera} camera`);
+    
+    if (stackingIntervals[camera]) {
+        clearInterval(stackingIntervals[camera]);
+        stackingIntervals[camera] = null;
+    }
 }
 
 function stopAutoStacking() {

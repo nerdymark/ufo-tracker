@@ -58,6 +58,8 @@ function stopAutoTracker() {
 
 function updateTrackerButton(isRunning) {
     const button = document.getElementById('tracker-toggle-btn');
+    const enableBtn = document.getElementById('enable-tracking-btn');
+    
     if (button) {
         if (isRunning) {
             button.innerHTML = '⏹️ Stop Tracking';
@@ -69,6 +71,33 @@ function updateTrackerButton(isRunning) {
             button.classList.remove('btn-danger');
             button.classList.add('btn-success');
             button.onclick = startAutoTracker;
+        }
+    }
+    
+    // Also update the enable-tracking-btn in auto-tracking view
+    if (enableBtn) {
+        if (isRunning) {
+            enableBtn.textContent = 'Disable Tracking';
+            enableBtn.classList.remove('btn-success');
+            enableBtn.classList.add('btn-danger');
+            
+            // Update status display
+            const statusElement = document.getElementById('tracking-enabled-status');
+            if (statusElement) {
+                statusElement.textContent = 'Enabled';
+                statusElement.style.color = '#4CAF50';
+            }
+        } else {
+            enableBtn.textContent = 'Enable Tracking';
+            enableBtn.classList.remove('btn-danger');
+            enableBtn.classList.add('btn-success');
+            
+            // Update status display
+            const statusElement = document.getElementById('tracking-enabled-status');
+            if (statusElement) {
+                statusElement.textContent = 'Disabled';
+                statusElement.style.color = '#666';
+            }
         }
     }
 }
@@ -249,4 +278,114 @@ function exportTrackingData() {
         showMessage('Error exporting tracking data: ' + error, 'error');
         console.error('Export error:', error);
     });
+}
+
+// Client-side auto tracking functions
+function toggleClientAutoTracking() {
+    const btn = document.getElementById('enable-tracking-btn');
+    if (!btn) return;
+    
+    // Toggle tracking state
+    if (btn.textContent.includes('Enable')) {
+        startAutoTracker();
+    } else {
+        stopAutoTracker();
+    }
+}
+
+function saveCurrentImage() {
+    showMessage('Save Current Image feature not implemented yet', 'info');
+    console.log('Save current image function called');
+}
+
+function downloadCurrentImage() {
+    showMessage('Download Current Image feature not implemented yet', 'info');
+    console.log('Download current image function called');
+}
+
+function toggleRecording() {
+    const btn = document.getElementById('record-btn');
+    if (!btn) return;
+    
+    if (btn.textContent.includes('🔴')) {
+        btn.textContent = '⏹️ Stop Record';
+        btn.classList.remove('btn-warning');
+        btn.classList.add('btn-danger');
+        showMessage('Recording started (feature not fully implemented)', 'info');
+    } else {
+        btn.textContent = '🔴 Record';
+        btn.classList.remove('btn-danger');
+        btn.classList.add('btn-warning');
+        showMessage('Recording stopped', 'info');
+    }
+}
+
+function toggleAutoRecord() {
+    const btn = document.getElementById('auto-record-btn');
+    if (!btn) return;
+    
+    if (btn.textContent.includes('📹')) {
+        btn.textContent = '⏹️ Stop Auto-Record';
+        btn.classList.remove('btn-secondary');
+        btn.classList.add('btn-danger');
+        showMessage('Auto-recording enabled (feature not fully implemented)', 'info');
+    } else {
+        btn.textContent = '📹 Auto-Record';
+        btn.classList.remove('btn-danger');
+        btn.classList.add('btn-secondary');
+        showMessage('Auto-recording disabled', 'info');
+    }
+}
+
+// Initialize auto-tracking camera feeds
+function initializeAutoTrackingFeeds() {
+    console.log('Initializing auto-tracking camera feeds');
+    
+    // Initialize IR motion feed
+    const irMotionFeed = document.getElementById('ir-motion-feed');
+    if (irMotionFeed && irMotionFeed.dataset.src) {
+        irMotionFeed.src = irMotionFeed.dataset.src;
+        irMotionFeed.onerror = function() {
+            console.warn('Failed to load IR motion feed');
+        };
+        irMotionFeed.onload = function() {
+            console.log('IR motion feed loaded successfully');
+        };
+    }
+    
+    // Initialize HQ motion feed
+    const hqMotionFeed = document.getElementById('hq-motion-feed');
+    if (hqMotionFeed && hqMotionFeed.dataset.src) {
+        hqMotionFeed.src = hqMotionFeed.dataset.src;
+        hqMotionFeed.onerror = function() {
+            console.warn('Failed to load HQ motion feed');
+        };
+        hqMotionFeed.onload = function() {
+            console.log('HQ motion feed loaded successfully');
+        };
+    }
+    
+    showMessage('Auto-tracking camera feeds initialized', 'info');
+}
+
+// Update motion sensitivity
+function updateSensitivity() {
+    const slider = document.getElementById('motion-sensitivity');
+    const display = document.getElementById('sensitivity-display');
+    const statusValue = document.getElementById('sensitivity-value');
+    
+    if (slider && display) {
+        const value = parseInt(slider.value);
+        display.textContent = value;
+        
+        if (statusValue) {
+            let level = 'Low';
+            if (value >= 30 && value < 70) level = 'Medium';
+            else if (value >= 70) level = 'High';
+            statusValue.textContent = level;
+        }
+        
+        console.log('Motion sensitivity updated to:', value);
+        showMessage(`Motion sensitivity set to ${value}`, 'info');
+    }
 }

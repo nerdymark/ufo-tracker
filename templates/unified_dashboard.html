@@ -1228,6 +1228,12 @@
                                      onclick="toggleFullscreen('ir-motion-feed')" />
                                 <canvas id="ir-motion-canvas" width="640" height="480" style="display: none;"></canvas>
                                 <canvas id="ir-overlay-canvas" width="640" height="480" style="position: absolute; top: 0; left: 0; pointer-events: none;"></canvas>
+                                <!-- IR Zoom Window -->
+                                <div id="ir-crop-window" style="position: absolute; border: 3px solid #00ff00; background: rgba(0,0,0,0.8); display: none; z-index: 10;">
+                                    <canvas id="ir-crop-canvas" width="200" height="200" style="display: block;"></canvas>
+                                    <canvas id="ir-crop-overlay" width="200" height="200" style="position: absolute; top: 0; left: 0; pointer-events: none;"></canvas>
+                                    <div style="color: #00ff00; text-align: center; padding: 2px; font-size: 12px;">IR Motion Zoom</div>
+                                </div>
                                 <div class="camera-overlay">IR Detection</div>
                             </div>
                             <div class="tracking-info">
@@ -1831,6 +1837,7 @@
     <script src="/static/js/camera-controls.js"></script>
     <script src="/static/js/pantilt-controls.js"></script>
     <script src="/static/js/tracking.js"></script>
+    <script src="/static/js/motion-detection.js"></script>
     <script src="/static/js/gallery.js"></script>
     <script src="/static/js/stacking.js"></script>
     

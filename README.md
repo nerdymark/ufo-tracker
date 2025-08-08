@@ -13,24 +13,26 @@ A dual-camera system for detecting and tracking unidentified flying objects (UFO
   - Auto-tracking mode with client-side motion detection
   - Image gallery and browser
 - **Camera Controls**: Manual camera settings adjustment (exposure, gain, brightness, contrast)
-- **Pan-Tilt Mechanism**: Placeholder implementation for future Waveshare stepper controller
+- **Pan-Tilt Mechanism**: Support for Waveshare stepper controller with 12V motors
 - **Multi-viewer Support**: Concurrent camera access without conflicts
 - **System Monitoring**: Real-time status monitoring and system information
 
 ## Hardware Requirements
 
-- Raspberry Pi 4 (recommended) or Pi 3B+
+- **Raspberry Pi 5** (Required - this system is optimized for Pi 5 hardware)
 - 2x Camera modules:
   - 1x Infrared-sensitive camera (e.g., Pi NoIR Camera)
   - 1x High-quality camera module
-- Waveshare stepper motor controller (for future pan-tilt mechanism)
+- Waveshare stepper motor controller (for pan-tilt mechanism)
 - MicroSD card (32GB+ recommended)
-- Power supply (5V 3A recommended for Pi 4)
+- Power supplies:
+  - 5V 5A for Raspberry Pi 5
+  - **12V power supply for stepper motors** (separate from Pi power)
 
 ## Software Requirements
 
-- Raspberry Pi OS (64-bit recommended)
-- Python 3.7+
+- Raspberry Pi OS (64-bit recommended for Pi 5)
+- Python 3.9+ (comes with Pi OS on Pi 5)
 - See `requirements.txt` for Python dependencies
 
 ## Installation
@@ -216,12 +218,26 @@ ufo-tracker/
 - `/api/system_status` - Overall system and component status
 - `/api/test` - Simple API test endpoint
 
+## Compatibility Note
+
+⚠️ **This system is specifically designed for Raspberry Pi 5**
+
+The UFO Tracker system requires:
+- Raspberry Pi 5's improved CPU performance for real-time motion detection
+- Enhanced camera interfaces available on Pi 5
+- Optimized for Pi 5's memory and processing capabilities
+- Separate 12V power supply for stepper motors (do not power motors from Pi)
+
+While some components may work on Pi 4, full functionality and performance are only guaranteed on Raspberry Pi 5.
+
+**Power Supply Warning**: Never connect the 12V stepper motor power directly to the Raspberry Pi. The stepper motors require their own 12V power supply connected to the motor controller board.
+
 ## Contributing
 
 1. Fork the repository
 2. Create a feature branch
 3. Make your changes
-4. Test on Raspberry Pi hardware
+4. Test on Raspberry Pi 5 hardware
 5. Submit a pull request
 
 ## License
@@ -240,13 +256,20 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 
 **Application Won't Start**  
 - Activate virtual environment: `source venv/bin/activate`
-- Check Python version: `python3 --version` (requires 3.7+)
+- Check Python version: `python3 --version` (requires 3.9+)
 - Install missing dependencies: `pip install -r requirements.txt`
 - Check logs in `logs/` directory
 
 **Performance Issues**
 - Reduce camera resolution in `config/config.py`
 - Close browser tabs/viewers when not needed
+
+**Stepper Motors Not Working**
+- Verify 12V power supply is connected to motor controller (not Pi)
+- Check motor controller is properly connected to Pi GPIO pins
+- Ensure motors are enabled in the web interface
+- Verify wiring connections between motors and controller
+- Check 12V power supply is providing adequate current
 - Monitor system resources: `htop` or `/api/system_status`
 - Consider using the headless OpenCV version
 

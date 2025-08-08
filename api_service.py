@@ -45,6 +45,42 @@ def initialize_pan_tilt():
     else:
         logger.info("Pan-tilt controller disabled in config")
 
+def check_camera_active(camera_type):
+    """Check if a camera service is active by trying to connect to it"""
+    try:
+        import requests
+        # Try to get camera status from camera service
+        response = requests.get(f'http://localhost:5001/{camera_type}_status', timeout=1)
+        return response.status_code == 200
+    except:
+        # If we can't connect, assume camera is inactive
+        return False
+
+def get_local_ip():
+    """Get the system's local IP address"""
+    import socket
+    
+    try:
+        # Get hostname IP
+        hostname = socket.gethostname()
+        local_ip = socket.gethostbyname(hostname)
+        
+        # If that returns localhost, try a different method
+        if local_ip.startswith('127.'):
+            s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+            try:
+                s.connect(('8.8.8.8', 80))
+                local_ip = s.getsockname()[0]
+            except:
+                local_ip = '127.0.0.1'
+            finally:
+                s.close()
+        
+        return local_ip
+    except Exception as e:
+        logger.error(f"Error getting local IP: {e}")
+        return '127.0.0.1'
+
 def cleanup_resources():
     """Cleanup resources periodically"""
     global cleanup_running
@@ -60,7 +96,7 @@ def cleanup_resources():
 @app.route('/')
 def dashboard():
     """Main dashboard"""
-    return render_template('unified_dashboard.html')
+    return render_template('unified_dashboard.html', server_ip=get_local_ip())
 
 @app.route('/viewer')
 def viewer():
@@ -97,6 +133,11 @@ def api_test():
 def system_status():
     """Get system status"""
     try:
+        import shutil
+        
+        # Get disk usage
+        disk_usage = shutil.disk_usage('/')
+        
         status = {
             'timestamp': datetime.now().isoformat(),
             'service': 'api-only',
@@ -105,9 +146,21 @@ def system_status():
                 'connected': pan_tilt.is_connected() if pan_tilt else False
             },
             'cameras': {
-                'ir_enabled': Config.CAMERA_SETTINGS['ir_camera']['enabled'],
-                'hq_enabled': Config.CAMERA_SETTINGS['hq_camera']['enabled'],
+                'ir': {
+                    'enabled': Config.CAMERA_SETTINGS['ir_camera']['enabled'],
+                    'active': check_camera_active('ir')
+                },
+                'hq': {
+                    'enabled': Config.CAMERA_SETTINGS['hq_camera']['enabled'],
+                    'active': check_camera_active('hq')
+                },
                 'streaming_service': 'http://localhost:5001'
+            },
+            'storage': {
+                'total': disk_usage.total,
+                'used': disk_usage.used,
+                'free': disk_usage.free,
+                'percent': round((disk_usage.used / disk_usage.total) * 100, 1)
             }
         }
         
@@ -424,6 +477,56 @@ def health():
         'pan_tilt_available': pan_tilt is not None,
         'camera_service': 'http://localhost:5001'
     })
+
+# Auto-tracker endpoints (stub implementation for client-side tracking)
+@app.route('/api/auto_tracker/status')
+def auto_tracker_status():
+    """Get auto tracker status - client-side implementation"""
+    return jsonify({
+        "enabled": False,
+        "tracking_active": False,
+        "objects_tracked": 0,
+        "motion_detected": False,
+        "message": "Client-side tracking only"
+    })
+
+@app.route('/api/auto_tracker/start', methods=['POST'])
+def auto_tracker_start():
+    """Start the auto tracker - client-side implementation"""
+    # Since tracking is client-side, just return success
+    return jsonify({
+        "success": True,
+        "message": "Client-side auto-tracking enabled",
+        "mode": "client-side"
+    })
+
+@app.route('/api/auto_tracker/stop', methods=['POST'])
+def auto_tracker_stop():
+    """Stop the auto tracker - client-side implementation"""
+    return jsonify({
+        "success": True,
+        "message": "Client-side auto-tracking disabled"
+    })
+
+@app.route('/api/auto_tracker/clear_history', methods=['POST'])
+def auto_tracker_clear_history():
+    """Clear tracking history - client-side implementation"""
+    return jsonify({
+        "success": True,
+        "message": "Tracking history cleared (client-side)"
+    })
+
+@app.route('/api/auto_tracker/export')
+def auto_tracker_export():
+    """Export tracking data - client-side implementation"""
+    # Return empty tracking data
+    tracking_data = {
+        "timestamp": datetime.now().isoformat(),
+        "mode": "client-side",
+        "tracks": [],
+        "message": "No server-side tracking data available"
+    }
+    return jsonify(tracking_data)
 
 # Error handlers
 @app.errorhandler(404)

@@ -5,6 +5,11 @@ let viewModes = ['live', 'autotrack', 'stacked', 'gallery']; // Available modes
 
 // Show section and update navigation
 function showSection(sectionId) {
+    // Stop auto-stacking when leaving cameras section
+    if (currentViewMode === 'stacked' && sectionId !== 'cameras') {
+        stopAutoStacking();
+    }
+    
     // Hide all sections first
     const sections = ['cameras', 'controls', 'detection', 'browser', 'autotrack', 'stacked', 'gallery'];
     sections.forEach(id => {
@@ -48,6 +53,11 @@ function setViewMode(mode) {
         return;
     }
     
+    // Stop auto-stacking when leaving stacked mode (before changing currentViewMode)
+    if (currentViewMode === 'stacked' && mode !== 'stacked') {
+        stopAutoStacking();
+    }
+    
     currentViewMode = mode;
     
     // Hide all mode-specific content
@@ -78,6 +88,8 @@ function setViewMode(mode) {
         setupStackedImageHandlers();
         startAutoStacking();
     } else if (mode === 'autotrack') {
+        // Initialize auto-tracking camera feeds
+        initializeAutoTrackingFeeds();
         if (typeof refreshTrackingStatus === 'function') {
             refreshTrackingStatus();
         }
@@ -85,11 +97,6 @@ function setViewMode(mode) {
         if (typeof refreshGallery === 'function') {
             refreshGallery();
         }
-    }
-    
-    // Stop auto-stacking when leaving stacked mode
-    if (currentViewMode === 'stacked' && mode !== 'stacked') {
-        stopAutoStacking();
     }
     
     // Start appropriate auto refresh

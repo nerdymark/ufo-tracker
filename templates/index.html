@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UFO Tracker - Dashboard</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="icon" type="image/png" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8/5+hHgAHggJ/PchI7wAAAABJRU5ErkJggg==">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🛸 UFO Tracker</h1>
+            <p class="subtitle">Dual-Camera Sky Monitoring System</p>
+        </header>
+
+        <nav>
+            <ul>
+                <li><a href="/" class="active">Dashboard</a></li>
+                <li><a href="/viewer">Camera Viewer</a></li>
+                <li><a href="/camera_controls">Camera Controls</a></li>
+                <li><a href="#" onclick="toggleDetection()">Toggle Detection</a></li>
+                <li><a href="#" onclick="refreshStatus()">Refresh Status</a></li>
+            </ul>
+        </nav>
+
+        <main>
+            <!-- System Status -->
+            <section class="status-panel">
+                <h2>System Status</h2>
+                <div class="status-grid">
+                    <div class="status-item">
+                        <h3>IR Camera</h3>
+                        <div class="status-indicator" id="ir-status">
+                            <span class="status-dot unknown"></span>
+                            <span>Unknown</span>
+                        </div>
+                    </div>
+                    <div class="status-item">
+                        <h3>HQ Camera</h3>
+                        <div class="status-indicator" id="hq-status">
+                            <span class="status-dot unknown"></span>
+                            <span>Unknown</span>
+                        </div>
+                    </div>
+                    <div class="status-item">
+                        <h3>Motion Detection</h3>
+                        <div class="status-indicator" id="detection-status">
+                            <span class="status-dot unknown"></span>
+                            <span>Unknown</span>
+                        </div>
+                    </div>
+                    <div class="status-item">
+                        <h3>Pan-Tilt</h3>
+                        <div class="status-indicator" id="pantilt-status">
+                            <span class="status-dot placeholder"></span>
+                            <span>Placeholder</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Camera Previews -->
+            <section class="camera-preview">
+                <h2>Camera Feeds</h2>
+                <div class="camera-grid">
+                    <div class="camera-container">
+                        <h3>Infrared Camera (Motion Detection)</h3>
+                        <div class="camera-frame">
+                            <img id="ir-feed" src="/ir_feed" alt="IR Camera Feed" onerror="this.src='data:image/svg+xml,<svg xmlns=&quot;http://www.w3.org/2000/svg&quot; width=&quot;320&quot; height=&quot;240&quot; viewBox=&quot;0 0 320 240&quot;><rect width=&quot;320&quot; height=&quot;240&quot; fill=&quot;%23333&quot;/><text x=&quot;160&quot; y=&quot;120&quot; text-anchor=&quot;middle&quot; fill=&quot;white&quot; font-family=&quot;Arial&quot; font-size=&quot;16&quot;>IR Camera Offline</text></svg>'">
+                        </div>
+                        <div class="camera-controls">
+                            <button onclick="openFullViewer('ir')">View Full Size</button>
+                        </div>
+                    </div>
+                    
+                    <div class="camera-container">
+                        <h3>High-Quality Camera (Tracking)</h3>
+                        <div class="camera-frame">
+                            <img id="hq-feed" src="/hq_feed" alt="HQ Camera Feed" onerror="this.src='data:image/svg+xml,<svg xmlns=&quot;http://www.w3.org/2000/svg&quot; width=&quot;320&quot; height=&quot;240&quot; viewBox=&quot;0 0 320 240&quot;><rect width=&quot;320&quot; height=&quot;240&quot; fill=&quot;%23333&quot;/><text x=&quot;160&quot; y=&quot;120&quot; text-anchor=&quot;middle&quot; fill=&quot;white&quot; font-family=&quot;Arial&quot; font-size=&quot;16&quot;>HQ Camera Offline</text></svg>'">
+                        </div>
+                        <div class="camera-controls">
+                            <button onclick="openFullViewer('hq')">View Full Size</button>
+                            <button onclick="resetHQCamera()">Reset View</button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Detection Statistics -->
+            <section class="detection-stats">
+                <h2>Detection Statistics</h2>
+                <div class="stats-grid">
+                    <div class="stat-item">
+                        <h3>Current Detections</h3>
+                        <span class="stat-value" id="current-detections">0</span>
+                    </div>
+                    <div class="stat-item">
+                        <h3>Total Detections</h3>
+                        <span class="stat-value" id="total-detections">0</span>
+                    </div>
+                    <div class="stat-item">
+                        <h3>Detection FPS</h3>
+                        <span class="stat-value" id="detection-fps">0.0</span>
+                    </div>
+                    <div class="stat-item">
+                        <h3>Last Detection</h3>
+                        <span class="stat-value" id="last-detection">Never</span>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Recent Activity -->
+            <section class="activity-log">
+                <h2>Recent Activity</h2>
+                <div class="log-container">
+                    <ul id="activity-list">
+                        <li class="log-entry info">
+                            <span class="timestamp">[Loading...]</span>
+                            <span class="message">Initializing UFO Tracker system...</span>
+                        </li>
+                    </ul>
+                </div>
+            </section>
+        </main>
+
+        <footer>
+            <p>&copy; 2025 UFO Tracker - Raspberry Pi Sky Monitoring System</p>
+            <p>Last Updated: <span id="last-update">--</span></p>
+        </footer>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/viewer.js') }}"></script>
+    <script>
+        // Initialize dashboard
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeDashboard();
+            
+            // Auto-refresh every 5 seconds
+            setInterval(refreshStatus, 5000);
+        });
+
+        function initializeDashboard() {
+            refreshStatus();
+            addLogEntry('System initialized', 'info');
+        }
+
+        function refreshStatus() {
+            fetch('/api/system_status')
+                .then(response => response.json())
+                .then(data => {
+                    updateSystemStatus(data);
+                    updateLastUpdate();
+                })
+                .catch(error => {
+                    console.error('Error fetching system status:', error);
+                    addLogEntry('Failed to fetch system status', 'error');
+                });
+
+            fetch('/detection_status')
+                .then(response => response.json())
+                .then(data => {
+                    updateDetectionStats(data);
+                })
+                .catch(error => {
+                    console.error('Error fetching detection status:', error);
+                });
+        }
+
+        function updateSystemStatus(data) {
+            // Update camera statuses
+            updateStatusIndicator('ir-status', data.cameras.ir_camera, 'IR Camera');
+            updateStatusIndicator('hq-status', data.cameras.hq_camera, 'HQ Camera');
+            updateStatusIndicator('detection-status', data.motion_detector, 'Motion Detection');
+            updateStatusIndicator('pantilt-status', data.pan_tilt, 'Pan-Tilt');
+        }
+
+        function updateStatusIndicator(elementId, status, label) {
+            const element = document.getElementById(elementId);
+            const dot = element.querySelector('.status-dot');
+            const text = element.querySelector('span:last-child');
+
+            if (status === true) {
+                dot.className = 'status-dot active';
+                text.textContent = 'Active';
+            } else if (status === false) {
+                dot.className = 'status-dot inactive';
+                text.textContent = 'Inactive';
+            } else {
+                dot.className = 'status-dot placeholder';
+                text.textContent = 'Placeholder';
+            }
+        }
+
+        function updateDetectionStats(data) {
+            if (data.error) {
+                addLogEntry('Detection system error: ' + data.error, 'error');
+                return;
+            }
+
+            document.getElementById('current-detections').textContent = data.current_detections || 0;
+            document.getElementById('total-detections').textContent = data.total_detections || 0;
+            document.getElementById('detection-fps').textContent = (data.fps || 0).toFixed(1);
+            
+            const lastDetection = data.last_detection;
+            if (lastDetection) {
+                const date = new Date(lastDetection);
+                document.getElementById('last-detection').textContent = date.toLocaleTimeString();
+            } else {
+                document.getElementById('last-detection').textContent = 'Never';
+            }
+        }
+
+        function updateLastUpdate() {
+            const now = new Date();
+            document.getElementById('last-update').textContent = now.toLocaleTimeString();
+        }
+
+        function toggleDetection() {
+            // This would implement detection toggle functionality
+            addLogEntry('Detection toggle requested', 'info');
+        }
+
+        function openFullViewer(camera) {
+            const url = `/viewer?camera=${camera}`;
+            window.open(url, '_blank', 'width=800,height=600');
+        }
+
+        function resetHQCamera() {
+            fetch('/api/pan_tilt', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({action: 'reset_camera'})
+            })
+            .then(response => response.json())
+            .then(data => {
+                addLogEntry('HQ camera view reset', 'info');
+            })
+            .catch(error => {
+                addLogEntry('Failed to reset HQ camera', 'error');
+            });
+        }
+
+        function addLogEntry(message, type = 'info') {
+            const logList = document.getElementById('activity-list');
+            const timestamp = new Date().toLocaleTimeString();
+            
+            const listItem = document.createElement('li');
+            listItem.className = `log-entry ${type}`;
+            listItem.innerHTML = `
+                <span class="timestamp">[${timestamp}]</span>
+                <span class="message">${message}</span>
+            `;
+            
+            logList.insertBefore(listItem, logList.firstChild);
+            
+            // Limit to 10 entries
+            while (logList.children.length > 10) {
+                logList.removeChild(logList.lastChild);
+            }
+        }
+    </script>
+</body>
+</html>

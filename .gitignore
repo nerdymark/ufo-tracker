@@ -1,0 +1,89 @@
+# UFO Tracker .gitignore
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual Environment
+venv/
+env/
+ENV/
+
+# Configuration files (keep example, ignore actual config)
+config/config.py
+!config/config.example.py
+
+# Logs
+logs/*.log
+logs/*.log.*
+
+# Detection data and captures
+detections/
+captures/
+*.jpg
+*.png
+*.mp4
+*.avi
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Raspberry Pi specific
+*.img
+*.iso
+
+# Temporary files
+*.tmp
+*.temp
+temp/
+
+# Flask
+instance/
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Documentation
+docs/_build/
+
+# System service files (created by setup.sh)
+/etc/systemd/system/ufo-tracker*.service
+
+# Local environment variables
+.env
+.env.local
+
+# Runtime/cache files
+*.cache
+.cache/
+*.pid
+*.sock

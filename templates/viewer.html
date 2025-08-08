@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UFO Tracker - Camera Viewer</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <style>
+        .viewer-container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            margin: 0;
+            padding: 0;
+        }
+        
+        .viewer-header {
+            background-color: #2c3e50;
+            color: white;
+            padding: 1rem;
+            text-align: center;
+        }
+        
+        .camera-tabs {
+            display: flex;
+            background-color: #34495e;
+            border-bottom: 2px solid #2c3e50;
+        }
+        
+        .tab-button {
+            flex: 1;
+            padding: 1rem;
+            background: none;
+            border: none;
+            color: white;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: background-color 0.3s;
+        }
+        
+        .tab-button:hover {
+            background-color: #4a6741;
+        }
+        
+        .tab-button.active {
+            background-color: #27ae60;
+        }
+        
+        .camera-display {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: #000;
+            position: relative;
+        }
+        
+        .camera-stream {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+        }
+        
+        .stream-info {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background-color: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 0.5rem;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 0.8rem;
+        }
+        
+        .detection-overlay {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background-color: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 0.5rem;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 0.8rem;
+        }
+        
+        .controls-panel {
+            background-color: #ecf0f1;
+            padding: 1rem;
+            border-top: 2px solid #bdc3c7;
+        }
+        
+        .control-group {
+            display: inline-block;
+            margin-right: 2rem;
+            vertical-align: top;
+        }
+        
+        .control-group h4 {
+            margin: 0 0 0.5rem 0;
+            color: #2c3e50;
+        }
+        
+        .control-button {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            margin: 0.2rem;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        
+        .control-button:hover {
+            background-color: #2980b9;
+        }
+        
+        .control-button:disabled {
+            background-color: #95a5a6;
+            cursor: not-allowed;
+        }
+        
+        .fullscreen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: 1000;
+            background-color: #000;
+        }
+    </style>
+</head>
+<body>
+    <div class="viewer-container">
+        <header class="viewer-header">
+            <h1>🛸 UFO Tracker - Camera Viewer</h1>
+            <p>Real-time dual-camera monitoring system</p>
+        </header>
+
+        <div class="camera-tabs">
+            <button class="tab-button active" onclick="switchCamera('ir')" id="ir-tab">
+                📡 IR Camera (Motion Detection)
+            </button>
+            <button class="tab-button" onclick="switchCamera('hq')" id="hq-tab">
+                📷 HQ Camera (Tracking)
+            </button>
+        </div>
+
+        <div class="camera-display" id="camera-display">
+            <img class="camera-stream" id="camera-stream" src="http://10.0.1.164:5001/ir_feed" alt="Camera Feed">
+            
+            <div class="stream-info" id="stream-info">
+                <div>Camera: IR</div>
+                <div>Status: <span id="stream-status">Loading...</span></div>
+                <div>Viewers: <span id="viewer-count">-</span></div>
+                <div>FPS: <span id="stream-fps">-</span></div>
+            </div>
+            
+            <div class="detection-overlay" id="detection-overlay">
+                <div>Detections: <span id="detection-count">0</span></div>
+                <div>Tracking: <span id="tracking-status">Inactive</span></div>
+                <div>Pan-Tilt: <span id="pantilt-position">0°, 0°</span></div>
+            </div>
+        </div>
+
+        <div class="controls-panel">
+            <div class="control-group">
+                <h4>Camera Controls</h4>
+                <button class="control-button" onclick="toggleFullscreen()">Toggle Fullscreen</button>
+                <button class="control-button" onclick="resetCamera()">Reset View</button>
+                <button class="control-button" onclick="captureFrame()">Capture Frame</button>
+            </div>
+            
+            <div class="control-group">
+                <h4>Detection Controls</h4>
+                <button class="control-button" onclick="toggleDetection()">Toggle Detection</button>
+                <button class="control-button" onclick="toggleTracking()">Toggle Tracking</button>
+                <button class="control-button" onclick="clearDetections()">Clear Detections</button>
+            </div>
+            
+            <div class="control-group">
+                <h4>Pan-Tilt Controls</h4>
+                <button class="control-button" onclick="homePanTilt()" disabled>Home Position</button>
+                <button class="control-button" onclick="stopMovement()" disabled>Stop Movement</button>
+                <button class="control-button" onclick="enablePanTilt()" disabled>Enable (Placeholder)</button>
+            </div>
+            
+            <div class="control-group">
+                <h4>View Options</h4>
+                <button class="control-button" onclick="openDashboard()">Open Dashboard</button>
+                <button class="control-button" onclick="downloadLogs()">Download Logs</button>
+                <button class="control-button" onclick="showStats()">Show Statistics</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentCamera = 'ir';
+        let isFullscreen = false;
+        let updateInterval;
+
+        // Initialize viewer
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeViewer();
+            startStatusUpdates();
+        });
+
+        function initializeViewer() {
+            // Get camera parameter from URL
+            const urlParams = new URLSearchParams(window.location.search);
+            const camera = urlParams.get('camera');
+            
+            if (camera === 'hq') {
+                switchCamera('hq');
+            }
+            
+            // Start periodic updates
+            updateStatus();
+        }
+
+        function startStatusUpdates() {
+            updateInterval = setInterval(updateStatus, 2000);
+        }
+
+        function stopStatusUpdates() {
+            if (updateInterval) {
+                clearInterval(updateInterval);
+            }
+        }
+
+        function switchCamera(camera) {
+            currentCamera = camera;
+            
+            // Update tab buttons
+            document.querySelectorAll('.tab-button').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            document.getElementById(camera + '-tab').classList.add('active');
+            
+            // Update stream source
+            const streamElement = document.getElementById('camera-stream');
+            const feedUrl = camera === 'ir' ? 'http://10.0.1.164:5001/ir_feed' : 'http://10.0.1.164:5001/hq_feed';
+            streamElement.src = feedUrl;
+            
+            // Update stream info
+            document.querySelector('#stream-info div:first-child').textContent = 
+                `Camera: ${camera.toUpperCase()}`;
+            
+            updateStatus();
+        }
+
+        function updateStatus() {
+            // Update system status
+            fetch('/api/system_status')
+                .then(response => response.json())
+                .then(data => {
+                    updateStreamInfo(data);
+                })
+                .catch(error => {
+                    console.error('Error fetching system status:', error);
+                    document.getElementById('stream-status').textContent = 'Error';
+                });
+            
+            // Update detection status
+            fetch('/detection_status')
+                .then(response => response.json())
+                .then(data => {
+                    updateDetectionInfo(data);
+                })
+                .catch(error => {
+                    console.error('Error fetching detection status:', error);
+                });
+            
+            // Update pan-tilt status
+            fetch('/api/pan_tilt')
+                .then(response => response.json())
+                .then(data => {
+                    updatePanTiltInfo(data);
+                })
+                .catch(error => {
+                    console.error('Error fetching pan-tilt status:', error);
+                });
+        }
+
+        function updateStreamInfo(data) {
+            const cameraData = currentCamera === 'ir' ? data.cameras.ir_camera : data.cameras.hq_camera;
+            
+            document.getElementById('stream-status').textContent = 
+                cameraData ? 'Active' : 'Inactive';
+            
+            // These would be populated with actual viewer count and FPS data
+            document.getElementById('viewer-count').textContent = '-';
+            document.getElementById('stream-fps').textContent = '-';
+        }
+
+        function updateDetectionInfo(data) {
+            if (!data.error) {
+                document.getElementById('detection-count').textContent = 
+                    data.current_detections || 0;
+                
+                document.getElementById('tracking-status').textContent = 
+                    data.running ? 'Active' : 'Inactive';
+            }
+        }
+
+        function updatePanTiltInfo(data) {
+            if (data.status === 'placeholder') {
+                document.getElementById('pantilt-position').textContent = 'Placeholder';
+            } else if (data.current_position) {
+                const pan = data.current_position.pan || 0;
+                const tilt = data.current_position.tilt || 0;
+                document.getElementById('pantilt-position').textContent = 
+                    `${pan.toFixed(1)}°, ${tilt.toFixed(1)}°`;
+            }
+        }
+
+        function toggleFullscreen() {
+            const container = document.querySelector('.viewer-container');
+            
+            if (!isFullscreen) {
+                container.classList.add('fullscreen');
+                isFullscreen = true;
+            } else {
+                container.classList.remove('fullscreen');
+                isFullscreen = false;
+            }
+        }
+
+        function resetCamera() {
+            fetch('/api/pan_tilt', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({action: 'reset_camera'})
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log('Camera reset:', data);
+            })
+            .catch(error => {
+                console.error('Error resetting camera:', error);
+            });
+        }
+
+        function captureFrame() {
+            // Create a canvas to capture the current frame
+            const img = document.getElementById('camera-stream');
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            
+            canvas.width = img.naturalWidth || img.width;
+            canvas.height = img.naturalHeight || img.height;
+            
+            ctx.drawImage(img, 0, 0);
+            
+            // Download the image
+            const link = document.createElement('a');
+            link.download = `ufo-tracker-${currentCamera}-${new Date().toISOString()}.png`;
+            link.href = canvas.toDataURL();
+            link.click();
+        }
+
+        function toggleDetection() {
+            console.log('Toggle detection requested');
+            // This would implement detection toggle
+        }
+
+        function toggleTracking() {
+            console.log('Toggle tracking requested');
+            // This would implement tracking toggle
+        }
+
+        function clearDetections() {
+            console.log('Clear detections requested');
+            // This would clear current detections
+        }
+
+        function homePanTilt() {
+            console.log('Pan-tilt home requested');
+            // This would home the pan-tilt mechanism
+        }
+
+        function stopMovement() {
+            console.log('Stop movement requested');
+            // This would stop pan-tilt movement
+        }
+
+        function enablePanTilt() {
+            console.log('Enable pan-tilt requested');
+            // This would enable the pan-tilt mechanism
+        }
+
+        function openDashboard() {
+            window.open('/', '_blank');
+        }
+
+        function downloadLogs() {
+            console.log('Download logs requested');
+            // This would download system logs
+        }
+
+        function showStats() {
+            console.log('Show statistics requested');
+            // This would show detailed statistics
+        }
+
+        // Handle page visibility for performance
+        document.addEventListener('visibilitychange', function() {
+            if (document.hidden) {
+                stopStatusUpdates();
+            } else {
+                startStatusUpdates();
+            }
+        });
+
+        // Handle window unload
+        window.addEventListener('beforeunload', function() {
+            stopStatusUpdates();
+        });
+    </script>
+</body>
+</html>

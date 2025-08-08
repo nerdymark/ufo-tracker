@@ -1,0 +1,1849 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🛸 UFO Tracker - Unified Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #000814;
+            color: #e0e0e0;
+            min-height: 100vh;
+            padding: 10px;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        /* Starfield Background */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 200%;
+            height: 200%;
+            background-image: 
+                radial-gradient(2px 2px at 20px 30px, #fff, transparent),
+                radial-gradient(2px 2px at 40px 70px, rgba(255,255,255,0.8), transparent),
+                radial-gradient(1px 1px at 90px 40px, #fff, transparent),
+                radial-gradient(1px 1px at 130px 80px, rgba(255,255,255,0.6), transparent),
+                radial-gradient(2px 2px at 160px 30px, #fff, transparent),
+                radial-gradient(1px 1px at 200px 90px, rgba(255,255,255,0.7), transparent),
+                radial-gradient(1px 1px at 240px 20px, #fff, transparent),
+                radial-gradient(2px 2px at 280px 100px, rgba(255,255,255,0.9), transparent),
+                radial-gradient(1px 1px at 320px 50px, rgba(255,255,255,0.8), transparent),
+                radial-gradient(1px 1px at 360px 120px, #fff, transparent);
+            background-repeat: repeat;
+            background-size: 400px 400px;
+            animation: starMove 120s linear infinite;
+            z-index: -3;
+            opacity: 0.6;
+        }
+
+        @keyframes starMove {
+            0% { transform: translate(0, 0); }
+            100% { transform: translate(-200px, -200px); }
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 20px;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Header */
+        .header {
+            text-align: center;
+            padding: 20px;
+            background: rgba(0, 8, 20, 0.85);
+            border: 1px solid rgba(100, 200, 255, 0.3);
+            border-radius: 12px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 8px 32px rgba(0, 150, 255, 0.1);
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-shadow: 
+                0 0 10px rgba(100, 200, 255, 0.5),
+                0 0 20px rgba(100, 200, 255, 0.3),
+                2px 2px 4px rgba(0, 0, 0, 0.8);
+            background: linear-gradient(45deg, #64c8ff, #ffffff, #64c8ff);
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: titleGlow 3s ease-in-out infinite alternate;
+        }
+
+        @keyframes titleGlow {
+            0% { filter: brightness(1); }
+            100% { filter: brightness(1.2); }
+        }
+
+        .header .subtitle {
+            font-size: 1.1rem;
+            opacity: 0.8;
+            color: #a0c4ff;
+            text-shadow: 0 0 5px rgba(160, 196, 255, 0.3);
+        }
+
+        /* Navigation Tabs */
+        .nav-tabs {
+            display: flex;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 12px;
+            padding: 5px;
+            gap: 5px;
+            overflow-x: auto;
+        }
+
+        .nav-tab {
+            flex: 1;
+            min-width: 120px;
+            padding: 12px 16px;
+            text-align: center;
+            background: rgba(255, 255, 255, 0.1);
+            border: none;
+            border-radius: 8px;
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.9rem;
+            white-space: nowrap;
+        }
+
+        .nav-tab:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateY(-2px);
+        }
+
+        .nav-tab.active {
+            background: linear-gradient(45deg, #4CAF50, #45a049);
+            box-shadow: 0 4px 15px rgba(76, 175, 80, 0.3);
+        }
+
+        /* Content Sections */
+        .content-section {
+            display: none;
+            animation: fadeIn 0.3s ease-in;
+        }
+
+        .content-section.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* System Status Panel */
+        .status-panel {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 12px;
+            padding: 20px;
+            backdrop-filter: blur(10px);
+        }
+
+        .status-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .status-item {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            transition: transform 0.3s ease;
+        }
+
+        .status-item:hover {
+            transform: translateY(-5px);
+        }
+
+        .status-indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-left: 8px;
+        }
+
+        .status-active { background: #4CAF50; }
+        .status-inactive { background: #f44336; }
+        .status-updating { background: #ff9800; animation: pulse 1s infinite; }
+
+        /* Status Bar (Always Visible) */
+        .status-bar {
+            background: rgba(0, 0, 0, 0.4);
+            border-radius: 8px;
+            padding: 10px 15px;
+            margin-bottom: 15px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .status-grid-horizontal {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 20px;
+            justify-content: space-between;
+        }
+
+        .status-item-compact {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: #fff;
+            font-size: 14px;
+        }
+
+        .status-label {
+            font-weight: bold;
+            min-width: 50px;
+        }
+
+        .status-indicator-small {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+
+        .btn-small {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: #fff;
+            padding: 4px 8px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.3s ease;
+        }
+
+        .btn-small:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        /* Camera Grid */
+        .camera-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 20px;
+        }
+
+        .camera-panel {
+            background: rgba(0, 8, 20, 0.75);
+            border: 1px solid rgba(100, 200, 255, 0.2);
+            border-radius: 12px;
+            padding: 20px;
+            backdrop-filter: blur(15px);
+            box-shadow: 
+                0 8px 32px rgba(0, 150, 255, 0.1),
+                inset 0 1px 0 rgba(255, 255, 255, 0.1);
+        }
+
+        /* Auto Tracking Styles */
+        .tracking-status-panel {
+            background: rgba(0, 20, 8, 0.75);
+            border: 1px solid rgba(100, 255, 150, 0.3);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            backdrop-filter: blur(15px);
+            box-shadow: 
+                0 8px 32px rgba(0, 255, 100, 0.1),
+                inset 0 1px 0 rgba(255, 255, 255, 0.1);
+        }
+
+        .tracking-controls {
+            margin-bottom: 15px;
+        }
+
+        .tracking-status .status-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .status-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+        }
+
+        .status-label {
+            font-size: 0.9rem;
+            color: #a0c4ff;
+            margin-bottom: 5px;
+        }
+
+        .status-value {
+            font-size: 1.1rem;
+            font-weight: bold;
+            color: #64c8ff;
+        }
+
+        .tracking-info {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 10px;
+            font-size: 0.9rem;
+        }
+
+        .info-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .info-label {
+            color: #a0c4ff;
+            font-size: 0.8rem;
+        }
+
+        .info-value {
+            color: #64c8ff;
+            font-weight: bold;
+            margin-top: 2px;
+        }
+
+        .tracking-settings-panel {
+            background: rgba(8, 0, 20, 0.75);
+            border: 1px solid rgba(200, 100, 255, 0.3);
+            border-radius: 12px;
+            padding: 20px;
+            margin-top: 20px;
+            backdrop-filter: blur(15px);
+        }
+
+        .gallery-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .gallery-item {
+            background: rgba(8, 0, 20, 0.75);
+            border: 1px solid rgba(100, 200, 255, 0.3);
+            border-radius: 8px;
+            padding: 15px;
+            text-align: center;
+        }
+
+        .gallery-item img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 4px;
+            margin-bottom: 10px;
+        }
+
+        .gallery-item-info {
+            color: #ccc;
+            font-size: 12px;
+            margin-bottom: 10px;
+        }
+
+        .gallery-item-controls {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .settings-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-top: 15px;
+        }
+
+        .setting-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .setting-group label {
+            margin-bottom: 8px;
+            font-weight: bold;
+            color: #e0e0e0;
+        }
+
+        .camera-preview {
+            position: relative;
+            width: 100%;
+            aspect-ratio: 16/9;
+            background: #000;
+            border-radius: 8px;
+            overflow: hidden;
+            margin-bottom: 15px;
+        }
+
+        .camera-preview img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            cursor: pointer;
+            transition: transform 0.3s ease;
+        }
+
+        .camera-preview img:hover {
+            transform: scale(1.02);
+        }
+
+        .camera-preview img:fullscreen {
+            object-fit: contain;
+            background: black;
+        }
+
+        .camera-overlay {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-size: 0.8rem;
+        }
+
+        .live-indicator {
+            color: #00ff00;
+            font-weight: bold;
+            animation: pulse 2s infinite;
+            font-size: 0.9rem;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+
+        /* Control Groups */
+        .control-group {
+            margin: 15px 0;
+        }
+
+        .control-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+        }
+
+        .control-input {
+            width: 100%;
+            height: 40px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 6px;
+            color: white;
+            padding: 0 15px;
+            font-size: 1rem;
+        }
+
+        .control-input:focus {
+            outline: none;
+            border-color: #4CAF50;
+            box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.2);
+        }
+
+        .range-display {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 5px;
+            font-size: 0.8rem;
+            opacity: 0.8;
+        }
+
+        .range-display span:nth-child(2) {
+            background: rgba(76, 175, 80, 0.2);
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+
+        /* Buttons */
+        .btn-group {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-top: 15px;
+        }
+
+        .btn {
+            flex: 1;
+            min-width: 100px;
+            padding: 12px 16px;
+            border: 1px solid rgba(100, 200, 255, 0.3);
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            text-align: center;
+            display: inline-block;
+            backdrop-filter: blur(10px);
+            /* Prevent double-tap zoom on mobile devices */
+            touch-action: manipulation;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+        }
+
+        .btn-primary {
+            background: linear-gradient(45deg, rgba(76, 175, 80, 0.8), rgba(69, 160, 73, 0.8));
+            color: #e0e0e0;
+            box-shadow: 0 0 10px rgba(76, 175, 80, 0.3);
+        }
+
+        .btn-secondary {
+            background: linear-gradient(45deg, rgba(33, 150, 243, 0.8), rgba(25, 118, 210, 0.8));
+            color: #e0e0e0;
+            box-shadow: 0 0 10px rgba(33, 150, 243, 0.3);
+        }
+
+        .btn-warning {
+            background: linear-gradient(45deg, rgba(255, 152, 0, 0.8), rgba(245, 124, 0, 0.8));
+            color: #e0e0e0;
+            box-shadow: 0 0 10px rgba(255, 152, 0, 0.3);
+        }
+
+        .btn-danger {
+            background: linear-gradient(45deg, rgba(244, 67, 54, 0.8), rgba(211, 47, 47, 0.8));
+            color: #e0e0e0;
+            box-shadow: 0 0 10px rgba(244, 67, 54, 0.3);
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 
+                0 4px 15px rgba(100, 200, 255, 0.2),
+                0 0 20px rgba(100, 200, 255, 0.4);
+            border-color: rgba(100, 200, 255, 0.6);
+        }
+        
+        .btn.disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+            background: #555 !important;
+            color: #999 !important;
+            border-color: #444 !important;
+        }
+        
+        .btn.disabled:hover {
+            background: #555 !important;
+            color: #999 !important;
+            transform: none !important;
+            box-shadow: none !important;
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        /* Checkbox Styling */
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 10px 0;
+        }
+
+        .checkbox-group input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            accent-color: #4CAF50;
+        }
+
+        /* Detection Panel */
+        .detection-panel {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 12px;
+            padding: 20px;
+            backdrop-filter: blur(10px);
+        }
+
+        .detection-info {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .detection-stat {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .detection-stat .value {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #4CAF50;
+        }
+
+        .detection-stat .label {
+            font-size: 0.9rem;
+            opacity: 0.8;
+            margin-top: 5px;
+        }
+
+        /* Image Browser Styles */
+        .image-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 15px;
+            max-height: 500px;
+            overflow-y: auto;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 15px;
+            background: rgba(0, 0, 0, 0.2);
+        }
+
+        .image-item {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 10px;
+            text-align: center;
+            transition: transform 0.3s ease;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .image-item:hover {
+            transform: translateY(-5px);
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        .image-thumbnail {
+            width: 100%;
+            height: 150px;
+            object-fit: cover;
+            border-radius: 6px;
+            margin-bottom: 10px;
+            cursor: pointer;
+        }
+
+        .image-info {
+            font-size: 12px;
+            color: #ccc;
+            margin-bottom: 8px;
+        }
+
+        .image-type {
+            display: inline-block;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 10px;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .image-type.motion_detection { background: #4CAF50; color: white; }
+        .image-type.stacked { background: #2196F3; color: white; }
+        .image-type.aligned { background: #FF9800; color: white; }
+        .image-type.unknown { background: #757575; color: white; }
+
+        .image-actions {
+            display: flex;
+            gap: 5px;
+            justify-content: center;
+        }
+
+        .btn-tiny {
+            padding: 4px 8px;
+            font-size: 10px;
+            border-radius: 4px;
+            border: none;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+
+        .btn-tiny.view { background: #4CAF50; color: white; }
+        .btn-tiny.delete { background: #f44336; color: white; }
+        .btn-tiny:hover { opacity: 0.8; }
+
+        .loading-message {
+            text-align: center;
+            color: #ccc;
+            padding: 20px;
+            grid-column: 1 / -1;
+        }
+
+        /* Timelapse Styles */
+        .timelapse-controls h3 {
+            color: #4CAF50;
+            margin-bottom: 15px;
+        }
+
+        .timelapse-item {
+            background: rgba(255,255,255,0.1);
+            border-radius: 8px;
+            padding: 10px;
+            margin-bottom: 10px;
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+
+        .timelapse-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .timelapse-title {
+            font-weight: bold;
+            color: #4CAF50;
+        }
+
+        .timelapse-info {
+            display: flex;
+            gap: 15px;
+            font-size: 0.9em;
+            color: #ccc;
+            margin-bottom: 8px;
+        }
+
+        .timelapse-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .timelapse-video {
+            width: 100%;
+            max-width: 400px;
+            height: 225px;
+            border-radius: 4px;
+            margin-top: 10px;
+        }
+
+        .timelapse-empty {
+            text-align: center;
+            color: #888;
+            padding: 20px;
+            font-style: italic;
+        }
+
+        .storage-info {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 10px;
+            border-radius: 6px;
+            text-align: center;
+            font-size: 14px;
+        }
+
+        /* Image Modal */
+        .image-modal {
+            display: none;
+            position: fixed;
+            z-index: 9999;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            backdrop-filter: blur(5px);
+        }
+
+        .image-modal.active {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .image-modal-content {
+            max-width: 90%;
+            max-height: 90%;
+            border-radius: 8px;
+        }
+
+        .image-modal-close {
+            position: absolute;
+            top: 20px;
+            right: 30px;
+            color: white;
+            font-size: 30px;
+            cursor: pointer;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .container {
+                padding: 5px;
+                gap: 15px;
+            }
+
+            .header h1 {
+                font-size: 1.8rem;
+            }
+
+            .nav-tabs {
+                flex-direction: column;
+            }
+
+            .nav-tab {
+                min-width: auto;
+            }
+
+            .camera-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .btn-group {
+                flex-direction: column;
+            }
+
+            .btn {
+                min-width: auto;
+            }
+
+            .status-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .detection-info {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 480px) {
+            .header {
+                padding: 15px;
+            }
+
+            .camera-panel,
+            .status-panel,
+            .detection-panel {
+                padding: 15px;
+            }
+
+            .detection-info {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Loading Animation */
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: #4CAF50;
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Success/Error Messages - Fixed overlay positioning */
+        .message {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            max-width: 400px;
+            z-index: 10000;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            animation: slideIn 0.3s ease-out;
+        }
+        
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        .message.success {
+            background: linear-gradient(135deg, rgba(76, 175, 80, 0.95), rgba(76, 175, 80, 0.85));
+            border: 1px solid rgba(76, 175, 80, 0.8);
+            color: #ffffff;
+        }
+
+        .message.error {
+            background: linear-gradient(135deg, rgba(244, 67, 54, 0.95), rgba(244, 67, 54, 0.85));
+            border: 1px solid rgba(244, 67, 54, 0.8);
+            color: #ffffff;
+        }
+        
+        .message.info {
+            background: linear-gradient(135deg, rgba(33, 150, 243, 0.95), rgba(33, 150, 243, 0.85));
+            border: 1px solid rgba(33, 150, 243, 0.8);
+            color: #ffffff;
+        }
+
+        /* Particle Effects Container */
+        .particles {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: -2;
+        }
+
+        /* Falling Stars */
+        .falling-star {
+            position: absolute;
+            width: 2px;
+            height: 2px;
+            background: #ffffff;
+            border-radius: 50%;
+            animation: fallingStar 3s linear infinite;
+            box-shadow: 0 0 4px #ffffff, 0 0 8px #64c8ff;
+        }
+
+        .falling-star::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 20px;
+            height: 1px;
+            background: linear-gradient(90deg, #ffffff, transparent);
+            transform: rotate(-45deg);
+            transform-origin: 0 0;
+        }
+
+        @keyframes fallingStar {
+            0% {
+                transform: translate(-10px, -10px);
+                opacity: 1;
+            }
+            70% {
+                opacity: 1;
+            }
+            100% {
+                transform: translate(300px, 300px);
+                opacity: 0;
+            }
+        }
+
+        /* Satellites */
+        .satellite {
+            position: absolute;
+            width: 3px;
+            height: 3px;
+            background: #ff6b35;
+            border-radius: 50%;
+            animation: satellite 20s linear infinite;
+            box-shadow: 0 0 6px #ff6b35;
+        }
+
+        .satellite::before {
+            content: '';
+            position: absolute;
+            width: 1px;
+            height: 8px;
+            background: #ff6b35;
+            top: -4px;
+            left: 1px;
+        }
+
+        .satellite::after {
+            content: '';
+            position: absolute;
+            width: 8px;
+            height: 1px;
+            background: #ff6b35;
+            top: 1px;
+            left: -3px;
+        }
+
+        @keyframes satellite {
+            0% {
+                transform: translateX(-50px);
+                opacity: 0;
+            }
+            10% {
+                opacity: 1;
+            }
+            90% {
+                opacity: 1;
+            }
+            100% {
+                transform: translateX(calc(100vw + 50px));
+                opacity: 0;
+            }
+        }
+
+        /* UFOs */
+        .ufo {
+            position: absolute;
+            width: 12px;
+            height: 6px;
+            background: linear-gradient(ellipse, #00ff41, #32cd32);
+            border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
+            animation: ufo 25s ease-in-out infinite;
+            box-shadow: 
+                0 0 10px #00ff41,
+                0 0 20px rgba(0, 255, 65, 0.5);
+        }
+
+        .ufo::before {
+            content: '';
+            position: absolute;
+            width: 16px;
+            height: 3px;
+            background: linear-gradient(ellipse, rgba(0, 255, 65, 0.3), transparent);
+            border-radius: 50%;
+            top: 3px;
+            left: -2px;
+        }
+
+        .ufo::after {
+            content: '';
+            position: absolute;
+            width: 2px;
+            height: 2px;
+            background: #ffffff;
+            border-radius: 50%;
+            top: 1px;
+            left: 2px;
+            box-shadow: 4px 0 #ffffff, 8px 0 #ffffff;
+        }
+
+        @keyframes ufo {
+            0% {
+                transform: translate(-50px, 0px);
+                opacity: 0;
+            }
+            5% {
+                opacity: 1;
+            }
+            25% {
+                transform: translate(25vw, -20px);
+            }
+            50% {
+                transform: translate(50vw, 10px);
+            }
+            75% {
+                transform: translate(75vw, -10px);
+            }
+            95% {
+                opacity: 1;
+            }
+            100% {
+                transform: translate(calc(100vw + 50px), 5px);
+                opacity: 0;
+            }
+        }
+
+        /* Twinkling Stars Enhancement */
+        .twinkle {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            background: #ffffff;
+            border-radius: 50%;
+            animation: twinkle 4s ease-in-out infinite;
+        }
+
+        @keyframes twinkle {
+            0%, 100% { opacity: 0.3; transform: scale(1); }
+            50% { opacity: 1; transform: scale(1.5); }
+        }
+    </style>
+</head>
+<body>
+    <div class="particles" id="particles-container"></div>
+    
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1>🛸 UFO Tracker</h1>
+            <p class="subtitle">Dual-Camera Detection System - Unified Dashboard</p>
+            <div id="system-time"></div>
+        </div>
+
+        <!-- System Status Bar - Always Visible -->
+        <div class="status-bar">
+            <div class="status-grid-horizontal">
+                <div class="status-item-compact">
+                    <span class="status-label">IR:</span>
+                    <span id="ir-status-bar">Loading...</span>
+                    <span class="status-indicator-small" id="ir-indicator-bar"></span>
+                </div>
+                <div class="status-item-compact">
+                    <span class="status-label">HQ:</span>
+                    <span id="hq-status-bar">Loading...</span>
+                    <span class="status-indicator-small" id="hq-indicator-bar"></span>
+                </div>
+                <div class="status-item-compact">
+                    <span class="status-label">Motion:</span>
+                    <span id="motion-status-bar">Loading...</span>
+                    <span class="status-indicator-small" id="motion-indicator-bar"></span>
+                </div>
+                <div class="status-item-compact">
+                    <span class="status-label">Storage:</span>
+                    <span id="storage-status-bar">Loading...</span>
+                    <span class="status-indicator-small" id="storage-indicator-bar"></span>
+                </div>
+                <div class="status-item-compact">
+                    <button class="btn-small" onclick="refreshSystemStatus()">🔄</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Navigation Tabs -->
+        <div class="nav-tabs">
+            <button class="nav-tab active" onclick="showSection('cameras')">📹 Live Cameras</button>
+            <button class="nav-tab" onclick="showSection('controls')">⚙️ Camera Controls</button>
+            <button class="nav-tab disabled" style="opacity: 0.5; cursor: not-allowed;" title="Motion Detection disabled">🎯 Motion Detection</button>
+            <button class="nav-tab" onclick="showSection('browser')">🖼️ Image Browser</button>
+            <button class="nav-tab" onclick="showSection('settings')">🔧 System Settings</button>
+        </div>
+
+        <!-- Cameras Section -->
+        <div id="cameras" class="content-section active">
+            <div style="margin-bottom: 20px;">
+                <div class="btn-group">
+                    <button class="btn btn-primary" onclick="setViewMode('live')" id="live-mode-btn">📹 Live Streams</button>
+                    <button class="btn btn-secondary" onclick="setViewMode('stacked')" id="stacked-mode-btn">📚 Image Stacking</button>
+                    <button class="btn btn-warning disabled" title="Feature alignment disabled for compatibility" disabled>🎯 Feature Aligned</button>
+                    <button class="btn btn-success" onclick="setViewMode('autotrack')" id="autotrack-mode-btn">🎯 Auto Tracking</button>
+                    <button class="btn btn-info" onclick="setViewMode('gallery')" id="gallery-mode-btn">🖼️ Gallery</button>
+                </div>
+                <div class="btn-group" style="margin-left: 20px;">
+                    <!-- Camera streams now auto-load on page load -->
+                </div>
+            </div>
+            
+            <div class="camera-grid" id="camera-container">
+                <!-- Live Mode - Always MJPEG for motion -->
+                <div id="live-cameras">
+                    <!-- IR Camera -->
+                    <div class="camera-panel">
+                        <h3>📡 IR Camera (Live Stream)</h3>
+                        <div class="camera-preview">
+                            <img id="ir-live" data-src="http://10.0.1.164:5001/ir_feed" alt="IR Camera Live" onclick="toggleFullscreen('ir')" style="cursor: pointer;" src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzIwIiBoZWlnaHQ9IjI0MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMzIwIiBoZWlnaHQ9IjI0MCIgZmlsbD0iIzMzMyIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBkb21pbmFudC1iYXNlbGluZT0ibWlkZGxlIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmaWxsPSJ3aGl0ZSI+SVIgQ2FtZXJhIExvYWRpbmcuLi48L3RleHQ+PC9zdmc+">
+                            <div class="camera-overlay">IR Live</div>
+                        </div>
+                        <div class="btn-group">
+                            <button class="btn btn-primary" onclick="refreshStream('ir')">🔄 Refresh Stream</button>
+                            <button class="btn btn-warning" onclick="captureFrame('ir')">📸 Capture</button>
+                        </div>
+                    </div>
+
+                    <!-- HQ Camera -->
+                    <div class="camera-panel">
+                        <h3>📷 HQ Camera (Live Stream)</h3>
+                        <div class="camera-preview">
+                            <img id="hq-live" data-src="http://10.0.1.164:5001/hq_feed" alt="HQ Camera Live" onclick="toggleFullscreen('hq')" style="cursor: pointer;" src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzIwIiBoZWlnaHQ9IjI0MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMzIwIiBoZWlnaHQ9IjI0MCIgZmlsbD0iIzMzMyIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBkb21pbmFudC1iYXNlbGluZT0ibWlkZGxlIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmaWxsPSJ3aGl0ZSI+SFEgQ2FtZXJhIExvYWRpbmcuLi48L3RleHQ+PC9zdmc+">
+                            <div class="camera-overlay">HQ Live</div>
+                        </div>
+                        <div class="btn-group">
+                            <button class="btn btn-primary" onclick="refreshStream('hq')">🔄 Refresh Stream</button>
+                            <button class="btn btn-warning" onclick="captureFrame('hq')">📸 Capture</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Auto Tracking Mode -->
+                <div id="autotrack-cameras" style="display: none;">
+                    <div class="tracking-status-panel">
+                        <h3>🎯 Client-Side Auto Tracking System</h3>
+                        <div class="tracking-controls">
+                            <div class="btn-group">
+                                <button class="btn btn-success" id="enable-tracking-btn" onclick="toggleClientAutoTracking()">Enable Tracking</button>
+                                <button class="btn btn-primary" id="save-image-btn" onclick="saveCurrentImage()">💾 Save Image</button>
+                                <button class="btn btn-info" id="download-image-btn" onclick="downloadCurrentImage()">⬇️ Download</button>
+                                <button class="btn btn-warning" id="record-btn" onclick="toggleRecording()">🔴 Record</button>
+                                <button class="btn btn-secondary" id="auto-record-btn" onclick="toggleAutoRecord()">📹 Auto-Record</button>
+                            </div>
+                        </div>
+                        <div class="tracking-status">
+                            <div class="status-grid">
+                                <div class="status-item">
+                                    <span class="status-label">Tracking:</span>
+                                    <span id="tracking-enabled-status" class="status-value">Disabled</span>
+                                </div>
+                                <div class="status-item">
+                                    <span class="status-label">Motion Detected:</span>
+                                    <span id="motion-detected-status" class="status-value">None</span>
+                                </div>
+                                <div class="status-item">
+                                    <span class="status-label">Sensitivity:</span>
+                                    <span id="sensitivity-value" class="status-value">Medium</span>
+                                </div>
+                                <div class="status-item">
+                                    <span class="status-label">Objects Tracked:</span>
+                                    <span id="objects-tracked-count" class="status-value">0</span>
+                                </div>
+                            </div>
+                            <div class="sensitivity-controls" style="margin-top: 10px;">
+                                <label for="motion-sensitivity">Motion Sensitivity:</label>
+                                <input type="range" id="motion-sensitivity" min="10" max="100" value="40" onchange="updateSensitivity()">
+                                <span id="sensitivity-display">40</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="camera-grid" style="position: relative;">
+                        <!-- IR Camera with Motion Detection -->
+                        <div class="camera-panel">
+                            <h3>📡 IR Camera (Motion Detection)</h3>
+                            <div class="camera-preview" style="position: relative;">
+                                <img id="ir-motion-feed" alt="IR Motion Feed" 
+                                     data-src="http://10.0.1.164:5001/ir_feed" 
+                                     crossorigin="anonymous"
+                                     style="width: 640px; height: 480px; border: 2px solid #333; background: #000;"
+                                     onclick="toggleFullscreen('ir-motion-feed')" />
+                                <canvas id="ir-motion-canvas" width="640" height="480" style="display: none;"></canvas>
+                                <canvas id="ir-overlay-canvas" width="640" height="480" style="position: absolute; top: 0; left: 0; pointer-events: none;"></canvas>
+                                <div class="camera-overlay">IR Detection</div>
+                            </div>
+                            <div class="tracking-info">
+                                <div class="info-item">
+                                    <span class="info-label">Motion Objects:</span>
+                                    <span id="motion-objects-count" class="info-value">0</span>
+                                </div>
+                                <div class="info-item">
+                                    <span class="info-label">Processing FPS:</span>
+                                    <span id="ir-processing-fps" class="info-value">0</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- HQ Camera with Smart Crop Overlay -->
+                        <div class="camera-panel">
+                            <h3>📷 HQ Camera (Annotated & Cropped)</h3>
+                            <div class="camera-preview" style="position: relative;">
+                                <img id="hq-motion-feed" alt="HQ Motion Feed" 
+                                     data-src="http://10.0.1.164:5001/hq_feed" 
+                                     crossorigin="anonymous"
+                                     style="width: 640px; height: 480px; border: 2px solid #333; background: #000;"
+                                     onclick="toggleFullscreen('hq-motion-feed')" />
+                                <canvas id="hq-main-canvas" width="640" height="480" style="display: none;"></canvas>
+                                <canvas id="hq-annotation-canvas" width="640" height="480" style="position: absolute; top: 0; left: 0; pointer-events: none;"></canvas>
+                                <!-- Smart Crop Window -->
+                                <div id="hq-crop-window" style="position: absolute; border: 3px solid #00ff00; background: rgba(0,0,0,0.8); display: none; z-index: 10;">
+                                    <canvas id="hq-crop-canvas" width="200" height="200" style="display: block;"></canvas>
+                                    <div style="color: #00ff00; text-align: center; padding: 2px; font-size: 12px;">Motion Zoom</div>
+                                </div>
+                                <div class="camera-overlay">HQ Annotated</div>
+                            </div>
+                            <div class="tracking-info">
+                                <div class="info-item">
+                                    <span class="info-label">Crop Active:</span>
+                                    <span id="crop-active-status" class="info-value">No</span>
+                                </div>
+                                <div class="info-item">
+                                    <span class="info-label">Annotations:</span>
+                                    <span id="annotations-count" class="info-value">0</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Manual Zoom Controls -->
+                    <div class="tracking-settings-panel">
+                        <h4>🔍 Manual Zoom Controls</h4>
+                        <div class="settings-grid">
+                            <div class="setting-group">
+                                <label for="zoom-level">Zoom Level:</label>
+                                <input type="range" id="zoom-level" class="control-input" 
+                                       min="1" max="5" step="0.5" value="1"
+                                       oninput="updateZoomDisplay(); applyZoom(this.value)">
+                                <div class="range-display">
+                                    <span>1x</span>
+                                    <span id="zoom-value">1.0x</span>
+                                    <span>5x</span>
+                                </div>
+                            </div>
+                            <div class="setting-group">
+                                <button class="btn btn-info" onclick="zoomToCenter()" style="margin-right: 10px;">🎯 Center Zoom</button>
+                                <button class="btn btn-warning" onclick="resetZoom()">↩️ Reset View</button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Tracking Settings Panel -->
+                    <div class="tracking-settings-panel">
+                        <h4>⚙️ Tracking Settings</h4>
+                        <div class="settings-grid">
+                            <div class="setting-group">
+                                <label for="target-selection-mode">Target Selection:</label>
+                                <select id="target-selection-mode" class="control-input" onchange="updateTrackingSettings()">
+                                    <option value="largest">Largest Object</option>
+                                    <option value="newest">Newest Detection</option>
+                                    <option value="most_active">Most Active</option>
+                                </select>
+                            </div>
+                            <div class="setting-group">
+                                <label for="tracking-timeout">Tracking Timeout (seconds):</label>
+                                <input type="range" id="tracking-timeout" class="control-input" 
+                                       min="1" max="30" step="1" value="5"
+                                       oninput="updateTrackingTimeoutDisplay(); updateTrackingSettings()">
+                                <div class="range-display">
+                                    <span>1s</span>
+                                    <span id="tracking-timeout-value">5s</span>
+                                    <span>30s</span>
+                                </div>
+                            </div>
+                            <div class="setting-group">
+                                <div class="checkbox-group">
+                                    <input type="checkbox" id="auto-calibration" onchange="updateTrackingSettings()" checked>
+                                    <label for="auto-calibration">Auto Calibration</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Image Gallery Mode -->
+                <div id="gallery-images" style="display: none;">
+                    <div class="tracking-status-panel">
+                        <h3>🖼️ Image Gallery</h3>
+                        <div class="tracking-controls">
+                            <div class="btn-group">
+                                <button class="btn btn-primary" onclick="refreshGallery()">🔄 Refresh</button>
+                                <button class="btn btn-warning" onclick="clearGallery()">🗑️ Clear All</button>
+                                <button class="btn btn-info" onclick="exportGallery()">📤 Export</button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div id="gallery-content" class="gallery-grid">
+                        <!-- Gallery items will be populated here -->
+                    </div>
+                </div>
+
+                <!-- Stacked Mode -->
+                <div id="stacked-cameras" style="display: none;">
+                    <div class="camera-grid" style="grid-template-columns: 1fr;">
+                        <!-- IR Camera Stacking -->
+                        <div class="camera-panel">
+                            <h3>📚 IR Camera Stacking <span class="live-indicator">● LIVE</span></h3>
+                            <div class="camera-preview">
+                                <img id="stacked-ir-preview" alt="Stacked IR Image" 
+                                     src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTI4MCIgaGVpZ2h0PSI3MjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjEyODAiIGhlaWdodD0iNzIwIiBmaWxsPSIjMDAwIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGRvbWluYW50LWJhc2VsaW5lPSJtaWRkbGUiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZpbGw9IndoaXRlIj5TdGFja2luZyBJUi4uLjwvdGV4dD48L3N2Zz4="
+                                     onclick="toggleFullscreen('stacked-ir')" style="cursor: pointer;">
+                                <div class="camera-overlay">Stacked IR</div>
+                            </div>
+                            <div class="control-group">
+                                <label for="ir-stack-count">Stack Count</label>
+                                <input type="range" id="ir-stack-count" class="control-input" 
+                                       min="2" max="20" step="1" value="5"
+                                       oninput="updateStackCount('ir')">
+                                <div class="range-display">
+                                    <span>2</span>
+                                    <span id="ir-stack-count-value">5</span>
+                                    <span>20</span>
+                                </div>
+                            </div>
+                            <div class="control-group">
+                                <label>
+                                    <input type="checkbox" id="ir-long-exposure" onchange="toggleLongExposure('ir')">
+                                    🌌 Long Exposure Mode
+                                </label>
+                            </div>
+                            <div class="control-group">
+                                <label>
+                                    <input type="checkbox" id="ir-infinite-exposure" onchange="toggleInfiniteExposure('ir')">
+                                    ♾️ Infinite Exposure Mode
+                                </label>
+                            </div>
+                            <div class="btn-group">
+                                <!-- Client-side stacking controls -->
+                                <button class="btn btn-success" onclick="saveStackedImage('ir')">💾 Save Stack</button>
+                                <button class="btn btn-warning" onclick="clearStackingBuffer('ir')">🗑️ Clear Buffer</button>
+                                <button class="btn btn-info" onclick="updateStackedImage('ir')">🔄 Stack Now</button>
+                            </div>
+                        </div>
+
+                        <!-- HQ Camera Stacking -->
+                        <div class="camera-panel">
+                            <h3>📚 HQ Camera Stacking <span class="live-indicator">● LIVE</span></h3>
+                            <div class="camera-preview">
+                                <img id="stacked-hq-preview" alt="Stacked HQ Image"
+                                     src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTI4MCIgaGVpZ2h0PSI3MjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjEyODAiIGhlaWdodD0iNzIwIiBmaWxsPSIjMDAwIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGRvbWluYW50LWJhc2VsaW5lPSJtaWRkbGUiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZpbGw9IndoaXRlIj5TdGFja2luZyBIUS4uLjwvdGV4dD48L3N2Zz4="
+                                     onclick="toggleFullscreen('stacked-hq')" style="cursor: pointer;">
+                                <div class="camera-overlay">Stacked HQ</div>
+                            </div>
+                            <div class="control-group">
+                                <label for="hq-stack-count">Stack Count</label>
+                                <input type="range" id="hq-stack-count" class="control-input" 
+                                       min="2" max="20" step="1" value="5"
+                                       oninput="updateStackCount('hq')">
+                                <div class="range-display">
+                                    <span>2</span>
+                                    <span id="hq-stack-count-value">5</span>
+                                    <span>20</span>
+                                </div>
+                            </div>
+                            <div class="control-group">
+                                <label>
+                                    <input type="checkbox" id="hq-long-exposure" onchange="toggleLongExposure('hq')">
+                                    🌌 Long Exposure Mode
+                                </label>
+                            </div>
+                            <div class="control-group">
+                                <label>
+                                    <input type="checkbox" id="hq-infinite-exposure" onchange="toggleInfiniteExposure('hq')">
+                                    ♾️ Infinite Exposure Mode
+                                </label>
+                            </div>
+                            <div class="btn-group">
+                                <!-- Client-side stacking controls -->
+                                <button class="btn btn-success" onclick="saveStackedImage('hq')">💾 Save Stack</button>
+                                <button class="btn btn-warning" onclick="clearStackingBuffer('hq')">🗑️ Clear Buffer</button>
+                                <button class="btn btn-info" onclick="updateStackedImage('hq')">🔄 Stack Now</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Aligned Mode -->
+                <div id="aligned-cameras" style="display: none;">
+                    <div class="camera-panel" style="grid-column: 1 / -1;">
+                        <h3>🎯 Feature Aligned View</h3>
+                        <div class="camera-preview">
+                            <img id="aligned-preview" alt="Aligned Cameras">
+                            <div class="camera-overlay">Feature Aligned</div>
+                        </div>
+                        <div class="control-group">
+                            <div class="checkbox-group">
+                                <input type="checkbox" id="show-features" onchange="toggleFeatureDisplay()">
+                                <label for="show-features">Show Feature Points</label>
+                            </div>
+                        </div>
+                        <div class="control-group">
+                            <label for="alignment-method">Alignment Method</label>
+                            <select id="alignment-method" class="control-input" onchange="updateAlignmentMethod()">
+                                <option value="orb">ORB Features</option>
+                                <option value="sift">SIFT Features</option>
+                                <option value="surf">SURF Features</option>
+                                <option value="phase">Phase Correlation</option>
+                            </select>
+                        </div>
+                        <div class="btn-group">
+                            <button class="btn btn-primary" onclick="startAlignment()">▶️ Start Alignment</button>
+                            <button class="btn btn-danger" onclick="stopAlignment()">⏹️ Stop</button>
+                            <button class="btn btn-warning" onclick="saveAlignedImage()">💾 Save Aligned</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Camera Controls Section -->
+        <div id="controls" class="content-section">
+            <div class="camera-grid">
+                <!-- IR Camera Controls -->
+                <div class="camera-panel">
+                    <h3>📡 IR Camera Controls</h3>
+                    <span id="ir-control-status" class="status-indicator"></span>
+                    
+                    <!-- Live Preview in Controls -->
+                    <div class="camera-preview" style="margin-bottom: 15px;">
+                        <img id="ir-control-preview" src="http://10.0.1.164:5001/ir_feed" alt="IR Camera Preview">
+                        <div class="camera-overlay">IR Preview</div>
+                    </div>
+                    
+                    <div class="control-group">
+                        <div class="checkbox-group">
+                            <input type="checkbox" id="ir-auto-exposure" onchange="updateAutoExposure('ir'); applySettings('ir')">
+                            <label for="ir-auto-exposure">Auto Exposure</label>
+                        </div>
+                    </div>
+                    
+                    <div class="control-group">
+                        <label for="ir-exposure">Exposure Time</label>
+                        <input type="range" id="ir-exposure" class="control-input" 
+                               min="1000" max="1000000" step="1000" value="50000"
+                               oninput="updateExposureDisplay('ir'); applySettings('ir')">
+                        <span id="ir-exposure-display" class="value-display">50ms</span>
+                        <div class="range-display">
+                            <span>1ms</span>
+                            <span id="ir-exposure-value">100ms</span>
+                            <span>10s</span>
+                        </div>
+                    </div>
+                    
+                    <div class="control-group">
+                        <label for="ir-gain">Analogue Gain</label>
+                        <input type="range" id="ir-gain" class="control-input" 
+                               min="1" max="10.9" step="0.1" value="4.0"
+                               oninput="updateGainDisplay('ir'); applySettings('ir')">
+                        <span id="ir-gain-display" class="value-display">4.0x</span>
+                        <div class="range-display">
+                            <span>1.0x</span>
+                            <span id="ir-gain-value">4.0x</span>
+                            <span>10.9x</span>
+                        </div>
+                    </div>
+                    
+                    <div class="control-group">
+                        <label for="ir-brightness">Brightness</label>
+                        <input type="range" id="ir-brightness" class="control-input" 
+                               min="-1" max="1" step="0.1" value="0.5"
+                               oninput="updateBrightnessDisplay('ir'); applySettings('ir')">
+                        <div class="range-display">
+                            <span>Dark</span>
+                            <span id="ir-brightness-value">0.5</span>
+                            <span>Bright</span>
+                        </div>
+                    </div>
+                    
+                    <div class="control-group">
+                        <label for="ir-contrast">Contrast</label>
+                        <input type="range" id="ir-contrast" class="control-input" 
+                               min="0" max="2" step="0.1" value="1.2"
+                               oninput="updateContrastDisplay('ir'); applySettings('ir')">
+                        <div class="range-display">
+                            <span>0.0x</span>
+                            <span id="ir-contrast-value">1.2x</span>
+                            <span>2.0x</span>
+                        </div>
+                    </div>
+                    
+                    <div class="btn-group">
+                        <button id="ir-dynamic-toggle" class="btn btn-info" onclick="toggleDynamicMode('ir')">📊 Dynamic Mode</button>
+                        <button class="btn btn-primary" onclick="setDayMode('ir')">☀️ Day</button>
+                        <button class="btn btn-dark" onclick="setNightMode('ir')">🌙 Night</button>
+                    </div>
+                    
+                    <div class="btn-group" style="margin-top: 10px;">
+                        <button class="btn btn-success" onclick="autoTuneCamera('ir', false)" title="Comprehensive auto-tuning with multiple samples">🎯 Auto-Tune</button>
+                        <button class="btn btn-warning" onclick="autoTuneCamera('ir', true)" title="Quick auto-tuning with fewer samples">⚡ Quick Tune</button>
+                        <button class="btn btn-secondary" onclick="fineTuneCamera('ir')" title="Fine-tune current settings">🔧 Fine-Tune</button>
+                    </div>
+                </div>
+
+                <!-- HQ Camera Controls -->
+                <div class="camera-panel">
+                    <h3>📷 HQ Camera Controls</h3>
+                    <span id="hq-control-status" class="status-indicator"></span>
+                    
+                    <!-- Live Preview in Controls -->
+                    <div class="camera-preview" style="margin-bottom: 15px;">
+                        <img id="hq-control-preview" src="http://10.0.1.164:5001/hq_feed" alt="HQ Camera Preview">
+                        <div class="camera-overlay">HQ Preview</div>
+                    </div>
+                    
+                    <div class="control-group">
+                        <div class="checkbox-group">
+                            <input type="checkbox" id="hq-auto-exposure" onchange="updateAutoExposure('hq'); applySettings('hq')">
+                            <label for="hq-auto-exposure">Auto Exposure</label>
+                        </div>
+                    </div>
+                    
+                    <div class="control-group">
+                        <label for="hq-exposure">Exposure Time</label>
+                        <input type="range" id="hq-exposure" class="control-input" 
+                               min="1000" max="1000000" step="1000" value="50000"
+                               oninput="updateExposureDisplay('hq'); applySettings('hq')">
+                        <span id="hq-exposure-display" class="value-display">50ms</span>
+                        <div class="range-display">
+                            <span>1ms</span>
+                            <span id="hq-exposure-value">100ms</span>
+                            <span>30s</span>
+                        </div>
+                    </div>
+                    
+                    <div class="control-group">
+                        <label for="hq-gain">Analogue Gain</label>
+                        <input type="range" id="hq-gain" class="control-input" 
+                               min="1" max="22.3" step="0.1" value="4.0"
+                               oninput="updateGainDisplay('hq'); applySettings('hq')">
+                        <span id="hq-gain-display" class="value-display">4.0x</span>
+                        <div class="range-display">
+                            <span>1.0x</span>
+                            <span id="hq-gain-value">4.0x</span>
+                            <span>22.3x</span>
+                        </div>
+                    </div>
+                    
+                    <div class="control-group">
+                        <label for="hq-brightness">Brightness</label>
+                        <input type="range" id="hq-brightness" class="control-input" 
+                               min="-1" max="1" step="0.1" value="0.5"
+                               oninput="updateBrightnessDisplay('hq'); applySettings('hq')">
+                        <div class="range-display">
+                            <span>Dark</span>
+                            <span id="hq-brightness-value">0.5</span>
+                            <span>Bright</span>
+                        </div>
+                    </div>
+                    
+                    <div class="control-group">
+                        <label for="hq-contrast">Contrast</label>
+                        <input type="range" id="hq-contrast" class="control-input" 
+                               min="0" max="2" step="0.1" value="1.2"
+                               oninput="updateContrastDisplay('hq'); applySettings('hq')">
+                        <div class="range-display">
+                            <span>0.0x</span>
+                            <span id="hq-contrast-value">1.2x</span>
+                            <span>2.0x</span>
+                        </div>
+                    </div>
+                    
+                    <div class="btn-group">
+                        <button id="hq-dynamic-toggle" class="btn btn-info" onclick="toggleDynamicMode('hq')">📊 Dynamic Mode</button>
+                        <button class="btn btn-primary" onclick="setDayMode('hq')">☀️ Day</button>
+                        <button class="btn btn-dark" onclick="setNightMode('hq')">🌙 Night</button>
+                    </div>
+                    
+                    <div class="btn-group" style="margin-top: 10px;">
+                        <button class="btn btn-success" onclick="autoTuneCamera('hq', false)" title="Comprehensive auto-tuning with multiple samples">🎯 Auto-Tune</button>
+                        <button class="btn btn-warning" onclick="autoTuneCamera('hq', true)" title="Quick auto-tuning with fewer samples">⚡ Quick Tune</button>
+                        <button class="btn btn-secondary" onclick="fineTuneCamera('hq')" title="Fine-tune current settings">🔧 Fine-Tune</button>
+                    </div>
+                </div>
+                
+                <!-- Pan/Tilt Controls -->
+                <div class="camera-panel">
+                    <h3>🎯 Pan/Tilt Controls</h3>
+                    <span id="pantilt-control-status" class="status-indicator"></span>
+                    
+                    <div class="control-group">
+                        <h4>Current Position</h4>
+                        <div class="status-grid">
+                            <div class="status-item">
+                                <span class="status-label">Pan:</span>
+                                <span id="pan-position" class="status-value">0.0°</span>
+                            </div>
+                            <div class="status-item">
+                                <span class="status-label">Tilt:</span>
+                                <span id="tilt-position" class="status-value">0.0°</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="control-group">
+                        <h4>Movement Controls</h4>
+                        <div style="display: grid; grid-template-columns: 1fr auto 1fr; gap: 10px; align-items: center; margin: 15px 0;">
+                            <!-- Top row -->
+                            <div></div>
+                            <button class="btn btn-secondary" onclick="movePanTilt('move_relative', {tilt_steps: 10})" title="Tilt Up">⬆️</button>
+                            <div></div>
+                            
+                            <!-- Middle row -->
+                            <button class="btn btn-secondary" onclick="movePanTilt('move_relative', {pan_steps: -10})" title="Pan Left">⬅️</button>
+                            <button class="btn btn-primary" onclick="movePanTilt('home')" title="Home">🏠</button>
+                            <button class="btn btn-secondary" onclick="movePanTilt('move_relative', {pan_steps: 10})" title="Pan Right">➡️</button>
+                            
+                            <!-- Bottom row -->
+                            <div></div>
+                            <button class="btn btn-secondary" onclick="movePanTilt('move_relative', {tilt_steps: -10})" title="Tilt Down">⬇️</button>
+                            <div></div>
+                        </div>
+                    </div>
+                    
+                    <div class="control-group">
+                        <h4>Step Size Control</h4>
+                        <div class="control-row">
+                            <label for="step-size">Movement Step Size</label>
+                            <input type="range" id="step-size" class="control-input" 
+                                   min="1" max="10" step="1" value="5"
+                                   oninput="updateStepSize()">
+                            <div class="range-display">
+                                <span>1</span>
+                                <span id="step-size-value">5</span>
+                                <span>10</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="control-group">
+                        <label for="pantilt-speed">Movement Speed</label>
+                        <input type="range" id="pantilt-speed" class="control-input" 
+                               min="50" max="255" step="5" value="100"
+                               oninput="updatePanTiltSpeed()">
+                        <div class="range-display">
+                            <span>Slow</span>
+                            <span id="pantilt-speed-value">100</span>
+                            <span>Fast</span>
+                        </div>
+                    </div>
+                    
+                    <div class="control-group">
+                        <h4>Motor Control</h4>
+                        <div class="btn-group">
+                            <button type="button" class="btn btn-success" id="motor-toggle-btn" onclick="toggleMotors()">🔌 Enable Motors</button>
+                            <button class="btn btn-danger" id="keepalive-toggle-btn" onclick="toggleKeepalive()">🔒 Keep Motors On</button>
+                        </div>
+                        <div id="motor-status" style="margin-top: 10px; padding: 5px; border-radius: 5px; background: rgba(255,255,255,0.1);">
+                            <strong>Motors:</strong> <span id="motor-state">Unknown</span><br>
+                            <strong>Keep On Mode:</strong> <span id="keepalive-state">Inactive</span>
+                        </div>
+                    </div>
+                    
+                    <div class="btn-group">
+                        <button class="btn btn-primary" onclick="refreshPanTiltStatus()">🔄 Refresh Status</button>
+                        <button class="btn btn-secondary" onclick="togglePanTiltAutoRefresh()">⏰ Auto: OFF</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Motion Detection Section (Disabled) -->
+        <div id="detection" class="content-section">
+            <div class="detection-panel" style="opacity: 0.5;">
+                <h2>🎯 Motion Detection Status (Disabled)</h2>
+                <div style="background: rgba(255, 107, 107, 0.2); padding: 15px; border-radius: 8px; margin-bottom: 20px; border-left: 4px solid #ff6b6b;">
+                    <p style="color: #ff6b6b; margin: 0;">Motion detection has been disabled for performance optimization. Use manual zoom controls above for zooming instead of auto-tracking.</p>
+                </div>
+                <div class="detection-info">
+                    <div class="detection-stat">
+                        <div class="value" id="detection-objects">0</div>
+                        <div class="label">Objects Detected</div>
+                    </div>
+                    <div class="detection-stat">
+                        <div class="value" id="detection-sensitivity">Medium</div>
+                        <div class="label">Sensitivity</div>
+                    </div>
+                    <div class="detection-stat">
+                        <div class="value" id="detection-fps">0</div>
+                        <div class="label">FPS</div>
+                    </div>
+                    <div class="detection-stat">
+                        <div class="value" id="detection-uptime">00:00:00</div>
+                        <div class="label">Uptime</div>
+                    </div>
+                </div>
+                
+                <div class="btn-group">
+                    <button class="btn btn-primary" onclick="toggleDetection()">▶️ Start/Stop</button>
+                    <button class="btn btn-secondary" onclick="refreshDetectionStatus()">🔄 Refresh</button>
+                    <button class="btn btn-warning" onclick="adjustSensitivity()">🎚️ Sensitivity</button>
+                    <button class="btn btn-danger" onclick="clearDetections()">🗑️ Clear</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Image Browser Section -->
+        <div id="browser" class="content-section">
+            <div class="status-panel">
+                <h2>🖼️ Detection Image Browser</h2>
+                
+                <div class="btn-group" style="margin-bottom: 20px;">
+                    <button class="btn btn-primary" onclick="refreshImageBrowser()">🔄 Refresh</button>
+                    <button class="btn btn-secondary" onclick="filterImages('all')" id="filter-all">📁 All</button>
+                    <button class="btn btn-secondary" onclick="filterImages('motion_detection')" id="filter-motion">🎯 Motion</button>
+                    <button class="btn btn-secondary" onclick="filterImages('stacked')" id="filter-stacked">📚 Stacked</button>
+                    <button class="btn btn-secondary disabled" title="Feature alignment disabled for compatibility" disabled>🎯 Aligned</button>
+                    <button class="btn btn-danger" onclick="clearAllImages()">🗑️ Clear All</button>
+                </div>
+                
+                <div class="storage-info" style="margin-bottom: 20px;">
+                    <p>Storage: <span id="storage-used">Loading...</span> | Images: <span id="image-count">Loading...</span></p>
+                </div>
+                
+                <!-- Timelapse Controls (Disabled) -->
+                <div class="timelapse-controls" style="background: rgba(0,0,0,0.3); padding: 15px; border-radius: 8px; margin-bottom: 20px; opacity: 0.5;">
+                    <h3 style="margin-top: 0;">🎬 Timelapse Generator (Disabled)</h3>
+                    <div style="margin-bottom: 15px;">
+                        <p style="color: #ff6b6b; margin: 10px 0;">Timelapse functionality has been disabled for performance optimization.</p>
+                    </div>
+                </div>
+                
+                <div class="image-grid" id="image-browser-grid">
+                    <div class="loading-message">Loading images...</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- System Settings Section -->
+        <div id="settings" class="content-section">
+            <div class="status-panel">
+                <h2>🔧 System Settings</h2>
+                
+                <div class="control-group">
+                    <label for="refresh-interval">Auto Refresh Interval (seconds)</label>
+                    <input type="range" id="refresh-interval" class="control-input" 
+                           min="1" max="10" step="1" value="2"
+                           oninput="updateRefreshInterval()">
+                    <div class="range-display">
+                        <span>1s</span>
+                        <span id="refresh-interval-value">2s</span>
+                        <span>10s</span>
+                    </div>
+                </div>
+                
+                <div class="control-group">
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="night-mode" onchange="toggleNightMode()">
+                        <label for="night-mode">Night Mode</label>
+                    </div>
+                </div>
+                
+                <div class="control-group">
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="sound-alerts" onchange="toggleSoundAlerts()">
+                        <label for="sound-alerts">Sound Alerts</label>
+                    </div>
+                </div>
+                
+                <div class="btn-group">
+                    <button class="btn btn-primary" onclick="saveSettings()">💾 Save Settings</button>
+                    <button class="btn btn-secondary" onclick="resetSettings()">🔄 Reset</button>
+                    <button class="btn btn-warning" onclick="exportConfig()">📤 Export Config</button>
+                    <button class="btn btn-danger" onclick="restartSystem()">🔄 Restart System</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- External JavaScript files -->
+    <script src="/static/js/utils.js"></script>
+    <script src="/static/js/core.js"></script>
+    <script src="/static/js/navigation.js"></script>
+    <script src="/static/js/camera-feeds.js"></script>
+    <script src="/static/js/camera-controls.js"></script>
+    <script src="/static/js/pantilt-controls.js"></script>
+    <script src="/static/js/tracking.js"></script>
+    <script src="/static/js/gallery.js"></script>
+    <script src="/static/js/stacking.js"></script>
+    
+    <script>
+        // Server IP passed from Flask - needed by all modules
+        const serverIP = '{{ server_ip }}';
+        console.log('Server IP:', serverIP);
+    </script>
+    <!-- Image Modal -->
+    <div id="image-modal" class="image-modal" onclick="closeImageModal()">
+        <span class="image-modal-close" onclick="closeImageModal()">&times;</span>
+        <img id="modal-image" class="image-modal-content" onclick="event.stopPropagation()">
+    </div>
+
+</body>
+</html>

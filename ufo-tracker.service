@@ -1,0 +1,32 @@
+[Unit]
+Description=UFO Tracker - Dual Camera UFO Detection System
+After=network.target
+Wants=network.target
+
+[Service]
+Type=simple
+User=mark
+Group=mark
+WorkingDirectory=/home/mark/ufo-tracker
+Environment=PATH=/usr/bin:/usr/local/bin:/home/mark/ufo-tracker/venv/bin
+Environment=PYTHONPATH=/home/mark/ufo-tracker
+ExecStart=/home/mark/ufo-tracker/venv/bin/python /home/mark/ufo-tracker/app.py
+ExecStop=/bin/kill -TERM $MAINPID
+Restart=always
+RestartSec=5
+TimeoutStopSec=30
+KillMode=mixed
+KillSignal=SIGTERM
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=ufo-tracker
+
+# Camera access permissions
+SupplementaryGroups=video
+
+# Resource limits
+LimitNOFILE=65536
+MemoryMax=512M
+
+[Install]
+WantedBy=multi-user.target

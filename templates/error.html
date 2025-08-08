@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UFO Tracker - Error</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🛸 UFO Tracker</h1>
+            <p class="subtitle">Error</p>
+        </header>
+
+        <main>
+            <div class="error-container">
+                <h2>Oops! Something went wrong</h2>
+                <p class="error-message">{{ error }}</p>
+                
+                <div class="error-actions">
+                    <a href="/" class="button">Return to Dashboard</a>
+                    <a href="/viewer" class="button">Camera Viewer</a>
+                    <button onclick="window.history.back()" class="button secondary">Go Back</button>
+                </div>
+            </div>
+        </main>
+
+        <footer>
+            <p>&copy; 2025 UFO Tracker - Raspberry Pi Sky Monitoring System</p>
+        </footer>
+    </div>
+</body>
+</html>

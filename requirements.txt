@@ -1,0 +1,23 @@
+# UFO Tracker - Raspberry Pi Requirements
+# Essential packages for UFO Tracker functionality
+# Note: picamera2 is installed via system packages (python3-picamera2)
+
+# Web Framework
+Flask==2.3.3
+
+# Computer Vision & Image Processing
+opencv-python==4.8.1.78
+numpy==1.24.3
+Pillow==9.4.0
+imutils==0.5.4
+
+# System Monitoring & Utilities
+psutil==5.9.4
+
+# Web Server (optional, for production deployment)
+gunicorn==23.0.0
+
+# Development & Testing (optional)
+# Uncomment if needed for development:
+# pytest>=7.0.0
+# flake8>=5.0.0

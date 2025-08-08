@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>UFO Tracker - Stream Test</title>
+    <style>
+        body {
+            background: #000;
+            color: white;
+            font-family: Arial, sans-serif;
+            text-align: center;
+            padding: 20px;
+        }
+        .stream-container {
+            margin: 20px;
+            border: 2px solid #444;
+            display: inline-block;
+            padding: 10px;
+        }
+        img {
+            max-width: 640px;
+            max-height: 480px;
+            border: 1px solid #666;
+        }
+        .info {
+            margin: 10px 0;
+            font-size: 14px;
+        }
+        .refresh-button {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            margin: 10px;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+        .refresh-button:hover {
+            background: #45a049;
+        }
+    </style>
+</head>
+<body>
+    <h1>UFO Tracker - Camera Stream Test</h1>
+    
+    <div class="stream-container">
+        <h2>IR Camera Stream</h2>
+        <img src="/ir_feed" alt="IR Camera Feed" id="ir-stream">
+        <div class="info">
+            <div>Stream URL: /ir_feed</div>
+            <div>Status: <span id="ir-status">Loading...</span></div>
+            <div>Last Updated: <span id="ir-timestamp">Never</span></div>
+        </div>
+        <button class="refresh-button" onclick="refreshIRStream()">Refresh IR Stream</button>
+    </div>
+    
+    <div class="stream-container">
+        <h2>HQ Camera Stream</h2>
+        <img src="/hq_feed" alt="HQ Camera Feed" id="hq-stream">
+        <div class="info">
+            <div>Stream URL: /hq_feed</div>
+            <div>Status: <span id="hq-status">Loading...</span></div>
+            <div>Last Updated: <span id="hq-timestamp">Never</span></div>
+        </div>
+        <button class="refresh-button" onclick="refreshHQStream()">Refresh HQ Stream</button>
+    </div>
+
+    <div style="margin-top: 30px;">
+        <h3>Troubleshooting</h3>
+        <p>If streams are not showing:</p>
+        <ul style="text-align: left; max-width: 600px; margin: 0 auto;">
+            <li>Check that the UFO Tracker backend is running</li>
+            <li>Verify cameras are connected and initialized</li>
+            <li>Try refreshing the page or individual streams</li>
+            <li>Check browser console for errors (F12)</li>
+        </ul>
+        <button class="refresh-button" onclick="window.location.reload()">Reload Page</button>
+    </div>
+
+    <script>
+        // Monitor stream loading
+        const irStream = document.getElementById('ir-stream');
+        const hqStream = document.getElementById('hq-stream');
+        const irStatus = document.getElementById('ir-status');
+        const hqStatus = document.getElementById('hq-status');
+        const irTimestamp = document.getElementById('ir-timestamp');
+        const hqTimestamp = document.getElementById('hq-timestamp');
+
+        // IR Camera events
+        irStream.onload = () => {
+            irStatus.textContent = 'Stream Active';
+            irStatus.style.color = 'green';
+            irTimestamp.textContent = new Date().toLocaleTimeString();
+            console.log('IR stream loaded successfully');
+        };
+        
+        irStream.onerror = (e) => {
+            irStatus.textContent = 'Stream Error: ' + e.type;
+            irStatus.style.color = 'red';
+            console.error('IR stream error:', e);
+        };
+
+        // HQ Camera events  
+        hqStream.onload = () => {
+            hqStatus.textContent = 'Stream Active';
+            hqStatus.style.color = 'green';
+            hqTimestamp.textContent = new Date().toLocaleTimeString();
+            console.log('HQ stream loaded successfully');
+        };
+        
+        hqStream.onerror = (e) => {
+            hqStatus.textContent = 'Stream Error: ' + e.type;
+            hqStatus.style.color = 'red';
+            console.error('HQ stream error:', e);
+        };
+
+        // Refresh functions
+        function refreshIRStream() {
+            const timestamp = new Date().getTime();
+            irStream.src = '/ir_feed?' + timestamp;
+            irStatus.textContent = 'Refreshing...';
+            irStatus.style.color = 'orange';
+        }
+
+        function refreshHQStream() {
+            const timestamp = new Date().getTime();
+            hqStream.src = '/hq_feed?' + timestamp;
+            hqStatus.textContent = 'Refreshing...';
+            hqStatus.style.color = 'orange';
+        }
+
+        // Add timestamps to check if streams are updating
+        setInterval(() => {
+            const timestamp = new Date().toLocaleTimeString();
+            console.log('Checking streams at', timestamp);
+        }, 5000);
+
+        // Force refresh streams every 30 seconds to prevent stale connections
+        setInterval(() => {
+            console.log('Auto-refreshing streams...');
+            refreshIRStream();
+            setTimeout(() => refreshHQStream(), 1000);
+        }, 30000);
+    </script>
+</body>
+</html>

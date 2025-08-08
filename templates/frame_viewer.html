@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>UFO Tracker - Frame-based Viewer</title>
+    <style>
+        body {
+            background: #000;
+            color: white;
+            font-family: Arial, sans-serif;
+            text-align: center;
+            padding: 20px;
+        }
+        .stream-container {
+            margin: 20px;
+            border: 2px solid #444;
+            display: inline-block;
+            padding: 10px;
+            vertical-align: top;
+        }
+        img {
+            max-width: 640px;
+            max-height: 480px;
+            border: 1px solid #666;
+            background: #333;
+        }
+        .info {
+            margin: 10px 0;
+            font-size: 12px;
+        }
+        .controls {
+            margin: 10px 0;
+        }
+        button {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            margin: 5px;
+            cursor: pointer;
+            border-radius: 3px;
+            font-size: 12px;
+        }
+        button:hover {
+            background: #45a049;
+        }
+        button:disabled {
+            background: #666;
+            cursor: not-allowed;
+        }
+        .fps-counter {
+            color: #0f0;
+            font-weight: bold;
+        }
+        .error {
+            color: #f00;
+        }
+        .warning {
+            color: #ff0;
+        }
+        .success {
+            color: #0f0;
+        }
+    </style>
+</head>
+<body>
+    <h1>UFO Tracker - Frame-based Camera Viewer</h1>
+    <p>This viewer refreshes individual frames instead of using MJPEG streams</p>
+    
+    <div class="stream-container">
+        <h2>IR Camera</h2>
+        <img id="ir-image" alt="IR Camera" src="http://10.0.1.164:5001/ir_frame">
+        <div class="info">
+            <div>Status: <span id="ir-status" class="warning">Starting...</span></div>
+            <div>FPS: <span id="ir-fps" class="fps-counter">0</span></div>
+            <div>Frames: <span id="ir-frames">0</span></div>
+            <div>Errors: <span id="ir-errors">0</span></div>
+        </div>
+        <div class="controls">
+            <button onclick="startIRStream()" id="ir-start">Start</button>
+            <button onclick="stopIRStream()" id="ir-stop" disabled>Stop</button>
+            <button onclick="captureIRFrame()">Single Frame</button>
+        </div>
+    </div>
+    
+    <div class="stream-container">
+        <h2>HQ Camera</h2>
+        <img id="hq-image" alt="HQ Camera" src="http://10.0.1.164:5001/hq_frame">
+        <div class="info">
+            <div>Status: <span id="hq-status" class="warning">Starting...</span></div>
+            <div>FPS: <span id="hq-fps" class="fps-counter">0</span></div>
+            <div>Frames: <span id="hq-frames">0</span></div>
+            <div>Errors: <span id="hq-errors">0</span></div>
+        </div>
+        <div class="controls">
+            <button onclick="startHQStream()" id="hq-start">Start</button>
+            <button onclick="stopHQStream()" id="hq-stop" disabled>Stop</button>
+            <button onclick="captureHQFrame()">Single Frame</button>
+        </div>
+    </div>
+
+    <div style="margin-top: 20px;">
+        <h3>Global Controls</h3>
+        <button onclick="startBothStreams()">Start Both</button>
+        <button onclick="stopBothStreams()">Stop Both</button>
+        <button onclick="window.location.href='/'">Back to Dashboard</button>
+        <button onclick="window.location.href='/viewer'">MJPEG Viewer</button>
+    </div>
+
+    <script>
+        let irInterval = null;
+        let hqInterval = null;
+        let irFrameCount = 0;
+        let hqFrameCount = 0;
+        let irErrorCount = 0;
+        let hqErrorCount = 0;
+        let irStartTime = Date.now();
+        let hqStartTime = Date.now();
+
+        const irImage = document.getElementById('ir-image');
+        const hqImage = document.getElementById('hq-image');
+
+        // FPS calculation
+        function updateFPS() {
+            const irElapsed = (Date.now() - irStartTime) / 1000;
+            const hqElapsed = (Date.now() - hqStartTime) / 1000;
+            
+            const irFPS = irElapsed > 0 ? (irFrameCount / irElapsed).toFixed(1) : 0;
+            const hqFPS = hqElapsed > 0 ? (hqFrameCount / hqElapsed).toFixed(1) : 0;
+            
+            document.getElementById('ir-fps').textContent = irFPS;
+            document.getElementById('hq-fps').textContent = hqFPS;
+            document.getElementById('ir-frames').textContent = irFrameCount;
+            document.getElementById('hq-frames').textContent = hqFrameCount;
+            document.getElementById('ir-errors').textContent = irErrorCount;
+            document.getElementById('hq-errors').textContent = hqErrorCount;
+        }
+
+        // IR Camera functions
+        function captureIRFrame() {
+            const timestamp = Date.now();
+            irImage.src = 'http://10.0.1.164:5001/ir_frame?' + timestamp;
+        }
+
+        function startIRStream() {
+            if (irInterval) return;
+            
+            irStartTime = Date.now();
+            irFrameCount = 0;
+            irErrorCount = 0;
+            
+            irInterval = setInterval(() => {
+                captureIRFrame();
+                irFrameCount++;
+            }, 200); // 5 FPS
+            
+            document.getElementById('ir-status').textContent = 'Streaming';
+            document.getElementById('ir-status').className = 'success';
+            document.getElementById('ir-start').disabled = true;
+            document.getElementById('ir-stop').disabled = false;
+        }
+
+        function stopIRStream() {
+            if (irInterval) {
+                clearInterval(irInterval);
+                irInterval = null;
+            }
+            
+            document.getElementById('ir-status').textContent = 'Stopped';
+            document.getElementById('ir-status').className = 'warning';
+            document.getElementById('ir-start').disabled = false;
+            document.getElementById('ir-stop').disabled = true;
+        }
+
+        // HQ Camera functions
+        function captureHQFrame() {
+            const timestamp = Date.now();
+            hqImage.src = 'http://10.0.1.164:5001/hq_frame?' + timestamp;
+        }
+
+        function startHQStream() {
+            if (hqInterval) return;
+            
+            hqStartTime = Date.now();
+            hqFrameCount = 0;
+            hqErrorCount = 0;
+            
+            hqInterval = setInterval(() => {
+                captureHQFrame();
+                hqFrameCount++;
+            }, 333); // 3 FPS (HQ camera is slower)
+            
+            document.getElementById('hq-status').textContent = 'Streaming';
+            document.getElementById('hq-status').className = 'success';
+            document.getElementById('hq-start').disabled = true;
+            document.getElementById('hq-stop').disabled = false;
+        }
+
+        function stopHQStream() {
+            if (hqInterval) {
+                clearInterval(hqInterval);
+                hqInterval = null;
+            }
+            
+            document.getElementById('hq-status').textContent = 'Stopped';
+            document.getElementById('hq-status').className = 'warning';
+            document.getElementById('hq-start').disabled = false;
+            document.getElementById('hq-stop').disabled = true;
+        }
+
+        // Global functions
+        function startBothStreams() {
+            startIRStream();
+            startHQStream();
+        }
+
+        function stopBothStreams() {
+            stopIRStream();
+            stopHQStream();
+        }
+
+        // Error handling
+        irImage.onerror = () => {
+            irErrorCount++;
+            document.getElementById('ir-status').textContent = 'Error loading frame';
+            document.getElementById('ir-status').className = 'error';
+        };
+
+        hqImage.onerror = () => {
+            hqErrorCount++;
+            document.getElementById('hq-status').textContent = 'Error loading frame';
+            document.getElementById('hq-status').className = 'error';
+        };
+
+        irImage.onload = () => {
+            if (document.getElementById('ir-status').textContent === 'Starting...') {
+                document.getElementById('ir-status').textContent = 'Frame loaded';
+                document.getElementById('ir-status').className = 'success';
+            }
+        };
+
+        hqImage.onload = () => {
+            if (document.getElementById('hq-status').textContent === 'Starting...') {
+                document.getElementById('hq-status').textContent = 'Frame loaded';
+                document.getElementById('hq-status').className = 'success';
+            }
+        };
+
+        // Update FPS counter every second
+        setInterval(updateFPS, 1000);
+
+        // Auto-start streams after page load
+        setTimeout(() => {
+            startBothStreams();
+        }, 1000);
+    </script>
+</body>
+</html>

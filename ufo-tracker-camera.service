@@ -1,0 +1,23 @@
+[Unit]
+Description=UFO Tracker - Camera Streaming Service
+After=network.target
+Wants=network.target
+
+[Service]
+Type=simple
+User=mark
+Group=mark
+WorkingDirectory=/home/mark/ufo-tracker
+Environment=PYTHONPATH=/home/mark/ufo-tracker
+ExecStart=/home/mark/ufo-tracker/venv/bin/python /home/mark/ufo-tracker/camera_service.py
+Restart=always
+RestartSec=10
+StandardOutput=journal
+StandardError=journal
+
+# Resource limits
+MemoryMax=512M
+CPUQuota=50%
+
+[Install]
+WantedBy=multi-user.target

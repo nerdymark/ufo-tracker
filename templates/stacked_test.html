@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Stacked Images</title>
+    <style>
+        body { background: #000; color: #fff; font-family: Arial, sans-serif; }
+        .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+        .image-container { margin: 20px 0; }
+        img { max-width: 100%; border: 1px solid #333; }
+        .info { margin: 10px 0; padding: 10px; background: #222; border-radius: 5px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Stacked Image Test</h1>
+        
+        <div class="image-container">
+            <h2>IR Camera - Stacked Feed (Stream)</h2>
+            <div class="info">URL: /stacked_feed?camera=ir&count=5</div>
+            <img id="ir-stream" src="/stacked_feed?camera=ir&count=5" alt="IR Stacked Stream">
+        </div>
+        
+        <div class="image-container">
+            <h2>IR Camera - Stacked Frame (Static)</h2>
+            <div class="info">URL: http://{{ server_ip }}:5002/stacked_frame?camera=ir&count=5</div>
+            <img id="ir-static" src="http://{{ server_ip }}:5002/stacked_frame?camera=ir&count=5" alt="IR Stacked Frame">
+        </div>
+        
+        <div class="image-container">
+            <h2>HQ Camera - Stacked Feed (Stream)</h2>
+            <div class="info">URL: /stacked_feed?camera=hq&count=5</div>
+            <img id="hq-stream" src="/stacked_feed?camera=hq&count=5" alt="HQ Stacked Stream">
+        </div>
+        
+        <div class="image-container">
+            <h2>HQ Camera - Stacked Frame (Static)</h2>
+            <div class="info">URL: http://{{ server_ip }}:5002/stacked_frame?camera=hq&count=5</div>
+            <img id="hq-static" src="http://{{ server_ip }}:5002/stacked_frame?camera=hq&count=5" alt="HQ Stacked Frame">
+        </div>
+        
+        <div class="image-container">
+            <h2>Controls</h2>
+            <button onclick="refreshStatic()">Refresh Static Images</button>
+            <button onclick="toggleStream()">Toggle Stream Images</button>
+        </div>
+        
+        <div id="log" class="info">
+            <h3>Log:</h3>
+            <div id="log-content"></div>
+        </div>
+    </div>
+
+    <script>
+        // Server IP passed from Flask
+        const serverIP = '{{ server_ip }}';
+        function log(message) {
+            const logContent = document.getElementById('log-content');
+            const timestamp = new Date().toLocaleTimeString();
+            logContent.innerHTML += `<div>[${timestamp}] ${message}</div>`;
+            logContent.scrollTop = logContent.scrollHeight;
+        }
+
+        function refreshStatic() {
+            const timestamp = Date.now();
+            document.getElementById('ir-static').src = `http://${serverIP}:5002/stacked_frame?camera=ir&count=5&t=${timestamp}`;
+            document.getElementById('hq-static').src = `http://${serverIP}:5002/stacked_frame?camera=hq&count=5&t=${timestamp}`;
+            log('Refreshed static images');
+        }
+
+        let streamEnabled = true;
+        function toggleStream() {
+            streamEnabled = !streamEnabled;
+            const irStream = document.getElementById('ir-stream');
+            const hqStream = document.getElementById('hq-stream');
+            
+            if (streamEnabled) {
+                irStream.src = '/stacked_feed?camera=ir&count=5';
+                hqStream.src = '/stacked_feed?camera=hq&count=5';
+                log('Enabled stream images');
+            } else {
+                irStream.src = '';
+                hqStream.src = '';
+                log('Disabled stream images');
+            }
+        }
+
+        // Add event listeners for debugging
+        document.querySelectorAll('img').forEach(img => {
+            img.addEventListener('load', function() {
+                log(`Image loaded: ${this.id} (${this.src.substring(0, 50)}...)`);
+            });
+            
+            img.addEventListener('error', function() {
+                log(`Image error: ${this.id} (${this.src.substring(0, 50)}...)`);
+            });
+        });
+
+        log('Test page initialized');
+    </script>
+</body>
+</html>

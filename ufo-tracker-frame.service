@@ -1,0 +1,24 @@
+[Unit]
+Description=UFO Tracker - Frame Service (Port 5002)
+After=network.target ufo-tracker-camera.service
+Wants=network.target
+Requires=ufo-tracker-camera.service
+
+[Service]
+Type=simple
+User=mark
+Group=mark
+WorkingDirectory=/home/mark/ufo-tracker
+Environment=PYTHONPATH=/home/mark/ufo-tracker
+ExecStart=/home/mark/ufo-tracker/venv/bin/python /home/mark/ufo-tracker/frame_service.py
+Restart=always
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+
+# Resource limits (lighter than camera service)
+MemoryMax=128M
+CPUQuota=15%
+
+[Install]
+WantedBy=multi-user.target

@@ -22,7 +22,8 @@ class Config:
             'framerate': 30,
             'auto_exposure': True,
             'exposure_time': 10000,  # microseconds
-            'gain': 1.0
+            'gain': 1.0,
+            'field_of_view_degrees': 35  # Field of view in degrees for parametric coordinate mapping
         },
         'hq_camera': {
             'index': 1,  # Camera index for HQ camera
@@ -30,7 +31,8 @@ class Config:
             'framerate': 15,
             'auto_exposure': True,
             'exposure_time': 10000,  # microseconds
-            'gain': 1.0
+            'gain': 1.0,
+            'field_of_view_degrees': 45  # Field of view in degrees for parametric coordinate mapping
         }
     }
     

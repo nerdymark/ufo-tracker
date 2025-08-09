@@ -14,6 +14,7 @@ from datetime import datetime
 import math
 
 from config.config import Config
+from .fov_mapper import FOVMapper
 
 logger = logging.getLogger(__name__)
 
@@ -311,7 +312,8 @@ class AutoTracker:
         self.motion_detector = motion_detector  # Can be None if motion detection is disabled
         
         # Core components
-        self.camera_correlation = CameraCorrelation()
+        self.camera_correlation = CameraCorrelation()  # Keep for backwards compatibility
+        self.fov_mapper = FOVMapper()  # New parametric FOV mapping
         self.roi_controller = SmoothROIController(camera_manager.hq_camera if camera_manager else None)
         
         # Tracking state
@@ -422,8 +424,8 @@ class AutoTracker:
                 if self.auto_calibration_enabled:
                     self._check_auto_calibration()
                 
-                # Process tracking if enabled
-                if self.tracking_enabled and self.camera_correlation.is_calibrated():
+                # Process tracking if enabled (FOV mapping doesn't require calibration)
+                if self.tracking_enabled:
                     self._process_tracking()
                 
                 # Control processing rate - very low frequency without motion detection
@@ -465,18 +467,18 @@ class AutoTracker:
             target_detection = self._select_target_detection(detections)
             
             if target_detection:
-                # Map IR detection to HQ camera coordinates
+                # Map IR detection to HQ camera coordinates using parametric FOV mapping
                 ir_bbox = target_detection['bbox']
                 hq_resolution = self.camera_manager.hq_camera.resolution if self.camera_manager.hq_camera else (4056, 3040)
                 
-                hq_bbox = self.camera_correlation.map_ir_bbox_to_hq(ir_bbox, hq_resolution)
+                # Use new FOV-based mapping (always available, no calibration needed)
+                hq_bbox = self.fov_mapper.map_ir_bbox_to_hq(ir_bbox)
                 
-                if hq_bbox:
-                    # Set smooth ROI target
-                    self.roi_controller.set_target_roi(hq_bbox, hq_resolution)
-                    self.tracks_followed += 1
-                    
-                    logger.debug(f"Tracking object: IR bbox {ir_bbox} -> HQ bbox {hq_bbox}")
+                # Set smooth ROI target
+                self.roi_controller.set_target_roi(hq_bbox, hq_resolution)
+                self.tracks_followed += 1
+                
+                logger.debug(f"FOV Tracking object: IR bbox {ir_bbox} -> HQ bbox {hq_bbox}")
         else:
             # Check for tracking timeout
             if (self.last_detection_time and 
@@ -524,7 +526,8 @@ class AutoTracker:
                 'successful_calibrations': self.successful_calibrations,
                 'calibration_success_rate': (self.successful_calibrations / max(1, self.calibration_attempts)) * 100
             },
-            'roi_controller_active': self.roi_controller._active if self.roi_controller else False
+            'roi_controller_active': self.roi_controller._active if self.roi_controller else False,
+            'fov_mapping': self.fov_mapper.get_scale_info() if self.fov_mapper else None
         }
     
     def set_target_selection_mode(self, mode: str):
@@ -549,6 +552,17 @@ class AutoTracker:
     def is_tracking_enabled(self) -> bool:
         """Check if tracking is enabled"""
         return self.tracking_enabled
+    
+    def update_fov_settings(self, ir_fov_degrees: Optional[float] = None, hq_fov_degrees: Optional[float] = None):
+        """Update field-of-view settings for parametric mapping"""
+        if self.fov_mapper:
+            self.fov_mapper.update_fov_settings(ir_fov_degrees, hq_fov_degrees)
+    
+    def validate_fov_mapping(self, test_points: list = None) -> dict:
+        """Validate the FOV mapping with test points"""
+        if self.fov_mapper:
+            return self.fov_mapper.validate_mapping(test_points)
+        return {'error': 'FOV mapper not available'}
     
     def cleanup(self):
         """Cleanup auto tracker"""

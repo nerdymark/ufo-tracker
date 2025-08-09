@@ -10,7 +10,7 @@ import sys
 import time
 import threading
 from datetime import datetime
-from flask import Flask, render_template, jsonify, request, Response, url_for, send_from_directory, redirect
+from flask import Flask, render_template, jsonify, request, Response, url_for, send_from_directory, redirect, send_file
 
 # Setup logging first
 from config.config import Config
@@ -527,6 +527,233 @@ def auto_tracker_export():
         "message": "No server-side tracking data available"
     }
     return jsonify(tracking_data)
+
+# ============================================================================
+# Gallery API Routes
+# ============================================================================
+
+@app.route('/api/gallery/images')
+def api_gallery_images():
+    """Get list of all images in the detections directory"""
+    try:
+        gallery_path = Config.STORAGE['save_path']
+        
+        # Create directory if it doesn't exist
+        os.makedirs(gallery_path, exist_ok=True)
+        
+        images = []
+        
+        # Get all image files
+        for filename in os.listdir(gallery_path):
+            if filename.lower().endswith(('.jpg', '.jpeg', '.png', '.gif')):
+                filepath = os.path.join(gallery_path, filename)
+                try:
+                    stat = os.stat(filepath)
+                    images.append({
+                        'name': filename,
+                        'url': f'/detections/{filename}',
+                        'size': stat.st_size,
+                        'date': datetime.fromtimestamp(stat.st_mtime).isoformat()
+                    })
+                except Exception as e:
+                    logger.error(f"Error processing gallery image {filename}: {e}")
+        
+        # Sort by date (newest first)
+        images.sort(key=lambda x: x['date'], reverse=True)
+        
+        return jsonify({
+            'success': True,
+            'images': images,
+            'count': len(images)
+        })
+        
+    except Exception as e:
+        logger.error(f"Gallery images error: {e}")
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+@app.route('/api/gallery/delete', methods=['POST'])
+def api_gallery_delete():
+    """Delete a specific image from the gallery"""
+    try:
+        data = request.json
+        filename = data.get('filename')
+        
+        if not filename:
+            return jsonify({
+                'success': False,
+                'error': 'No filename provided'
+            }), 400
+        
+        # Security check - prevent directory traversal
+        if '..' in filename or '/' in filename or '\\' in filename:
+            return jsonify({
+                'success': False,
+                'error': 'Invalid filename'
+            }), 400
+        
+        gallery_path = Config.STORAGE['save_path']
+        filepath = os.path.join(gallery_path, filename)
+        
+        # Check if file exists
+        if not os.path.exists(filepath):
+            return jsonify({
+                'success': False,
+                'error': 'File not found'
+            }), 404
+        
+        # Delete the file
+        os.remove(filepath)
+        logger.info(f"Deleted gallery image: {filename}")
+        
+        return jsonify({
+            'success': True,
+            'message': f'Deleted {filename}'
+        })
+        
+    except Exception as e:
+        logger.error(f"Gallery delete error: {e}")
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+@app.route('/api/gallery/clear', methods=['POST'])
+def api_gallery_clear():
+    """Clear all images from the gallery"""
+    try:
+        gallery_path = Config.STORAGE['save_path']
+        
+        if not os.path.exists(gallery_path):
+            return jsonify({
+                'success': True,
+                'message': 'Gallery already empty'
+            })
+        
+        count = 0
+        for filename in os.listdir(gallery_path):
+            if filename.lower().endswith(('.jpg', '.jpeg', '.png', '.gif')):
+                try:
+                    os.remove(os.path.join(gallery_path, filename))
+                    count += 1
+                except Exception as e:
+                    logger.error(f"Error deleting {filename}: {e}")
+        
+        logger.info(f"Cleared gallery: deleted {count} images")
+        
+        return jsonify({
+            'success': True,
+            'message': f'Deleted {count} images'
+        })
+        
+    except Exception as e:
+        logger.error(f"Gallery clear error: {e}")
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+@app.route('/api/gallery/upload', methods=['POST'])
+def api_gallery_upload():
+    """Upload images to the gallery"""
+    try:
+        if 'files' not in request.files:
+            return jsonify({
+                'success': False,
+                'error': 'No files provided'
+            }), 400
+        
+        gallery_path = Config.STORAGE['save_path']
+        os.makedirs(gallery_path, exist_ok=True)
+        
+        uploaded = 0
+        files = request.files.getlist('files')
+        
+        for file in files:
+            if file and file.filename:
+                # Security check - sanitize filename
+                filename = os.path.basename(file.filename)
+                if '..' in filename:
+                    continue
+                
+                # Add timestamp to filename to avoid collisions
+                base, ext = os.path.splitext(filename)
+                timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+                filename = f"{base}_{timestamp}{ext}"
+                
+                filepath = os.path.join(gallery_path, filename)
+                file.save(filepath)
+                uploaded += 1
+                logger.info(f"Uploaded gallery image: {filename}")
+        
+        return jsonify({
+            'success': True,
+            'uploaded': uploaded,
+            'message': f'Uploaded {uploaded} image(s)'
+        })
+        
+    except Exception as e:
+        logger.error(f"Gallery upload error: {e}")
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+@app.route('/api/gallery/export')
+def api_gallery_export():
+    """Export all gallery images as a zip file"""
+    try:
+        import zipfile
+        from io import BytesIO
+        
+        gallery_path = Config.STORAGE['save_path']
+        
+        # Create zip file in memory
+        zip_buffer = BytesIO()
+        
+        with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zip_file:
+            for filename in os.listdir(gallery_path):
+                if filename.lower().endswith(('.jpg', '.jpeg', '.png', '.gif')):
+                    filepath = os.path.join(gallery_path, filename)
+                    zip_file.write(filepath, filename)
+        
+        zip_buffer.seek(0)
+        
+        return send_file(
+            zip_buffer,
+            mimetype='application/zip',
+            as_attachment=True,
+            download_name=f'gallery_export_{datetime.now().strftime("%Y%m%d_%H%M%S")}.zip'
+        )
+        
+    except Exception as e:
+        logger.error(f"Gallery export error: {e}")
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+@app.route('/detections/<filename>')
+def serve_gallery_image(filename):
+    """Serve gallery images from the detections directory"""
+    try:
+        # Security check - prevent directory traversal
+        if '..' in filename or '/' in filename or '\\' in filename:
+            return "Invalid filename", 400
+        
+        gallery_path = Config.STORAGE['save_path']
+        filepath = os.path.join(gallery_path, filename)
+        
+        if os.path.exists(filepath):
+            return send_file(filepath, mimetype='image/jpeg')
+        else:
+            return "File not found", 404
+            
+    except Exception as e:
+        logger.error(f"Error serving gallery image {filename}: {e}")
+        return "Error serving image", 500
 
 # Error handlers
 @app.errorhandler(404)

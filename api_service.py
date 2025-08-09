@@ -10,7 +10,7 @@ import sys
 import time
 import threading
 from datetime import datetime
-from flask import Flask, render_template, jsonify, request, Response, url_for, send_from_directory, redirect
+from flask import Flask, render_template, jsonify, request, Response, url_for, send_from_directory, redirect, send_file
 
 # Setup logging first
 from config.config import Config
@@ -27,8 +27,12 @@ app.config['SECRET_KEY'] = Config.SECRET_KEY
 
 # Global objects
 pan_tilt = None
+motion_tracker = None
 resource_cleanup_thread = None
 cleanup_running = True
+
+# Client-side tracking state (since it's handled by JavaScript, we track it server-side)
+client_tracking_active = False
 
 def initialize_pan_tilt():
     """Initialize pan-tilt controller"""
@@ -44,6 +48,20 @@ def initialize_pan_tilt():
             pan_tilt = None
     else:
         logger.info("Pan-tilt controller disabled in config")
+
+def initialize_motion_tracker():
+    """Initialize server-side motion tracker"""
+    global motion_tracker, pan_tilt
+    
+    try:
+        from detection.server_motion_tracker import ServerMotionTracker
+        # Note: camera_manager would need to be passed from camera_service
+        # For now, we initialize without it (frames will be fetched via HTTP)
+        motion_tracker = ServerMotionTracker(camera_manager=None, pan_tilt_controller=pan_tilt)
+        logger.info("Server motion tracker initialized")
+    except Exception as e:
+        logger.error(f"Failed to initialize motion tracker: {e}")
+        motion_tracker = None
 
 def check_camera_active(camera_type):
     """Check if a camera service is active by trying to connect to it"""
@@ -229,6 +247,15 @@ def pan_tilt_control():
                     })
                 else:
                     return jsonify({'error': 'Failed to home mechanism'}), 500
+            
+            elif action == 'reset_home':
+                if pan_tilt.reset_home():
+                    return jsonify({
+                        'success': True,
+                        'message': 'Current position set as home (0°, 0°)'
+                    })
+                else:
+                    return jsonify({'error': 'Failed to reset home position'}), 500
             
             elif action == 'calibrate':
                 axis = data.get('axis')  # 'pan' or 'tilt'
@@ -482,9 +509,11 @@ def health():
 @app.route('/api/auto_tracker/status')
 def auto_tracker_status():
     """Get auto tracker status - client-side implementation"""
+    global client_tracking_active
     return jsonify({
-        "enabled": False,
-        "tracking_active": False,
+        "enabled": client_tracking_active,
+        "tracking_active": client_tracking_active,
+        "active": client_tracking_active,
         "objects_tracked": 0,
         "motion_detected": False,
         "message": "Client-side tracking only"
@@ -493,7 +522,8 @@ def auto_tracker_status():
 @app.route('/api/auto_tracker/start', methods=['POST'])
 def auto_tracker_start():
     """Start the auto tracker - client-side implementation"""
-    # Since tracking is client-side, just return success
+    global client_tracking_active
+    client_tracking_active = True
     return jsonify({
         "success": True,
         "message": "Client-side auto-tracking enabled",
@@ -503,6 +533,8 @@ def auto_tracker_start():
 @app.route('/api/auto_tracker/stop', methods=['POST'])
 def auto_tracker_stop():
     """Stop the auto tracker - client-side implementation"""
+    global client_tracking_active
+    client_tracking_active = False
     return jsonify({
         "success": True,
         "message": "Client-side auto-tracking disabled"
@@ -527,6 +559,338 @@ def auto_tracker_export():
         "message": "No server-side tracking data available"
     }
     return jsonify(tracking_data)
+
+# Server-side motion tracking endpoints
+@app.route('/api/motion_tracker/start', methods=['POST'])
+def motion_tracker_start():
+    """Start server-side motion tracking with pan-tilt integration"""
+    if not motion_tracker:
+        return jsonify({"success": False, "error": "Motion tracker not initialized"}), 503
+    
+    try:
+        success = motion_tracker.start_tracking()
+        return jsonify({
+            "success": success,
+            "message": "Server motion tracking started" if success else "Already running"
+        })
+    except Exception as e:
+        logger.error(f"Error starting motion tracker: {e}")
+        return jsonify({"success": False, "error": str(e)}), 500
+
+@app.route('/api/motion_tracker/stop', methods=['POST'])
+def motion_tracker_stop():
+    """Stop server-side motion tracking"""
+    if not motion_tracker:
+        return jsonify({"success": False, "error": "Motion tracker not initialized"}), 503
+    
+    try:
+        success = motion_tracker.stop_tracking()
+        return jsonify({
+            "success": success,
+            "message": "Server motion tracking stopped" if success else "Not running"
+        })
+    except Exception as e:
+        logger.error(f"Error stopping motion tracker: {e}")
+        return jsonify({"success": False, "error": str(e)}), 500
+
+@app.route('/api/motion_tracker/auto_center', methods=['POST'])
+def motion_tracker_auto_center():
+    """Enable/disable auto-centering on detected motion"""
+    if not motion_tracker:
+        return jsonify({"success": False, "error": "Motion tracker not initialized"}), 503
+    
+    try:
+        data = request.get_json() or {}
+        enabled = data.get('enabled', True)
+        motion_tracker.set_auto_center(enabled)
+        return jsonify({
+            "success": True,
+            "auto_center_enabled": enabled,
+            "message": f"Auto-centering {'enabled' if enabled else 'disabled'}"
+        })
+    except Exception as e:
+        logger.error(f"Error setting auto-center: {e}")
+        return jsonify({"success": False, "error": str(e)}), 500
+
+@app.route('/api/motion_tracker/sensitivity', methods=['POST'])
+def motion_tracker_sensitivity():
+    """Set motion detection sensitivity"""
+    if not motion_tracker:
+        return jsonify({"success": False, "error": "Motion tracker not initialized"}), 503
+    
+    try:
+        data = request.get_json() or {}
+        sensitivity = data.get('sensitivity', 30)
+        motion_tracker.set_sensitivity(sensitivity)
+        return jsonify({
+            "success": True,
+            "sensitivity": sensitivity,
+            "message": f"Sensitivity set to {sensitivity}"
+        })
+    except Exception as e:
+        logger.error(f"Error setting sensitivity: {e}")
+        return jsonify({"success": False, "error": str(e)}), 500
+
+@app.route('/api/motion_tracker/status')
+def motion_tracker_status():
+    """Get server motion tracker status"""
+    if not motion_tracker:
+        return jsonify({
+            "initialized": False,
+            "error": "Motion tracker not initialized"
+        })
+    
+    try:
+        status = motion_tracker.get_status()
+        status['initialized'] = True
+        return jsonify(status)
+    except Exception as e:
+        logger.error(f"Error getting motion tracker status: {e}")
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/api/motion_tracker/regions')
+def motion_tracker_regions():
+    """Get current detected motion regions"""
+    if not motion_tracker:
+        return jsonify({"regions": [], "error": "Motion tracker not initialized"})
+    
+    try:
+        regions = motion_tracker.get_motion_regions()
+        return jsonify({
+            "regions": regions,
+            "count": len(regions),
+            "timestamp": datetime.now().isoformat()
+        })
+    except Exception as e:
+        logger.error(f"Error getting motion regions: {e}")
+        return jsonify({"regions": [], "error": str(e)}), 500
+
+# ============================================================================
+# Gallery API Routes
+# ============================================================================
+
+@app.route('/api/gallery/images')
+def api_gallery_images():
+    """Get list of all images in the detections directory"""
+    try:
+        gallery_path = Config.STORAGE['save_path']
+        
+        # Create directory if it doesn't exist
+        os.makedirs(gallery_path, exist_ok=True)
+        
+        images = []
+        
+        # Get all image files
+        for filename in os.listdir(gallery_path):
+            if filename.lower().endswith(('.jpg', '.jpeg', '.png', '.gif')):
+                filepath = os.path.join(gallery_path, filename)
+                try:
+                    stat = os.stat(filepath)
+                    images.append({
+                        'name': filename,
+                        'url': f'/detections/{filename}',
+                        'size': stat.st_size,
+                        'date': datetime.fromtimestamp(stat.st_mtime).isoformat()
+                    })
+                except Exception as e:
+                    logger.error(f"Error processing gallery image {filename}: {e}")
+        
+        # Sort by date (newest first)
+        images.sort(key=lambda x: x['date'], reverse=True)
+        
+        return jsonify({
+            'success': True,
+            'images': images,
+            'count': len(images)
+        })
+        
+    except Exception as e:
+        logger.error(f"Gallery images error: {e}")
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+@app.route('/api/gallery/delete', methods=['POST'])
+def api_gallery_delete():
+    """Delete a specific image from the gallery"""
+    try:
+        data = request.json
+        filename = data.get('filename')
+        
+        if not filename:
+            return jsonify({
+                'success': False,
+                'error': 'No filename provided'
+            }), 400
+        
+        # Security check - prevent directory traversal
+        if '..' in filename or '/' in filename or '\\' in filename:
+            return jsonify({
+                'success': False,
+                'error': 'Invalid filename'
+            }), 400
+        
+        gallery_path = Config.STORAGE['save_path']
+        filepath = os.path.join(gallery_path, filename)
+        
+        # Check if file exists
+        if not os.path.exists(filepath):
+            return jsonify({
+                'success': False,
+                'error': 'File not found'
+            }), 404
+        
+        # Delete the file
+        os.remove(filepath)
+        logger.info(f"Deleted gallery image: {filename}")
+        
+        return jsonify({
+            'success': True,
+            'message': f'Deleted {filename}'
+        })
+        
+    except Exception as e:
+        logger.error(f"Gallery delete error: {e}")
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+@app.route('/api/gallery/clear', methods=['POST'])
+def api_gallery_clear():
+    """Clear all images from the gallery"""
+    try:
+        gallery_path = Config.STORAGE['save_path']
+        
+        if not os.path.exists(gallery_path):
+            return jsonify({
+                'success': True,
+                'message': 'Gallery already empty'
+            })
+        
+        count = 0
+        for filename in os.listdir(gallery_path):
+            if filename.lower().endswith(('.jpg', '.jpeg', '.png', '.gif')):
+                try:
+                    os.remove(os.path.join(gallery_path, filename))
+                    count += 1
+                except Exception as e:
+                    logger.error(f"Error deleting {filename}: {e}")
+        
+        logger.info(f"Cleared gallery: deleted {count} images")
+        
+        return jsonify({
+            'success': True,
+            'message': f'Deleted {count} images'
+        })
+        
+    except Exception as e:
+        logger.error(f"Gallery clear error: {e}")
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+@app.route('/api/gallery/upload', methods=['POST'])
+def api_gallery_upload():
+    """Upload images to the gallery"""
+    try:
+        if 'files' not in request.files:
+            return jsonify({
+                'success': False,
+                'error': 'No files provided'
+            }), 400
+        
+        gallery_path = Config.STORAGE['save_path']
+        os.makedirs(gallery_path, exist_ok=True)
+        
+        uploaded = 0
+        files = request.files.getlist('files')
+        
+        for file in files:
+            if file and file.filename:
+                # Security check - sanitize filename
+                filename = os.path.basename(file.filename)
+                if '..' in filename:
+                    continue
+                
+                # Add timestamp to filename to avoid collisions
+                base, ext = os.path.splitext(filename)
+                timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+                filename = f"{base}_{timestamp}{ext}"
+                
+                filepath = os.path.join(gallery_path, filename)
+                file.save(filepath)
+                uploaded += 1
+                logger.info(f"Uploaded gallery image: {filename}")
+        
+        return jsonify({
+            'success': True,
+            'uploaded': uploaded,
+            'message': f'Uploaded {uploaded} image(s)'
+        })
+        
+    except Exception as e:
+        logger.error(f"Gallery upload error: {e}")
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+@app.route('/api/gallery/export')
+def api_gallery_export():
+    """Export all gallery images as a zip file"""
+    try:
+        import zipfile
+        from io import BytesIO
+        
+        gallery_path = Config.STORAGE['save_path']
+        
+        # Create zip file in memory
+        zip_buffer = BytesIO()
+        
+        with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zip_file:
+            for filename in os.listdir(gallery_path):
+                if filename.lower().endswith(('.jpg', '.jpeg', '.png', '.gif')):
+                    filepath = os.path.join(gallery_path, filename)
+                    zip_file.write(filepath, filename)
+        
+        zip_buffer.seek(0)
+        
+        return send_file(
+            zip_buffer,
+            mimetype='application/zip',
+            as_attachment=True,
+            download_name=f'gallery_export_{datetime.now().strftime("%Y%m%d_%H%M%S")}.zip'
+        )
+        
+    except Exception as e:
+        logger.error(f"Gallery export error: {e}")
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+@app.route('/detections/<filename>')
+def serve_gallery_image(filename):
+    """Serve gallery images from the detections directory"""
+    try:
+        # Security check - prevent directory traversal
+        if '..' in filename or '/' in filename or '\\' in filename:
+            return "Invalid filename", 400
+        
+        gallery_path = Config.STORAGE['save_path']
+        filepath = os.path.join(gallery_path, filename)
+        
+        if os.path.exists(filepath):
+            return send_file(filepath, mimetype='image/jpeg')
+        else:
+            return "File not found", 404
+            
+    except Exception as e:
+        logger.error(f"Error serving gallery image {filename}: {e}")
+        return "Error serving image", 500
 
 # Error handlers
 @app.errorhandler(404)
@@ -557,6 +921,9 @@ if __name__ == '__main__':
         
         # Initialize pan-tilt controller
         initialize_pan_tilt()
+        
+        # Initialize motion tracker
+        initialize_motion_tracker()
         
         # Start resource cleanup thread
         resource_cleanup_thread = threading.Thread(target=cleanup_resources, daemon=True)

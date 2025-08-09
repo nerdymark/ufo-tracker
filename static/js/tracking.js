@@ -1,9 +1,11 @@
 // Auto-tracking and motion detection functionality
 
 let trackingStatusInterval = null;
+let userManuallyDisabledTracking = false; // Track if user manually disabled tracking
 
 // Auto-tracking controls
 function startAutoTracker() {
+    userManuallyDisabledTracking = false; // User is enabling tracking
     fetch('/api/auto_tracker/start', {
         method: 'POST',
         headers: {
@@ -30,6 +32,7 @@ function startAutoTracker() {
 }
 
 function stopAutoTracker() {
+    userManuallyDisabledTracking = true; // User is manually disabling tracking
     fetch('/api/auto_tracker/stop', {
         method: 'POST',
         headers: {
@@ -144,8 +147,11 @@ function updateTrackingDisplay(data) {
         }
     });
     
-    // Update tracking button state
-    updateTrackerButton(data.active || false);
+    // Update tracking button state - but respect user's manual actions
+    // If user manually disabled tracking, don't override their choice
+    if (!userManuallyDisabledTracking) {
+        updateTrackerButton(data.active || false);
+    }
 }
 
 function formatUptime(seconds) {
@@ -366,6 +372,12 @@ function initializeAutoTrackingFeeds() {
     }
     
     showMessage('Auto-tracking camera feeds initialized', 'info');
+    
+    // Initialize tracking status on page load
+    refreshTrackingStatus();
+    
+    // Also refresh server tracking status
+    refreshServerTrackingStatus();
 }
 
 // Update motion sensitivity
@@ -388,4 +400,113 @@ function updateSensitivity() {
         console.log('Motion sensitivity updated to:', value);
         showMessage(`Motion sensitivity set to ${value}`, 'info');
     }
+}
+
+// Server-side motion tracking functions
+function startServerMotionTracking() {
+    fetch('/api/motion_tracker/start', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showMessage('Server motion tracking started', 'success');
+            updateServerTrackingUI(true);
+        } else {
+            showMessage(`Failed to start server tracking: ${data.error}`, 'error');
+        }
+    })
+    .catch(error => {
+        showMessage(`Error starting server tracking: ${error}`, 'error');
+    });
+}
+
+function stopServerMotionTracking() {
+    fetch('/api/motion_tracker/stop', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showMessage('Server motion tracking stopped', 'success');
+            updateServerTrackingUI(false);
+        } else {
+            showMessage(`Failed to stop server tracking: ${data.error}`, 'error');
+        }
+    })
+    .catch(error => {
+        showMessage(`Error stopping server tracking: ${error}`, 'error');
+    });
+}
+
+function toggleServerAutoCenter() {
+    const checkbox = document.getElementById('server-auto-center');
+    if (!checkbox) return;
+    
+    fetch('/api/motion_tracker/auto_center', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ enabled: checkbox.checked })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showMessage(`Auto-centering ${data.auto_center_enabled ? 'enabled' : 'disabled'}`, 'info');
+        } else {
+            showMessage(`Failed to set auto-center: ${data.error}`, 'error');
+            checkbox.checked = !checkbox.checked; // Revert
+        }
+    })
+    .catch(error => {
+        showMessage(`Error setting auto-center: ${error}`, 'error');
+        checkbox.checked = !checkbox.checked; // Revert
+    });
+}
+
+function updateServerTrackingUI(isActive) {
+    const startBtn = document.getElementById('server-tracking-start');
+    const stopBtn = document.getElementById('server-tracking-stop');
+    const statusElement = document.getElementById('server-tracking-status');
+    
+    if (startBtn) startBtn.disabled = isActive;
+    if (stopBtn) stopBtn.disabled = !isActive;
+    
+    if (statusElement) {
+        statusElement.textContent = isActive ? 'Active' : 'Stopped';
+        statusElement.style.color = isActive ? '#4CAF50' : '#666';
+    }
+}
+
+function refreshServerTrackingStatus() {
+    fetch('/api/motion_tracker/status')
+    .then(response => response.json())
+    .then(data => {
+        if (data.initialized) {
+            updateServerTrackingUI(data.tracking_enabled);
+            
+            // Update auto-center checkbox
+            const autoCenterCheckbox = document.getElementById('server-auto-center');
+            if (autoCenterCheckbox) {
+                autoCenterCheckbox.checked = data.auto_center_enabled;
+            }
+            
+            // Update motion status
+            const motionStatusElement = document.getElementById('server-motion-detected');
+            if (motionStatusElement) {
+                motionStatusElement.textContent = data.motion_detected ? 'Yes' : 'No';
+                motionStatusElement.style.color = data.motion_detected ? '#4CAF50' : '#666';
+            }
+            
+            // Update regions count
+            const regionsElement = document.getElementById('server-motion-regions');
+            if (regionsElement) {
+                regionsElement.textContent = data.motion_regions || 0;
+            }
+        }
+    })
+    .catch(error => {
+        console.error('Error refreshing server tracking status:', error);
+    });
 }

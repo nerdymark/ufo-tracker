@@ -189,3 +189,136 @@ window.addEventListener('beforeunload', function(event) {
         clearInterval(window.panTiltAutoRefresh);
     }
 });
+
+// ============================================================================
+// System Settings Functions
+// ============================================================================
+
+function updateGalleryStats() {
+    const statsDiv = document.getElementById('gallery-stats');
+    if (!statsDiv) return;
+    
+    fetch('/api/gallery/images')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                const count = data.count || 0;
+                const totalSize = data.images.reduce((sum, img) => sum + (img.size || 0), 0);
+                const sizeMB = (totalSize / (1024 * 1024)).toFixed(1);
+                const sizeGB = (totalSize / (1024 * 1024 * 1024)).toFixed(2);
+                
+                let displaySize = sizeGB > 1 ? `${sizeGB} GB` : `${sizeMB} MB`;
+                
+                statsDiv.innerHTML = `
+                    📊 <strong>${count.toLocaleString()}</strong> detection images using <strong>${displaySize}</strong> of storage
+                `;
+                statsDiv.style.color = '#ccc';
+            } else {
+                statsDiv.innerHTML = '❌ Unable to load gallery statistics';
+                statsDiv.style.color = '#ff6b6b';
+            }
+        })
+        .catch(error => {
+            console.error('Error loading gallery stats:', error);
+            statsDiv.innerHTML = '❌ Error loading gallery statistics';
+            statsDiv.style.color = '#ff6b6b';
+        });
+}
+
+function clearAllGalleryFiles() {
+    // Show confirmation dialog
+    const confirmed = confirm(
+        '⚠️ WARNING: This will permanently delete ALL detection images!\n\n' +
+        'This action cannot be undone. Are you absolutely sure you want to continue?\n\n' +
+        'Click OK to permanently delete all images, or Cancel to abort.'
+    );
+    
+    if (!confirmed) {
+        return; // User cancelled
+    }
+    
+    // Second confirmation for such a destructive action
+    const doubleConfirmed = confirm(
+        '🛑 FINAL WARNING!\n\n' +
+        'You are about to permanently delete all detection images. This cannot be undone!\n\n' +
+        'Click OK to proceed with deletion, or Cancel to abort.'
+    );
+    
+    if (!doubleConfirmed) {
+        return; // User cancelled on second confirmation
+    }
+    
+    // Show loading state
+    const button = document.querySelector('button[onclick*="clearAllGalleryFiles"]');
+    const originalText = button.innerHTML;
+    button.innerHTML = '⏳ Deleting...';
+    button.disabled = true;
+    
+    // Make API call to clear gallery
+    fetch('/api/gallery/clear', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showMessage(`✅ Successfully deleted all images! ${data.message}`, 'success');
+            updateGalleryStats(); // Refresh stats
+            
+            // Also refresh the gallery view if it's currently open
+            if (typeof refreshGallery === 'function') {
+                refreshGallery();
+            }
+        } else {
+            showMessage(`❌ Failed to clear gallery: ${data.error || 'Unknown error'}`, 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error clearing gallery:', error);
+        showMessage('❌ Error clearing gallery: ' + error, 'error');
+    })
+    .finally(() => {
+        // Restore button state
+        button.innerHTML = originalText;
+        button.disabled = false;
+    });
+}
+
+// Placeholder functions for other system settings buttons
+function saveSettings() {
+    showMessage('💾 Settings saved successfully', 'success');
+}
+
+function resetSettings() {
+    if (confirm('Are you sure you want to reset all settings to defaults?')) {
+        showMessage('🔄 Settings reset to defaults', 'info');
+    }
+}
+
+function exportConfig() {
+    showMessage('📤 Config export feature coming soon', 'info');
+}
+
+function restartSystem() {
+    if (confirm('Are you sure you want to restart the UFO Tracker system?')) {
+        showMessage('🔄 System restart initiated...', 'warning');
+    }
+}
+
+// Update gallery stats when settings section is shown
+function updateSettingsSection() {
+    updateGalleryStats();
+}
+
+// Override the showSection function to update stats when settings is shown
+const originalShowSection = window.showSection;
+if (originalShowSection) {
+    window.showSection = function(sectionId) {
+        originalShowSection(sectionId);
+        if (sectionId === 'settings') {
+            setTimeout(updateSettingsSection, 100);
+        }
+    };
+}

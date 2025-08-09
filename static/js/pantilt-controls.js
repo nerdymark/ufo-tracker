@@ -146,13 +146,13 @@ function toggleMotors() {
     console.log('toggleMotors called, currently enabled:', isCurrentlyEnabled);
     console.log('Button element:', button);
     
-    fetch('/api/pan_tilt/motors', {
+    fetch('/api/pan_tilt', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-            enabled: !isCurrentlyEnabled
+            action: isCurrentlyEnabled ? 'disable_motors' : 'enable_motors'
         })
     })
     .then(response => response.json())
@@ -253,6 +253,38 @@ function goHome() {
     movePanTilt('go_home');
 }
 
+// Reset current position as home (for calibration)
+function resetHome() {
+    if (confirm('Reset the current position as home (0°, 0°)? This is used for calibration when the mechanism is manually leveled.')) {
+        fetch('/api/pan_tilt', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                action: 'reset_home'
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            console.log('Reset home response:', data);
+            if (data.success) {
+                showMessage(data.message || 'Home position reset to current location', 'success');
+                // Update display to show 0°, 0°
+                updatePanTiltPosition(0, 0);
+                // Refresh status to confirm
+                setTimeout(refreshPanTiltStatus, 500);
+            } else {
+                showMessage('Reset home failed: ' + (data.error || 'Unknown error'), 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Reset home error:', error);
+            showMessage('Error resetting home: ' + error, 'error');
+        });
+    }
+}
+
 // Directional movement functions
 function panLeft() {
     movePanTilt('move_relative', { pan_steps: -1 });
@@ -273,7 +305,7 @@ function tiltDown() {
 // Initialize pan/tilt status on page load
 document.addEventListener('DOMContentLoaded', function() {
     // Delay initial status check to allow other systems to initialize
-    // setTimeout(refreshPanTiltStatus, 2000); // DISABLED - causing auto-enable
+    setTimeout(refreshPanTiltStatus, 2000);
 });
 
 // Cleanup pan/tilt auto refresh

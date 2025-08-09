@@ -29,6 +29,16 @@ A dual-camera system for detecting and tracking unidentified flying objects (UFO
   - 5V 5A for Raspberry Pi 5
   - **12V power supply for stepper motors** (separate from Pi power)
 
+## 3D Printed Components
+
+STL files for 3D printing are located in the `stl/` folder:
+
+- **Pan/Tilt Gimbal**: Based on the excellent design from [Thingiverse Thing #4316563](https://www.thingiverse.com/thing:4316563)
+- **Tilt U-Mount.stl**: A remixed version from the original project, customized for this UFO tracker system
+- **UFO Tracker Case.stl**: Custom enclosure for the Raspberry Pi and electronics
+
+All STL files are ready for 3D printing and have been tested with the hardware components listed above.
+
 ## Software Requirements
 
 - Raspberry Pi OS (64-bit recommended for Pi 5)

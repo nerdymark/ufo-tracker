@@ -7,7 +7,7 @@ function refreshCamera(camera) {
     
     if (img) {
         const timestamp = Date.now();
-        const baseUrl = `http://${serverIP}:5001/${camera}_frame`;
+        const baseUrl = `http://${serverIP}:5002/${camera}_frame`;
         const newSrc = `${baseUrl}?t=${timestamp}`;
         
         // Create a new image to test loading

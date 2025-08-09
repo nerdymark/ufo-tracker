@@ -93,6 +93,9 @@ function setViewMode(mode) {
         if (typeof refreshTrackingStatus === 'function') {
             refreshTrackingStatus();
         }
+        if (typeof refreshServerTrackingStatus === 'function') {
+            refreshServerTrackingStatus();
+        }
     } else if (mode === 'gallery') {
         if (typeof refreshGallery === 'function') {
             refreshGallery();

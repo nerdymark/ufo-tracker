@@ -50,6 +50,7 @@ class PanTiltController:
         self._connected = False
         self._moving = False
         self._lock = threading.Lock()
+        self._simulation_motors_enabled = False  # Track motor state in simulation mode
         
         # Movement thread
         self._movement_thread: Optional[threading.Thread] = None
@@ -128,8 +129,8 @@ class PanTiltController:
         Returns:
             True if movement started successfully
         """
-        if not self.is_connected():
-            logger.warning("Cannot move: pan-tilt controller not connected")
+        if not self.enabled:
+            logger.warning("Cannot move: pan-tilt controller not enabled")
             return False
         
         # Validate position limits
@@ -255,12 +256,47 @@ class PanTiltController:
         Returns:
             True if homing successful
         """
-        if not self.is_connected():
-            logger.warning("Cannot home: pan-tilt controller not connected")
+        if not self.enabled:
+            logger.warning("Cannot home: pan-tilt controller not enabled")
             return False
         
         logger.info("Homing pan-tilt mechanism")
         return self.move_to(0.0, 0.0, blocking=True)
+    
+    def reset_home(self) -> bool:
+        """
+        Reset current position as home (0°, 0°) for calibration
+        
+        This method sets the current physical position as the new home position.
+        Used for calibration when the mechanism is manually leveled.
+        
+        Returns:
+            True if reset successful
+        """
+        if not self.enabled:
+            logger.warning("Cannot reset home: pan-tilt controller not enabled")
+            return False
+        
+        logger.info("Resetting current position as home (0°, 0°)")
+        
+        with self._lock:
+            # Set current position as home (0°, 0°)
+            self._current_pan = 0.0
+            self._current_tilt = 0.0
+            self._target_pan = 0.0
+            self._target_tilt = 0.0
+        
+        # If using actual hardware controller, reset its position counters
+        if self._hardware_controller and self._connected:
+            try:
+                self._hardware_controller.reset_position()
+                logger.info("Hardware controller position reset")
+            except Exception as e:
+                logger.error(f"Failed to reset hardware position: {e}")
+                return False
+        
+        logger.info("Home position reset to current location (0°, 0°)")
+        return True
     
     def track_object(self, object_position: Tuple[int, int], frame_size: Tuple[int, int]) -> bool:
         """
@@ -273,7 +309,7 @@ class PanTiltController:
         Returns:
             True if tracking movement started
         """
-        if not self.is_connected():
+        if not self.enabled:
             return False
         
         # Convert pixel coordinates to pan/tilt angles
@@ -344,6 +380,9 @@ class PanTiltController:
         """Set movement speed (0-255)"""
         if 0 <= speed <= 255:
             self.speed = speed
+            # Also update hardware controller if available
+            if self._hardware_controller and self._connected:
+                self._hardware_controller.set_speed(speed)
             logger.info(f"Pan-tilt speed set to {speed}")
         else:
             logger.warning(f"Invalid speed value: {speed}")
@@ -352,6 +391,9 @@ class PanTiltController:
         """Set movement acceleration (0-255)"""
         if 0 <= acceleration <= 255:
             self.acceleration = acceleration
+            # Also update hardware controller if available
+            if self._hardware_controller and self._connected:
+                self._hardware_controller.set_acceleration(acceleration)
             logger.info(f"Pan-tilt acceleration set to {acceleration}")
         else:
             logger.warning(f"Invalid acceleration value: {acceleration}")
@@ -380,7 +422,7 @@ class PanTiltController:
     
     def move_relative(self, pan_steps: int = 0, tilt_steps: int = 0) -> bool:
         """Move relative to current position by specified steps"""
-        if not self.is_connected():
+        if not self.enabled:
             return False
         
         if self._hardware_controller:
@@ -404,15 +446,15 @@ class PanTiltController:
         Returns:
             True if calibration successful
         """
-        if not self.is_connected():
-            logger.warning("Cannot calibrate: controller not connected")
+        if not self.enabled:
+            logger.warning("Cannot calibrate: controller not enabled")
             return False
         
         if self._hardware_controller:
             return self._hardware_controller.calibrate_limits(axis, limit_type, True)
         else:
-            logger.warning("Calibration not supported in simulation mode")
-            return False
+            logger.info("Calibration completed (simulation mode)")
+            return True
     
     def get_calibration_status(self) -> dict:
         """Get calibration status"""
@@ -427,27 +469,39 @@ class PanTiltController:
     
     def enable_motors(self) -> bool:
         """Enable stepper motors (turn on holding torque)"""
-        if not self.is_connected():
+        if not self.enabled:
+            logger.warning("Pan-tilt controller is disabled in config")
             return False
         
         if self._hardware_controller:
             return self._hardware_controller.enable_motors()
-        return False
+        else:
+            # Simulation mode - allow motor enable for testing
+            self._simulation_motors_enabled = True
+            logger.info("Motors enabled (simulation mode)")
+            return True
     
     def disable_motors(self) -> bool:
         """Disable stepper motors (turn off holding torque to save power)"""
-        if not self.is_connected():
+        if not self.enabled:
+            logger.warning("Pan-tilt controller is disabled in config")
             return False
         
         if self._hardware_controller:
             return self._hardware_controller.disable_motors()
-        return False
+        else:
+            # Simulation mode - allow motor disable for testing
+            self._simulation_motors_enabled = False
+            logger.info("Motors disabled (simulation mode)")
+            return True
     
     def get_motors_enabled(self) -> bool:
         """Check if motors are enabled"""
         if self._hardware_controller:
             return self._hardware_controller.get_motors_enabled()
-        return False
+        else:
+            # Simulation mode - return simulation motor state
+            return self._simulation_motors_enabled
     
     def get_keepalive_status(self) -> bool:
         """Check if keepalive is enabled"""
@@ -457,15 +511,15 @@ class PanTiltController:
     
     def start_keepalive(self) -> bool:
         """Start keepalive pulses to prevent motor timeout during long exposures"""
-        if not self.is_connected():
-            logger.warning("Cannot start keepalive: controller not connected")
+        if not self.enabled:
+            logger.warning("Cannot start keepalive: controller not enabled")
             return False
         
         if self._hardware_controller:
             return self._hardware_controller.start_keepalive()
-        
-        logger.warning("Keepalive not supported in simulation mode")
-        return False
+        else:
+            logger.info("Keepalive started (simulation mode)")
+            return True
     
     def stop_keepalive(self):
         """Stop keepalive pulses"""

@@ -1117,6 +1117,11 @@
                     <span class="status-indicator-small" id="storage-indicator-bar"></span>
                 </div>
                 <div class="status-item-compact">
+                    <button class="btn-small" onclick="toggleStatusBarMusic()" id="status-music-toggle">🎵</button>
+                    <button class="btn-small" onclick="nextStatusBarTrack()" id="status-music-next">⏭️</button>
+                    <button class="btn-small" onclick="toggleStatusBarShuffle()" id="status-music-shuffle">🔀</button>
+                </div>
+                <div class="status-item-compact">
                     <button class="btn-small" onclick="refreshSystemStatus()">🔄</button>
                 </div>
             </div>
@@ -1153,7 +1158,7 @@
                     <div class="camera-panel">
                         <h3>📡 IR Camera (Live Stream)</h3>
                         <div class="camera-preview">
-                            <img id="ir-live" data-src="http://10.0.1.164:5001/ir_feed" alt="IR Camera Live" onclick="toggleFullscreen('ir')" style="cursor: pointer;" src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzIwIiBoZWlnaHQ9IjI0MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMzIwIiBoZWlnaHQ9IjI0MCIgZmlsbD0iIzMzMyIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBkb21pbmFudC1iYXNlbGluZT0ibWlkZGxlIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmaWxsPSJ3aGl0ZSI+SVIgQ2FtZXJhIExvYWRpbmcuLi48L3RleHQ+PC9zdmc+">
+                            <img id="ir-live" data-src="http://10.0.1.164:5001/ir_feed" alt="IR Camera Live" onclick="toggleFullscreen('ir')" style="cursor: pointer;" src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzIwIiBoZWlnaHQ9IjI0MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KICA8ZGVmcz4KICAgIDxsaW5lYXJHcmFkaWVudCBpZD0iYmciIHgxPSIwJSIgeTE9IjAlIiB4Mj0iMTAwJSIgeTI9IjEwMCUiPgogICAgICA8c3RvcCBvZmZzZXQ9IjAlIiBzdHlsZT0ic3RvcC1jb2xvcjojMWExYTJlIi8+CiAgICAgIDxzdG9wIG9mZnNldD0iMTAwJSIgc3R5bGU9InN0b3AtY29sb3I6IzE2MjEzZSIvPgogICAgPC9saW5lYXJHcmFkaWVudD4KICAgIDxsaW5lYXJHcmFkaWVudCBpZD0idGV4dEdyYWQiIHgxPSIwJSIgeTE9IjAlIiB4Mj0iMTAwJSIgeTI9IjAlIj4KICAgICAgPHN0b3Agb2Zmc2V0PSIwJSIgc3R5bGU9InN0b3AtY29sb3I6IzBmZiIvPgogICAgICA8c3RvcCBvZmZzZXQ9IjUwJSIgc3R5bGU9InN0b3AtY29sb3I6IzBhZiIvPgogICAgICA8c3RvcCBvZmZzZXQ9IjEwMCUiIHN0eWxlPSJzdG9wLWNvbG9yOiMwNWYiLz4KICAgIDwvbGluZWFyR3JhZGllbnQ+CiAgPC9kZWZzPgogIDxyZWN0IHdpZHRoPSIzMjAiIGhlaWdodD0iMjQwIiBmaWxsPSJ1cmwoI2JnKSIgc3Ryb2tlPSIjMGZmIiBzdHJva2Utd2lkdGg9IjEiLz4KICA8dGV4dCB4PSI1MCUiIHk9IjQ1JSIgZG9taW5hbnQtYmFzZWxpbmU9Im1pZGRsZSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgCiAgICAgICAgZmlsbD0idXJsKCN0ZXh0R3JhZCkiIGZvbnQtZmFtaWx5PSJRdWlja3NhbmQsIG1vbm9zcGFjZSIgZm9udC1zaXplPSIxNiIgZm9udC13ZWlnaHQ9IjMwMCI+CiAgICBJUiBDQU1FUkEKICA8L3RleHQ+CiAgPHRleHQgeD0iNTAlIiB5PSI2MCUiIGRvbWluYW50LWJhc2VsaW5lPSJtaWRkbGUiIHRleHQtYW5jaG9yPSJtaWRkbGUiIAogICAgICAgIGZpbGw9IiMwZmYiIGZvbnQtZmFtaWx5PSJRdWlja3NhbmQsIG1vbm9zcGFjZSIgZm9udC1zaXplPSIxMiIgZm9udC13ZWlnaHQ9IjMwMCI+CiAgICBJTklUSUFMSVpJTkcuLi4KICA8L3RleHQ+CiAgPGNpcmNsZSBjeD0iMTYwIiBjeT0iMTgwIiByPSIyIiBmaWxsPSIjMGZmIiBvcGFjaXR5PSIwLjgiPgogICAgPGFuaW1hdGUgYXR0cmlidXRlTmFtZT0ib3BhY2l0eSIgdmFsdWVzPSIwLjg7MC4yOzAuOCIgZHVyPSIxLjVzIiByZXBlYXRDb3VudD0iaW5kZWZpbml0ZSIvPgogIDwvY2lyY2xlPgo8L3N2Zz4=">
                             <div class="camera-overlay">IR Live</div>
                         </div>
                         <div class="btn-group">
@@ -1166,7 +1171,7 @@
                     <div class="camera-panel">
                         <h3>📷 HQ Camera (Live Stream)</h3>
                         <div class="camera-preview">
-                            <img id="hq-live" data-src="http://10.0.1.164:5001/hq_feed" alt="HQ Camera Live" onclick="toggleFullscreen('hq')" style="cursor: pointer;" src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzIwIiBoZWlnaHQ9IjI0MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMzIwIiBoZWlnaHQ9IjI0MCIgZmlsbD0iIzMzMyIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBkb21pbmFudC1iYXNlbGluZT0ibWlkZGxlIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmaWxsPSJ3aGl0ZSI+SFEgQ2FtZXJhIExvYWRpbmcuLi48L3RleHQ+PC9zdmc+">
+                            <img id="hq-live" data-src="http://10.0.1.164:5001/hq_feed" alt="HQ Camera Live" onclick="toggleFullscreen('hq')" style="cursor: pointer;" src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzIwIiBoZWlnaHQ9IjI0MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KICA8ZGVmcz4KICAgIDxsaW5lYXJHcmFkaWVudCBpZD0iYmciIHgxPSIwJSIgeTE9IjAlIiB4Mj0iMTAwJSIgeTI9IjEwMCUiPgogICAgICA8c3RvcCBvZmZzZXQ9IjAlIiBzdHlsZT0ic3RvcC1jb2xvcjojMmUxYTFhIi8+CiAgICAgIDxzdG9wIG9mZnNldD0iMTAwJSIgc3R5bGU9InN0b3AtY29sb3I6IzNlMTYyMSIvPgogICAgPC9saW5lYXJHcmFkaWVudD4KICAgIDxsaW5lYXJHcmFkaWVudCBpZD0idGV4dEdyYWQiIHgxPSIwJSIgeTE9IjAlIiB4Mj0iMTAwJSIgeTI9IjAlIj4KICAgICAgPHN0b3Agb2Zmc2V0PSIwJSIgc3R5bGU9InN0b3AtY29sb3I6I2ZmMCIvPgogICAgICA8c3RvcCBvZmZzZXQ9IjUwJSIgc3R5bGU9InN0b3AtY29sb3I6I2ZhMCIvPgogICAgICA8c3RvcCBvZmZzZXQ9IjEwMCUiIHN0eWxlPSJzdG9wLWNvbG9yOiNmNTAiLz4KICAgIDwvbGluZWFyR3JhZGllbnQ+CiAgPC9kZWZzPgogIDxyZWN0IHdpZHRoPSIzMjAiIGhlaWdodD0iMjQwIiBmaWxsPSJ1cmwoI2JnKSIgc3Ryb2tlPSIjZmYwIiBzdHJva2Utd2lkdGg9IjEiLz4KICA8dGV4dCB4PSI1MCUiIHk9IjQ1JSIgZG9taW5hbnQtYmFzZWxpbmU9Im1pZGRsZSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgCiAgICAgICAgZmlsbD0idXJsKCN0ZXh0R3JhZCkiIGZvbnQtZmFtaWx5PSJRdWlja3NhbmQsIG1vbm9zcGFjZSIgZm9udC1zaXplPSIxNiIgZm9udC13ZWlnaHQ9IjMwMCI+CiAgICBIUSBDQU1FUkEKICA8L3RleHQ+CiAgPHRleHQgeD0iNTAlIiB5PSI2MCUiIGRvbWluYW50LWJhc2VsaW5lPSJtaWRkbGUiIHRleHQtYW5jaG9yPSJtaWRkbGUiIAogICAgICAgIGZpbGw9IiNmZjAiIGZvbnQtZmFtaWx5PSJRdWlja3NhbmQsIG1vbm9zcGFjZSIgZm9udC1zaXplPSIxMiIgZm9udC13ZWlnaHQ9IjMwMCI+CiAgICBJTklUSUFMSVpJTkcuLi4KICA8L3RleHQ+CiAgPGNpcmNsZSBjeD0iMTYwIiBjeT0iMTgwIiByPSIyIiBmaWxsPSIjZmYwIiBvcGFjaXR5PSIwLjgiPgogICAgPGFuaW1hdGUgYXR0cmlidXRlTmFtZT0ib3BhY2l0eSIgdmFsdWVzPSIwLjg7MC4yOzAuOCIgZHVyPSIxLjVzIiByZXBlYXRDb3VudD0iaW5kZWZpbml0ZSIvPgogIDwvY2lyY2xlPgo8L3N2Zz4=">
                             <div class="camera-overlay">HQ Live</div>
                         </div>
                         <div class="btn-group">
@@ -1178,6 +1183,41 @@
                 
                 <!-- Auto Tracking Mode -->
                 <div id="autotrack-cameras" style="display: none;">
+                    <!-- Server-Side Motion Tracking -->
+                    <div class="tracking-status-panel">
+                        <h3>🤖 Server-Side Motion Tracking with Pan-Tilt</h3>
+                        <div class="tracking-controls">
+                            <div class="btn-group">
+                                <button class="btn btn-success" id="server-tracking-start" onclick="startServerMotionTracking()">🎯 Start Tracking</button>
+                                <button class="btn btn-danger" id="server-tracking-stop" onclick="stopServerMotionTracking()" disabled>⏹️ Stop Tracking</button>
+                                <button class="btn btn-info" onclick="refreshServerTrackingStatus()">🔄 Refresh Status</button>
+                            </div>
+                        </div>
+                        <div class="tracking-status">
+                            <div class="status-grid">
+                                <div class="status-item">
+                                    <span class="status-label">Server Tracking:</span>
+                                    <span id="server-tracking-status" class="status-value">Stopped</span>
+                                </div>
+                                <div class="status-item">
+                                    <span class="status-label">Motion Detected:</span>
+                                    <span id="server-motion-detected" class="status-value">No</span>
+                                </div>
+                                <div class="status-item">
+                                    <span class="status-label">Motion Regions:</span>
+                                    <span id="server-motion-regions" class="status-value">0</span>
+                                </div>
+                                <div class="status-item">
+                                    <span class="status-label">Auto-Center:</span>
+                                    <span>
+                                        <input type="checkbox" id="server-auto-center" onchange="toggleServerAutoCenter()">
+                                        <label for="server-auto-center" style="margin-left: 5px;">Enable</label>
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
                     <div class="tracking-status-panel">
                         <h3>🎯 Client-Side Auto Tracking System</h3>
                         <div class="tracking-controls">
@@ -1360,7 +1400,7 @@
                             <h3>📚 IR Camera Stacking <span class="live-indicator">● LIVE</span></h3>
                             <div class="camera-preview">
                                 <img id="stacked-ir-preview" alt="Stacked IR Image" 
-                                     src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTI4MCIgaGVpZ2h0PSI3MjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjEyODAiIGhlaWdodD0iNzIwIiBmaWxsPSIjMDAwIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGRvbWluYW50LWJhc2VsaW5lPSJtaWRkbGUiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZpbGw9IndoaXRlIj5TdGFja2luZyBJUi4uLjwvdGV4dD48L3N2Zz4="
+                                     src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTI4MCIgaGVpZ2h0PSI3MjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CiAgPGRlZnM+CiAgICA8bGluZWFyR3JhZGllbnQgaWQ9ImJnIiB4MT0iMCUiIHkxPSIwJSIgeDI9IjEwMCUiIHkyPSIxMDAlIj4KICAgICAgPHN0b3Agb2Zmc2V0PSIwJSIgc3R5bGU9InN0b3AtY29sb3I6IzBhMGExYSIvPgogICAgICA8c3RvcCBvZmZzZXQ9IjEwMCUiIHN0eWxlPSJzdG9wLWNvbG9yOiMxYTFhMmUiLz4KICAgIDwvbGluZWFyR3JhZGllbnQ+CiAgICA8bGluZWFyR3JhZGllbnQgaWQ9InRleHRHcmFkIiB4MT0iMCUiIHkxPSIwJSIgeDI9IjEwMCUiIHkyPSIwJSI+CiAgICAgIDxzdG9wIG9mZnNldD0iMCUiIHN0eWxlPSJzdG9wLWNvbG9yOiMwZmYiLz4KICAgICAgPHN0b3Agb2Zmc2V0PSI1MCUiIHN0eWxlPSJzdG9wLWNvbG9yOiMwYWYiLz4KICAgICAgPHN0b3Agb2Zmc2V0PSIxMDAlIiBzdHlsZT0ic3RvcC1jb2xvcjojMDVmIi8+CiAgICA8L2xpbmVhckdyYWRpZW50PgogIDwvZGVmcz4KICA8cmVjdCB3aWR0aD0iMTI4MCIgaGVpZ2h0PSI3MjAiIGZpbGw9InVybCgjYmcpIiBzdHJva2U9IiMwZmYiIHN0cm9rZS13aWR0aD0iMiIvPgogIDx0ZXh0IHg9IjUwJSIgeT0iNDAlIiBkb21pbmFudC1iYXNlbGluZT0ibWlkZGxlIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiAKICAgICAgICBmaWxsPSJ1cmwoI3RleHRHcmFkKSIgZm9udC1mYW1pbHk9IlF1aWNrc2FuZCwgbW9ub3NwYWNlIiBmb250LXNpemU9IjM2IiBmb250LXdlaWdodD0iMzAwIj4KICAgIElSIFNUQUNLSU5HCiAgPC90ZXh0PgogIDx0ZXh0IHg9IjUwJSIgeT0iNTUlIiBkb21pbmFudC1iYXNlbGluZT0ibWlkZGxlIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiAKICAgICAgICBmaWxsPSIjMGZmIiBmb250LWZhbWlseT0iUXVpY2tzYW5kLCBtb25vc3BhY2UiIGZvbnQtc2l6ZT0iMTgiIGZvbnQtd2VpZ2h0PSIzMDAiPgogICAgUFJPQ0VTU0lORyBJTUFHRVMuLi4KICA8L3RleHQ+CiAgPGcgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoNjQwLCA0NTApIj4KICAgIDxjaXJjbGUgY3g9Ii0yMCIgY3k9IjAiIHI9IjQiIGZpbGw9IiMwZmYiIG9wYWNpdHk9IjAuOCI+CiAgICAgIDxhbmltYXRlIGF0dHJpYnV0ZU5hbWU9Im9wYWNpdHkiIHZhbHVlcz0iMC44OzAuMjswLjgiIGR1cj0iMS4ycyIgcmVwZWF0Q291bnQ9ImluZGVmaW5pdGUiLz4KICAgIDwvY2lyY2xlPgogICAgPGNpcmNsZSBjeD0iMCIgY3k9IjAiIHI9IjQiIGZpbGw9IiMwYWYiIG9wYWNpdHk9IjAuNiI+CiAgICAgIDxhbmltYXRlIGF0dHJpYnV0ZU5hbWU9Im9wYWNpdHkiIHZhbHVlcz0iMC42OzAuMjswLjYiIGR1cj0iMS4ycyIgYmVnaW49IjAuNHMiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+CiAgICA8L2NpcmNsZT4KICAgIDxjaXJjbGUgY3g9IjIwIiBjeT0iMCIgcj0iNCIgZmlsbD0iIzA1ZiIgb3BhY2l0eT0iMC40Ij4KICAgICAgPGFuaW1hdGUgYXR0cmlidXRlTmFtZT0ib3BhY2l0eSIgdmFsdWVzPSIwLjQ7MC4yOzAuNCIgZHVyPSIxLjJzIiBiZWdpbj0iMC44cyIgcmVwZWF0Q291bnQ9ImluZGVmaW5pdGUiLz4KICAgIDwvY2lyY2xlPgogIDwvZz4KPC9zdmc+"
                                      onclick="toggleFullscreen('stacked-ir')" style="cursor: pointer;">
                                 <div class="camera-overlay">Stacked IR</div>
                             </div>
@@ -1400,7 +1440,7 @@
                             <h3>📚 HQ Camera Stacking <span class="live-indicator">● LIVE</span></h3>
                             <div class="camera-preview">
                                 <img id="stacked-hq-preview" alt="Stacked HQ Image"
-                                     src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTI4MCIgaGVpZ2h0PSI3MjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjEyODAiIGhlaWdodD0iNzIwIiBmaWxsPSIjMDAwIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGRvbWluYW50LWJhc2VsaW5lPSJtaWRkbGUiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZpbGw9IndoaXRlIj5TdGFja2luZyBIUS4uLjwvdGV4dD48L3N2Zz4="
+                                     src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTI4MCIgaGVpZ2h0PSI3MjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CiAgPGRlZnM+CiAgICA8bGluZWFyR3JhZGllbnQgaWQ9ImJnIiB4MT0iMCUiIHkxPSIwJSIgeDI9IjEwMCUiIHkyPSIxMDAlIj4KICAgICAgPHN0b3Agb2Zmc2V0PSIwJSIgc3R5bGU9InN0b3AtY29sb3I6IzFhMGEwYSIvPgogICAgICA8c3RvcCBvZmZzZXQ9IjEwMCUiIHN0eWxlPSJzdG9wLWNvbG9yOiMyZTFhMWEiLz4KICAgIDwvbGluZWFyR3JhZGllbnQ+CiAgICA8bGluZWFyR3JhZGllbnQgaWQ9InRleHRHcmFkIiB4MT0iMCUiIHkxPSIwJSIgeDI9IjEwMCUiIHkyPSIwJSI+CiAgICAgIDxzdG9wIG9mZnNldD0iMCUiIHN0eWxlPSJzdG9wLWNvbG9yOiNmZjAiLz4KICAgICAgPHN0b3Agb2Zmc2V0PSI1MCUiIHN0eWxlPSJzdG9wLWNvbG9yOiNmYTAiLz4KICAgICAgPHN0b3Agb2Zmc2V0PSIxMDAlIiBzdHlsZT0ic3RvcC1jb2xvcjojZjUwIi8+CiAgICA8L2xpbmVhckdyYWRpZW50PgogIDwvZGVmcz4KICA8cmVjdCB3aWR0aD0iMTI4MCIgaGVpZ2h0PSI3MjAiIGZpbGw9InVybCgjYmcpIiBzdHJva2U9IiNmZjAiIHN0cm9rZS13aWR0aD0iMiIvPgogIDx0ZXh0IHg9IjUwJSIgeT0iNDAlIiBkb21pbmFudC1iYXNlbGluZT0ibWlkZGxlIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiAKICAgICAgICBmaWxsPSJ1cmwoI3RleHRHcmFkKSIgZm9udC1mYW1pbHk9IlF1aWNrc2FuZCwgbW9ub3NwYWNlIiBmb250LXNpemU9IjM2IiBmb250LXdlaWdodD0iMzAwIj4KICAgIEhRIFNUQUNLSU5HCiAgPC90ZXh0PgogIDx0ZXh0IHg9IjUwJSIgeT0iNTUlIiBkb21pbmFudC1iYXNlbGluZT0ibWlkZGxlIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiAKICAgICAgICBmaWxsPSIjZmYwIiBmb250LWZhbWlseT0iUXVpY2tzYW5kLCBtb25vc3BhY2UiIGZvbnQtc2l6ZT0iMTgiIGZvbnQtd2VpZ2h0PSIzMDAiPgogICAgUFJPQ0VTU0lORyBJTUFHRVMuLi4KICA8L3RleHQ+CiAgPGcgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoNjQwLCA0NTApIj4KICAgIDxjaXJjbGUgY3g9Ii0yMCIgY3k9IjAiIHI9IjQiIGZpbGw9IiNmZjAiIG9wYWNpdHk9IjAuOCI+CiAgICAgIDxhbmltYXRlIGF0dHJpYnV0ZU5hbWU9Im9wYWNpdHkiIHZhbHVlcz0iMC44OzAuMjswLjgiIGR1cj0iMS4ycyIgcmVwZWF0Q291bnQ9ImluZGVmaW5pdGUiLz4KICAgIDwvY2lyY2xlPgogICAgPGNpcmNsZSBjeD0iMCIgY3k9IjAiIHI9IjQiIGZpbGw9IiNmYTAiIG9wYWNpdHk9IjAuNiI+CiAgICAgIDxhbmltYXRlIGF0dHJpYnV0ZU5hbWU9Im9wYWNpdHkiIHZhbHVlcz0iMC42OzAuMjswLjYiIGR1cj0iMS4ycyIgYmVnaW49IjAuNHMiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+CiAgICA8L2NpcmNsZT4KICAgIDxjaXJjbGUgY3g9IjIwIiBjeT0iMCIgcj0iNCIgZmlsbD0iI2Y1MCIgb3BhY2l0eT0iMC40Ij4KICAgICAgPGFuaW1hdGUgYXR0cmlidXRlTmFtZT0ib3BhY2l0eSIgdmFsdWVzPSIwLjQ7MC4yOzAuNCIgZHVyPSIxLjJzIiBiZWdpbj0iMC44cyIgcmVwZWF0Q291bnQ9ImluZGVmaW5pdGUiLz4KICAgIDwvY2lyY2xlPgogIDwvZz4KPC9zdmc+"
                                      onclick="toggleFullscreen('stacked-hq')" style="cursor: pointer;">
                                 <div class="camera-overlay">Stacked HQ</div>
                             </div>
@@ -1707,6 +1747,9 @@
                             <button type="button" class="btn btn-success" id="motor-toggle-btn" onclick="toggleMotors()">🔌 Enable Motors</button>
                             <button class="btn btn-danger" id="keepalive-toggle-btn" onclick="toggleKeepalive()">🔒 Keep Motors On</button>
                         </div>
+                        <div class="btn-group" style="margin-top: 10px;">
+                            <button class="btn btn-warning" onclick="resetHome()" title="Reset current position as home (0°, 0°) for calibration">🎯 Reset Home</button>
+                        </div>
                         <div id="motor-status" style="margin-top: 10px; padding: 5px; border-radius: 5px; background: rgba(255,255,255,0.1);">
                             <strong>Motors:</strong> <span id="motor-state">Unknown</span><br>
                             <strong>Keep On Mode:</strong> <span id="keepalive-state">Inactive</span>
@@ -1819,6 +1862,57 @@
                     </div>
                 </div>
                 
+                <!-- Mood Music Controls -->
+                <div class="control-group">
+                    <h3>🎵 Mood Music</h3>
+                    <p style="font-size: 14px; color: #999; margin-bottom: 10px;">Ambient ethereal music to enhance the UFO tracking experience</p>
+                    
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="mood-music-enabled" onchange="toggleMoodMusic()">
+                        <label for="mood-music-enabled">Enable Mood Music</label>
+                        <span id="mood-music-status" style="margin-left: 10px; font-size: 12px; color: #666;">Disabled</span>
+                    </div>
+                    
+                    <div id="mood-music-controls" style="margin-top: 10px; display: none;">
+                        <div class="btn-group">
+                            <button class="btn btn-success" onclick="playRandomTrack()" id="play-btn">🎵 Play Random Track</button>
+                            <button class="btn btn-danger" onclick="stopMusic()" id="stop-btn">⏹️ Stop</button>
+                        </div>
+                        
+                        <div style="margin-top: 10px;">
+                            <label style="font-size: 12px;">
+                                <input type="checkbox" id="enhanced-engine-toggle" checked onchange="toggleMusicEngine(this.checked)">
+                                Enhanced Mode (with percussion & bass)
+                            </label>
+                        </div>
+                        
+                        <div style="margin-top: 10px; font-size: 12px; color: #888;">
+                            <span id="current-track-info">No track playing</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Storage Management -->
+                <div class="control-group">
+                    <h3>💾 Storage Management</h3>
+                    <p style="font-size: 14px; color: #999; margin-bottom: 10px;">Manage detection image storage and free up disk space</p>
+                    
+                    <div style="margin-bottom: 15px;">
+                        <div id="gallery-stats" style="font-size: 12px; color: #ccc;">
+                            Loading gallery statistics...
+                        </div>
+                    </div>
+                    
+                    <div class="btn-group">
+                        <button class="btn btn-danger" onclick="clearAllGalleryFiles()" style="margin-bottom: 10px;">
+                            🗑️ Clear All Images (Permanent)
+                        </button>
+                    </div>
+                    <p style="font-size: 12px; color: #ff9999; margin-top: 5px;">
+                        ⚠️ This will permanently delete ALL detection images and cannot be undone!
+                    </p>
+                </div>
+                
                 <div class="btn-group">
                     <button class="btn btn-primary" onclick="saveSettings()">💾 Save Settings</button>
                     <button class="btn btn-secondary" onclick="resetSettings()">🔄 Reset</button>
@@ -1834,6 +1928,9 @@
     <script src="/static/js/core.js"></script>
     <script src="/static/js/navigation.js"></script>
     <script src="/static/js/camera-feeds.js"></script>
+    <script src="/static/js/ambient-music-engine.js"></script>
+    <script src="/static/js/enhanced-music-engine.js"></script>
+    <script src="/static/js/mood-music.js"></script>
     <script src="/static/js/camera-controls.js"></script>
     <script src="/static/js/pantilt-controls.js"></script>
     <script src="/static/js/tracking.js"></script>

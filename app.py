@@ -1170,6 +1170,84 @@ def auto_tracker_settings():
         
         return jsonify(result)
 
+# ===== FOV MAPPING API ENDPOINTS =====
+@app.route('/api/auto_tracker/fov_mapping', methods=['GET'])
+def get_fov_mapping_info():
+    """Get FOV mapping information and validation"""
+    if not auto_tracker:
+        return jsonify({"error": "Auto tracker not available"}), 503
+    
+    try:
+        status = auto_tracker.get_status()
+        validation = auto_tracker.validate_fov_mapping()
+        
+        return jsonify({
+            "fov_mapping": status.get('fov_mapping'),
+            "validation": validation
+        })
+    except Exception as e:
+        logger.error(f"Error getting FOV mapping info: {e}")
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/api/auto_tracker/fov_mapping/update', methods=['POST'])
+def update_fov_mapping():
+    """Update FOV mapping settings"""
+    if not auto_tracker:
+        return jsonify({"error": "Auto tracker not available"}), 503
+    
+    try:
+        data = request.get_json() or {}
+        
+        ir_fov = data.get('ir_fov_degrees')
+        hq_fov = data.get('hq_fov_degrees')
+        
+        if ir_fov is not None:
+            ir_fov = float(ir_fov)
+        if hq_fov is not None:
+            hq_fov = float(hq_fov)
+        
+        auto_tracker.update_fov_settings(ir_fov, hq_fov)
+        
+        # Return updated info
+        status = auto_tracker.get_status()
+        validation = auto_tracker.validate_fov_mapping()
+        
+        return jsonify({
+            "success": True,
+            "fov_mapping": status.get('fov_mapping'),
+            "validation": validation
+        })
+    except Exception as e:
+        logger.error(f"Error updating FOV mapping: {e}")
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/api/auto_tracker/fov_mapping/test', methods=['POST'])
+def test_fov_mapping():
+    """Test FOV mapping with specific points"""
+    if not auto_tracker:
+        return jsonify({"error": "Auto tracker not available"}), 503
+    
+    try:
+        data = request.get_json() or {}
+        test_points = data.get('test_points', [])
+        
+        # Convert test points to tuples
+        test_points = [(int(p[0]), int(p[1])) for p in test_points]
+        
+        validation = auto_tracker.validate_fov_mapping(test_points if test_points else None)
+        
+        return jsonify({
+            "success": True,
+            "validation": validation
+        })
+    except Exception as e:
+        logger.error(f"Error testing FOV mapping: {e}")
+        return jsonify({"error": str(e)}), 500
+
+# ===== MOOD MUSIC API ENDPOINTS =====
+# Note: Mood music now runs entirely in the browser using Web Audio API
+# No server-side endpoints needed for playbook
+
 @app.route('/api/camera/hq/roi', methods=['POST'])
 def set_hq_camera_roi():
     """Set HQ camera region of interest for zooming"""
@@ -1895,6 +1973,8 @@ def cleanup():
     
     if pan_tilt:
         pan_tilt.cleanup()
+    
+    # Note: Mood music cleanup handled by browser
 
 if __name__ == '__main__':
     try:

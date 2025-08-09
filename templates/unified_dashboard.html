@@ -1819,6 +1819,57 @@
                     </div>
                 </div>
                 
+                <!-- Mood Music Controls -->
+                <div class="control-group">
+                    <h3>🎵 Mood Music</h3>
+                    <p style="font-size: 14px; color: #999; margin-bottom: 10px;">Ambient ethereal music to enhance the UFO tracking experience</p>
+                    
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="mood-music-enabled" onchange="toggleMoodMusic()">
+                        <label for="mood-music-enabled">Enable Mood Music</label>
+                        <span id="mood-music-status" style="margin-left: 10px; font-size: 12px; color: #666;">Disabled</span>
+                    </div>
+                    
+                    <div id="mood-music-controls" style="margin-top: 10px; display: none;">
+                        <div class="btn-group">
+                            <button class="btn btn-success" onclick="playRandomTrack()" id="play-btn">🎵 Play Random Track</button>
+                            <button class="btn btn-danger" onclick="stopMusic()" id="stop-btn">⏹️ Stop</button>
+                        </div>
+                        
+                        <div style="margin-top: 10px;">
+                            <label style="font-size: 12px;">
+                                <input type="checkbox" id="enhanced-engine-toggle" checked onchange="toggleMusicEngine(this.checked)">
+                                Enhanced Mode (with percussion & bass)
+                            </label>
+                        </div>
+                        
+                        <div style="margin-top: 10px; font-size: 12px; color: #888;">
+                            <span id="current-track-info">No track playing</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Storage Management -->
+                <div class="control-group">
+                    <h3>💾 Storage Management</h3>
+                    <p style="font-size: 14px; color: #999; margin-bottom: 10px;">Manage detection image storage and free up disk space</p>
+                    
+                    <div style="margin-bottom: 15px;">
+                        <div id="gallery-stats" style="font-size: 12px; color: #ccc;">
+                            Loading gallery statistics...
+                        </div>
+                    </div>
+                    
+                    <div class="btn-group">
+                        <button class="btn btn-danger" onclick="clearAllGalleryFiles()" style="margin-bottom: 10px;">
+                            🗑️ Clear All Images (Permanent)
+                        </button>
+                    </div>
+                    <p style="font-size: 12px; color: #ff9999; margin-top: 5px;">
+                        ⚠️ This will permanently delete ALL detection images and cannot be undone!
+                    </p>
+                </div>
+                
                 <div class="btn-group">
                     <button class="btn btn-primary" onclick="saveSettings()">💾 Save Settings</button>
                     <button class="btn btn-secondary" onclick="resetSettings()">🔄 Reset</button>
@@ -1834,6 +1885,9 @@
     <script src="/static/js/core.js"></script>
     <script src="/static/js/navigation.js"></script>
     <script src="/static/js/camera-feeds.js"></script>
+    <script src="/static/js/ambient-music-engine.js"></script>
+    <script src="/static/js/enhanced-music-engine.js"></script>
+    <script src="/static/js/mood-music.js"></script>
     <script src="/static/js/camera-controls.js"></script>
     <script src="/static/js/pantilt-controls.js"></script>
     <script src="/static/js/tracking.js"></script>

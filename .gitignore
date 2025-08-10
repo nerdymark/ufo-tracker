@@ -39,6 +39,18 @@ logs/*.log.*
 # Detection data and captures
 detections/
 captures/
+
+# Gallery files (user generated content)
+static/gallery/
+static/gallery/images/
+static/gallery/stacks/
+static/gallery/recordings/
+static/gallery/videos/
+
+# Timelapse files
+timelapses/
+
+# Media files (anywhere in the project)
 *.jpg
 *.png
 *.mp4

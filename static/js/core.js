@@ -109,11 +109,12 @@ function refreshSystemStatus() {
     fetch('/api/system_status')
         .then(response => response.json())
         .then(data => {
+            console.log('System status response:', data);
             // Update IR camera status
             const irStatus = document.getElementById('ir-status-bar');
             const irIndicator = document.getElementById('ir-indicator-bar');
             if (irStatus && data.cameras) {
-                const irActive = data.cameras.ir && data.cameras.ir.active;
+                const irActive = data.cameras.ir_camera || false;
                 irStatus.textContent = irActive ? 'Active' : 'Inactive';
                 if (irIndicator) {
                     irIndicator.style.backgroundColor = irActive ? '#4CAF50' : '#666';
@@ -124,7 +125,7 @@ function refreshSystemStatus() {
             const hqStatus = document.getElementById('hq-status-bar');
             const hqIndicator = document.getElementById('hq-indicator-bar');
             if (hqStatus && data.cameras) {
-                const hqActive = data.cameras.hq && data.cameras.hq.active;
+                const hqActive = data.cameras.hq_camera || false;
                 hqStatus.textContent = hqActive ? 'Active' : 'Inactive';
                 if (hqIndicator) {
                     hqIndicator.style.backgroundColor = hqActive ? '#4CAF50' : '#666';
@@ -146,15 +147,23 @@ function refreshSystemStatus() {
             // Update Storage status
             const storageStatus = document.getElementById('storage-status-bar');
             const storageIndicator = document.getElementById('storage-indicator-bar');
-            if (storageStatus && data.storage) {
-                const usedPercent = Math.round((data.storage.used / data.storage.total) * 100);
-                storageStatus.textContent = `${usedPercent}%`;
-                if (storageIndicator) {
-                    // Color code based on usage
-                    let color = '#4CAF50'; // Green
-                    if (usedPercent > 80) color = '#ff6b6b'; // Red
-                    else if (usedPercent > 60) color = '#ffa500'; // Orange
-                    storageIndicator.style.backgroundColor = color;
+            if (storageStatus) {
+                if (data.storage && data.storage.used !== undefined && data.storage.total !== undefined) {
+                    const usedPercent = Math.round((data.storage.used / data.storage.total) * 100);
+                    storageStatus.textContent = `${usedPercent}%`;
+                    if (storageIndicator) {
+                        // Color code based on usage
+                        let color = '#4CAF50'; // Green
+                        if (usedPercent > 80) color = '#ff6b6b'; // Red
+                        else if (usedPercent > 60) color = '#ffa500'; // Orange
+                        storageIndicator.style.backgroundColor = color;
+                    }
+                } else {
+                    // Fallback if storage data is not available
+                    storageStatus.textContent = 'N/A';
+                    if (storageIndicator) {
+                        storageIndicator.style.backgroundColor = '#666';
+                    }
                 }
             }
         })

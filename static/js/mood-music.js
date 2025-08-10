@@ -11,6 +11,27 @@ let shuffleMode = false;
 let trackEndTimeout = null;
 let useEnhancedEngine = true; // Toggle between original and enhanced engine
 
+// Initialize unified music engine with user interaction
+async function initializeMusicEngine() {
+    try {
+        console.log('Initializing unified music engine...');
+        
+        if (typeof unifiedMusic !== 'undefined' && unifiedMusic.initialize) {
+            const result = await unifiedMusic.initialize();
+            console.log('Unified music engine initialized:', result);
+            return result;
+        } else {
+            console.error('Unified music engine not found');
+            showMessage('Music engine not available', 'error');
+            return false;
+        }
+    } catch (error) {
+        console.error('Failed to initialize music engine:', error);
+        showMessage('Failed to initialize music system: ' + error.message, 'error');
+        return false;
+    }
+}
+
 // Initialize mood music controls
 function initializeMoodMusic() {
     // Load settings from localStorage
@@ -66,17 +87,24 @@ function toggleMoodMusic() {
 }
 
 function enableMoodMusic() {
+    console.log('enableMoodMusic called');
     moodMusicEnabled = true;
     const controls = document.getElementById('mood-music-controls');
     const status = document.getElementById('mood-music-status');
     
-    if (controls) controls.style.display = 'block';
+    console.log('Controls element:', controls);
+    console.log('Status element:', status);
+    
+    if (controls) {
+        controls.style.display = 'block';
+        console.log('Music controls now visible');
+    }
     if (status) {
         status.textContent = 'Enabled';
         status.style.color = '#4CAF50';
     }
     
-    console.log('Mood music system enabled (browser-based)');
+    console.log('Mood music system enabled (browser-based), moodMusicEnabled:', moodMusicEnabled);
     showMessage('Mood music system enabled', 'success');
 }
 
@@ -100,9 +128,13 @@ function disableMoodMusic() {
     showMessage('Mood music system disabled', 'info');
 }
 
-// Play a random ambient track
+// Play a random track using unified engine
 async function playRandomTrack() {
+    console.log('playRandomTrack called, moodMusicEnabled:', moodMusicEnabled);
+    console.log('unifiedMusic available:', typeof unifiedMusic !== 'undefined');
+    
     if (!moodMusicEnabled) {
+        console.log('Mood music not enabled, showing warning');
         showMessage('Please enable mood music first', 'warning');
         return;
     }
@@ -114,15 +146,23 @@ async function playRandomTrack() {
     if (trackInfo) trackInfo.textContent = 'Starting random track...';
     
     try {
-        // Use selected engine (enhanced or original)
-        const engine = useEnhancedEngine ? enhancedMusic : ambientMusic;
+        console.log('Attempting to initialize music engine...');
+        // Initialize music engine on first user interaction
+        await initializeMusicEngine();
+        
+        // Set enhanced mode based on user preference
+        if (typeof unifiedMusic !== 'undefined') {
+            unifiedMusic.setEnhancedMode(useEnhancedEngine);
+        }
+        
+        // Use unified engine
         const engineType = useEnhancedEngine ? 'Enhanced' : 'Ambient';
-        const success = await engine.playRandomTrack();
+        const success = await unifiedMusic.playRandomTrack();
         
         if (success) {
             moodMusicPlaying = true;
-            const status = engine.getStatus ? engine.getStatus() : { currentKey: engine.currentKey };
-            currentTrackKey = status.currentKey || engine.currentKey;
+            const status = unifiedMusic.getStatus ? unifiedMusic.getStatus() : { currentKey: unifiedMusic.currentKey };
+            currentTrackKey = status.currentKey || unifiedMusic.currentKey;
             
             if (trackInfo) {
                 trackInfo.textContent = `Playing ${engineType} track in key of ${currentTrackKey}`;
@@ -163,9 +203,10 @@ function stopMusic() {
     if (stopBtn) stopBtn.disabled = true;
     
     try {
-        // Stop both engines to ensure clean state
-        if (typeof ambientMusic !== 'undefined') ambientMusic.stop();
-        if (typeof enhancedMusic !== 'undefined') enhancedMusic.stop();
+        // Stop unified music engine
+        if (typeof unifiedMusic !== 'undefined') {
+            unifiedMusic.stop();
+        }
         
         moodMusicPlaying = false;
         currentTrackKey = null;
@@ -205,23 +246,22 @@ function updatePlaybackControls() {
 // Monitor playback status
 function monitorPlayback() {
     const checkStatus = () => {
-        const engine = useEnhancedEngine ? enhancedMusic : ambientMusic;
         const engineType = useEnhancedEngine ? 'Enhanced' : 'Ambient';
-        const engineStatus = engine.getStatus ? engine.getStatus() : { 
-            playing: engine.isPlaying, 
-            currentKey: engine.currentKey,
-            currentSection: engine.currentSection
+        const engineStatus = unifiedMusic.getStatus ? unifiedMusic.getStatus() : { 
+            playing: unifiedMusic.isPlaying, 
+            currentKey: unifiedMusic.currentKey,
+            currentSection: unifiedMusic.currentSection
         };
         const trackInfo = document.getElementById('current-track-info');
         
-        if (engineStatus.playing || engine.isPlaying) {
+        if (engineStatus.playing || unifiedMusic.isPlaying) {
             moodMusicPlaying = true;
-            currentTrackKey = engineStatus.currentKey || engine.currentKey;
+            currentTrackKey = engineStatus.currentKey || unifiedMusic.currentKey;
             
             if (trackInfo) {
                 let statusText = `Playing ${engineType} track in key of ${currentTrackKey}`;
-                if (engineStatus.currentSection || engine.currentSection) {
-                    statusText += ` (${engineStatus.currentSection || engine.currentSection})`;
+                if (engineStatus.currentSection || unifiedMusic.currentSection) {
+                    statusText += ` (${engineStatus.currentSection || unifiedMusic.currentSection})`;
                 }
                 trackInfo.textContent = statusText;
                 trackInfo.style.color = '#4CAF50';
@@ -305,12 +345,19 @@ async function playStatusBarMusic() {
     const toggle = document.getElementById('status-music-toggle');
     
     try {
-        // Use browser-based ambient music engine
-        const success = await ambientMusic.playRandomTrack();
+        // Initialize music engine on first user interaction
+        await initializeMusicEngine();
+        
+        // Use ambient mode for status bar (less intensive)
+        if (typeof unifiedMusic !== 'undefined') {
+            unifiedMusic.setEnhancedMode(false);
+        }
+        
+        const success = await unifiedMusic.playRandomTrack();
         
         if (success) {
             moodMusicPlaying = true;
-            const status = ambientMusic.getStatus();
+            const status = unifiedMusic.getStatus();
             currentTrackKey = status.currentKey;
             
             if (toggle) {
@@ -340,7 +387,9 @@ function stopStatusBarMusic() {
     const toggle = document.getElementById('status-music-toggle');
     
     try {
-        ambientMusic.stop();
+        if (typeof unifiedMusic !== 'undefined') {
+            unifiedMusic.stop();
+        }
         moodMusicPlaying = false;
         currentTrackKey = null;
         
@@ -365,7 +414,9 @@ function stopStatusBarMusic() {
 function nextStatusBarTrack() {
     if (moodMusicPlaying) {
         // Stop current track and start new one
-        ambientMusic.stop();
+        if (typeof unifiedMusic !== 'undefined') {
+            unifiedMusic.stop();
+        }
         setTimeout(() => {
             playStatusBarMusic();
         }, 500);
@@ -397,7 +448,9 @@ function toggleStatusBarShuffle() {
 
 function monitorStatusBarPlayback() {
     const checkStatus = () => {
-        const engineStatus = ambientMusic.getStatus();
+        if (typeof unifiedMusic === 'undefined') return;
+        
+        const engineStatus = unifiedMusic.getStatus();
         const toggle = document.getElementById('status-music-toggle');
         
         if (engineStatus.playing) {
@@ -440,10 +493,16 @@ function loadStatusBarMusicSettings() {
     const savedShuffle = localStorage.getItem('musicShuffleMode');
     if (savedShuffle === 'true') {
         shuffleMode = true;
-        const shuffleBtn = document.getElementById('status-music-shuffle');
+        const shuffleBtn = document.getElementById('shuffle-btn');
         if (shuffleBtn) {
-            shuffleBtn.style.color = '#4CAF50';
-            shuffleBtn.title = 'Shuffle: ON';
+            shuffleBtn.textContent = '🔀 Shuffle: ON';
+            shuffleBtn.style.backgroundColor = '#4CAF50';
+            shuffleBtn.style.color = 'white';
+        }
+        const statusShuffleBtn = document.getElementById('status-music-shuffle');
+        if (statusShuffleBtn) {
+            statusShuffleBtn.style.color = '#4CAF50';
+            statusShuffleBtn.title = 'Shuffle: ON';
         }
     }
     
@@ -454,9 +513,53 @@ function loadStatusBarMusicSettings() {
     }
 }
 
+// Play next track
+function playNextTrack() {
+    if (!moodMusicEnabled) {
+        showMessage('Please enable mood music first', 'warning');
+        return;
+    }
+    
+    // Stop current track if playing
+    if (moodMusicPlaying) {
+        stopMusic();
+        // Wait a moment then play new track
+        setTimeout(() => playRandomTrack(), 500);
+    } else {
+        // Just play a random track
+        playRandomTrack();
+    }
+}
+
+// Toggle shuffle mode
+function toggleShuffle() {
+    shuffleMode = !shuffleMode;
+    const shuffleBtn = document.getElementById('shuffle-btn');
+    
+    if (shuffleBtn) {
+        if (shuffleMode) {
+            shuffleBtn.textContent = '🔀 Shuffle: ON';
+            shuffleBtn.style.backgroundColor = '#4CAF50';
+            shuffleBtn.style.color = 'white';
+        } else {
+            shuffleBtn.textContent = '🔀 Shuffle';
+            shuffleBtn.style.backgroundColor = '';
+            shuffleBtn.style.color = '';
+        }
+    }
+    
+    // Save preference
+    localStorage.setItem('musicShuffleMode', shuffleMode.toString());
+    
+    showMessage(`Shuffle mode ${shuffleMode ? 'enabled' : 'disabled'}`, 'info');
+}
+
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', function() {
+    console.log('Mood music: DOMContentLoaded event fired');
     setTimeout(() => {
+        console.log('Mood music: Starting initialization...');
+        console.log('unifiedMusic available:', typeof unifiedMusic !== 'undefined');
         initializeMoodMusic();
         loadStatusBarMusicSettings();
     }, 1000);

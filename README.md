@@ -120,8 +120,47 @@ The unified dashboard provides several viewing modes:
 - **Live Cameras**: Real-time MJPEG streams from both cameras
 - **Camera Controls**: Manual adjustment of camera settings (exposure, gain, brightness, contrast)  
 - **Auto Tracking**: Client-side motion detection and tracking (motion detection disabled for performance)
+- **Image Stacking**: Advanced image stacking with multiple blend modes for astrophotography and motion capture
 - **Image Browser**: Browse captured images with filtering and management
 - **System Settings**: Configuration and system monitoring
+
+#### Image Stacking Modes
+
+The UFO Tracker includes sophisticated client-side image stacking capabilities with four distinct blending modes:
+
+**🔢 Default (Average Stacking)**
+- Blends all frames equally using weighted averaging
+- Each frame contributes `1/N` opacity where N is the number of frames
+- Best for: General noise reduction, creating stable composite images
+- Result: Smooth, averaged image with reduced noise and background movement
+
+**🌌 Long Exposure Mode**
+- Uses "lighten" blend mode - keeps the brightest pixel from each frame
+- Simulates traditional long-exposure photography techniques
+- Best for: Capturing motion trails, star trails, light streaks
+- Result: Preserves bright moving objects while maintaining dark background
+
+**🔥 Juiced Exposure Mode**
+- Uses "lighter" blend mode - adds brightness from each frame (30% per frame)
+- Creates artistic light painting and accumulation effects
+- **Recommended**: Use with fewer frames (3-5) to prevent overexposure
+- Best for: Light painting effects, emphasizing bright moving objects
+- Result: Bright, accumulated light effects with enhanced luminosity
+
+**♾️ Infinite Exposure Mode**
+- True infinite stacking - locks the frame counter and continuously accumulates frames
+- Uses Long Exposure technique but never stops adding new frames
+- **Automatic**: Disables other modes and locks the stack count slider when enabled
+- Best for: Extended observation sessions, capturing rare events over time
+- Result: Continuously building composite with unlimited frame accumulation
+
+**Usage Tips:**
+- Start with Default mode for general use
+- Switch between modes in real-time to see different effects
+- Long Exposure works well with 10-20 frames
+- Juiced Exposure is most effective with 3-8 frames
+- Infinite Exposure runs continuously until manually stopped
+- All modes (except Infinite) support 2-100 frame stacking ranges
 
 ### Service Management
 

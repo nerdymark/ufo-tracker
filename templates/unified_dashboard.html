@@ -1117,6 +1117,13 @@
                     <span class="status-indicator-small" id="storage-indicator-bar"></span>
                 </div>
                 <div class="status-item-compact">
+                    <span class="status-label">Music:</span>
+                    <button class="btn-small" onclick="statusPlayMusic()" id="status-play-btn" title="Play Music">🎵</button>
+                    <button class="btn-small" onclick="statusNextTrack()" id="status-next-btn" title="Next Track">⏭️</button>
+                    <button class="btn-small" onclick="statusToggleShuffle()" id="status-shuffle-btn" title="Shuffle">🔀</button>
+                    <button class="btn-small" onclick="statusStopMusic()" id="status-stop-btn" title="Stop Music">⏹️</button>
+                </div>
+                <div class="status-item-compact">
                     <button class="btn-small" onclick="refreshSystemStatus()">🔄</button>
                 </div>
             </div>
@@ -1127,7 +1134,7 @@
             <button class="nav-tab active" onclick="showSection('cameras')">📹 Live Cameras</button>
             <button class="nav-tab" onclick="showSection('controls')">⚙️ Camera Controls</button>
             <button class="nav-tab disabled" style="opacity: 0.5; cursor: not-allowed;" title="Motion Detection disabled">🎯 Motion Detection</button>
-            <button class="nav-tab" onclick="showSection('browser')">🖼️ Image Browser</button>
+            <button class="nav-tab" onclick="showSection('gallery')">🖼️ Gallery</button>
             <button class="nav-tab" onclick="showSection('settings')">🔧 System Settings</button>
         </div>
 
@@ -1139,7 +1146,6 @@
                     <button class="btn btn-secondary" onclick="setViewMode('stacked')" id="stacked-mode-btn">📚 Image Stacking</button>
                     <button class="btn btn-warning disabled" title="Feature alignment disabled for compatibility" disabled>🎯 Feature Aligned</button>
                     <button class="btn btn-success" onclick="setViewMode('autotrack')" id="autotrack-mode-btn">🎯 Auto Tracking</button>
-                    <button class="btn btn-info" onclick="setViewMode('gallery')" id="gallery-mode-btn">🖼️ Gallery</button>
                 </div>
                 <div class="btn-group" style="margin-left: 20px;">
                     <!-- Camera streams now auto-load on page load -->
@@ -1334,23 +1340,6 @@
                     </div>
                 </div>
 
-                <!-- Image Gallery Mode -->
-                <div id="gallery-images" style="display: none;">
-                    <div class="tracking-status-panel">
-                        <h3>🖼️ Image Gallery</h3>
-                        <div class="tracking-controls">
-                            <div class="btn-group">
-                                <button class="btn btn-primary" onclick="refreshGallery()">🔄 Refresh</button>
-                                <button class="btn btn-warning" onclick="clearGallery()">🗑️ Clear All</button>
-                                <button class="btn btn-info" onclick="exportGallery()">📤 Export</button>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div id="gallery-content" class="gallery-grid">
-                        <!-- Gallery items will be populated here -->
-                    </div>
-                </div>
 
                 <!-- Stacked Mode -->
                 <div id="stacked-cameras" style="display: none;">
@@ -1367,22 +1356,31 @@
                             <div class="control-group">
                                 <label for="ir-stack-count">Stack Count</label>
                                 <input type="range" id="ir-stack-count" class="control-input" 
-                                       min="2" max="20" step="1" value="5"
+                                       min="2" max="100" step="1" value="5"
                                        oninput="updateStackCount('ir')">
                                 <div class="range-display">
                                     <span>2</span>
                                     <span id="ir-stack-count-value">5</span>
-                                    <span>20</span>
+                                    <span>100</span>
                                 </div>
                             </div>
                             <div class="control-group">
-                                <label>
+                                <small class="text-muted">📊 Default: Average stacking blends all frames equally</small>
+                            </div>
+                            <div class="control-group">
+                                <label title="Keeps the brightest pixel from each frame - simulates long exposure photography. Good for capturing motion trails and star trails.">
                                     <input type="checkbox" id="ir-long-exposure" onchange="toggleLongExposure('ir')">
                                     🌌 Long Exposure Mode
                                 </label>
                             </div>
                             <div class="control-group">
-                                <label>
+                                <label title="Adds brightness from each frame together (30% per frame) - creates artistic light painting effects. Use with fewer frames (3-5) to avoid overexposure.">
+                                    <input type="checkbox" id="ir-juiced-exposure" onchange="toggleJuicedExposure('ir')">
+                                    🔥 Juiced Exposure Mode
+                                </label>
+                            </div>
+                            <div class="control-group">
+                                <label title="True infinite exposure - locks stack count and continuously adds frames using Long Exposure technique. Click to start/stop infinite stacking.">
                                     <input type="checkbox" id="ir-infinite-exposure" onchange="toggleInfiniteExposure('ir')">
                                     ♾️ Infinite Exposure Mode
                                 </label>
@@ -1407,22 +1405,31 @@
                             <div class="control-group">
                                 <label for="hq-stack-count">Stack Count</label>
                                 <input type="range" id="hq-stack-count" class="control-input" 
-                                       min="2" max="20" step="1" value="5"
+                                       min="2" max="100" step="1" value="5"
                                        oninput="updateStackCount('hq')">
                                 <div class="range-display">
                                     <span>2</span>
                                     <span id="hq-stack-count-value">5</span>
-                                    <span>20</span>
+                                    <span>100</span>
                                 </div>
                             </div>
                             <div class="control-group">
-                                <label>
+                                <small class="text-muted">📊 Default: Average stacking blends all frames equally</small>
+                            </div>
+                            <div class="control-group">
+                                <label title="Keeps the brightest pixel from each frame - simulates long exposure photography. Good for capturing motion trails and star trails.">
                                     <input type="checkbox" id="hq-long-exposure" onchange="toggleLongExposure('hq')">
                                     🌌 Long Exposure Mode
                                 </label>
                             </div>
                             <div class="control-group">
-                                <label>
+                                <label title="Adds brightness from each frame together (30% per frame) - creates artistic light painting effects. Use with fewer frames (3-5) to avoid overexposure.">
+                                    <input type="checkbox" id="hq-juiced-exposure" onchange="toggleJuicedExposure('hq')">
+                                    🔥 Juiced Exposure Mode
+                                </label>
+                            </div>
+                            <div class="control-group">
+                                <label title="True infinite exposure - locks stack count and continuously adds frames using Long Exposure technique. Click to start/stop infinite stacking.">
                                     <input type="checkbox" id="hq-infinite-exposure" onchange="toggleInfiniteExposure('hq')">
                                     ♾️ Infinite Exposure Mode
                                 </label>
@@ -1494,12 +1501,12 @@
                     <div class="control-group">
                         <label for="ir-exposure">Exposure Time</label>
                         <input type="range" id="ir-exposure" class="control-input" 
-                               min="1000" max="1000000" step="1000" value="50000"
+                               min="1" max="10000000" step="1" value="20000"
                                oninput="updateExposureDisplay('ir'); applySettings('ir')">
-                        <span id="ir-exposure-display" class="value-display">50ms</span>
+                        <span id="ir-exposure-display" class="value-display">20ms</span>
                         <div class="range-display">
-                            <span>1ms</span>
-                            <span id="ir-exposure-value">100ms</span>
+                            <span>1µs</span>
+                            <span id="ir-exposure-value">20ms</span>
                             <span>10s</span>
                         </div>
                     </div>
@@ -1575,12 +1582,12 @@
                     <div class="control-group">
                         <label for="hq-exposure">Exposure Time</label>
                         <input type="range" id="hq-exposure" class="control-input" 
-                               min="1000" max="1000000" step="1000" value="50000"
+                               min="1" max="30000000" step="1" value="20000"
                                oninput="updateExposureDisplay('hq'); applySettings('hq')">
-                        <span id="hq-exposure-display" class="value-display">50ms</span>
+                        <span id="hq-exposure-display" class="value-display">20ms</span>
                         <div class="range-display">
-                            <span>1ms</span>
-                            <span id="hq-exposure-value">100ms</span>
+                            <span>1µs</span>
+                            <span id="hq-exposure-value">20ms</span>
                             <span>30s</span>
                         </div>
                     </div>
@@ -1756,33 +1763,22 @@
             </div>
         </div>
 
-        <!-- Image Browser Section -->
-        <div id="browser" class="content-section">
+        <!-- Gallery Section -->
+        <div id="gallery" class="content-section">
             <div class="status-panel">
-                <h2>🖼️ Detection Image Browser</h2>
+                <h2>🖼️ Image Gallery</h2>
                 
                 <div class="btn-group" style="margin-bottom: 20px;">
-                    <button class="btn btn-primary" onclick="refreshImageBrowser()">🔄 Refresh</button>
-                    <button class="btn btn-secondary" onclick="filterImages('all')" id="filter-all">📁 All</button>
-                    <button class="btn btn-secondary" onclick="filterImages('motion_detection')" id="filter-motion">🎯 Motion</button>
-                    <button class="btn btn-secondary" onclick="filterImages('stacked')" id="filter-stacked">📚 Stacked</button>
-                    <button class="btn btn-secondary disabled" title="Feature alignment disabled for compatibility" disabled>🎯 Aligned</button>
-                    <button class="btn btn-danger" onclick="clearAllImages()">🗑️ Clear All</button>
+                    <button class="btn btn-primary" onclick="refreshGallery()">🔄 Refresh</button>
+                    <button class="btn btn-warning" onclick="clearGallery()">🗑️ Clear All</button>
+                    <button class="btn btn-info" onclick="exportGallery()">📤 Export</button>
                 </div>
                 
                 <div class="storage-info" style="margin-bottom: 20px;">
                     <p>Storage: <span id="storage-used">Loading...</span> | Images: <span id="image-count">Loading...</span></p>
                 </div>
                 
-                <!-- Timelapse Controls (Disabled) -->
-                <div class="timelapse-controls" style="background: rgba(0,0,0,0.3); padding: 15px; border-radius: 8px; margin-bottom: 20px; opacity: 0.5;">
-                    <h3 style="margin-top: 0;">🎬 Timelapse Generator (Disabled)</h3>
-                    <div style="margin-bottom: 15px;">
-                        <p style="color: #ff6b6b; margin: 10px 0;">Timelapse functionality has been disabled for performance optimization.</p>
-                    </div>
-                </div>
-                
-                <div class="image-grid" id="image-browser-grid">
+                <div id="gallery-content" class="gallery-grid">
                     <div class="loading-message">Loading images...</div>
                 </div>
             </div>
@@ -1816,36 +1812,6 @@
                     <div class="checkbox-group">
                         <input type="checkbox" id="sound-alerts" onchange="toggleSoundAlerts()">
                         <label for="sound-alerts">Sound Alerts</label>
-                    </div>
-                </div>
-                
-                <!-- Mood Music Controls -->
-                <div class="control-group">
-                    <h3>🎵 Mood Music</h3>
-                    <p style="font-size: 14px; color: #999; margin-bottom: 10px;">Ambient ethereal music to enhance the UFO tracking experience</p>
-                    
-                    <div class="checkbox-group">
-                        <input type="checkbox" id="mood-music-enabled" onchange="toggleMoodMusic()">
-                        <label for="mood-music-enabled">Enable Mood Music</label>
-                        <span id="mood-music-status" style="margin-left: 10px; font-size: 12px; color: #666;">Disabled</span>
-                    </div>
-                    
-                    <div id="mood-music-controls" style="margin-top: 10px; display: none;">
-                        <div class="btn-group">
-                            <button class="btn btn-success" onclick="playRandomTrack()" id="play-btn">🎵 Play Random Track</button>
-                            <button class="btn btn-danger" onclick="stopMusic()" id="stop-btn">⏹️ Stop</button>
-                        </div>
-                        
-                        <div style="margin-top: 10px;">
-                            <label style="font-size: 12px;">
-                                <input type="checkbox" id="enhanced-engine-toggle" checked onchange="toggleMusicEngine(this.checked)">
-                                Enhanced Mode (with percussion & bass)
-                            </label>
-                        </div>
-                        
-                        <div style="margin-top: 10px; font-size: 12px; color: #888;">
-                            <span id="current-track-info">No track playing</span>
-                        </div>
                     </div>
                 </div>
                 
@@ -1885,8 +1851,7 @@
     <script src="/static/js/core.js"></script>
     <script src="/static/js/navigation.js"></script>
     <script src="/static/js/camera-feeds.js"></script>
-    <script src="/static/js/ambient-music-engine.js"></script>
-    <script src="/static/js/enhanced-music-engine.js"></script>
+    <script src="/static/js/unified-music-engine.js"></script>
     <script src="/static/js/mood-music.js"></script>
     <script src="/static/js/camera-controls.js"></script>
     <script src="/static/js/pantilt-controls.js"></script>
@@ -1899,6 +1864,162 @@
         // Server IP passed from Flask - needed by all modules
         const serverIP = '{{ server_ip }}';
         console.log('Server IP:', serverIP);
+        
+        // Status bar music controls - use window object to avoid conflicts
+        window.statusMusicEnabled = false;
+        window.statusMusicPlaying = false;
+        window.statusShuffleMode = false;
+        
+        window.statusPlayMusic = function() {
+            try {
+                console.log('statusPlayMusic called');
+                const playBtn = document.getElementById('status-play-btn');
+                
+                if (!window.statusMusicEnabled) {
+                    window.statusMusicEnabled = true;
+                }
+                
+                if (typeof unifiedMusic !== 'undefined') {
+                    unifiedMusic.setEnhancedMode(true); // Default to enhanced mode
+                    unifiedMusic.playRandomTrack().then(success => {
+                        if (success) {
+                            window.statusMusicPlaying = true;
+                            if (playBtn) {
+                                playBtn.style.color = '#4CAF50';
+                            }
+                            window.monitorPlaybackForAutoAdvance();
+                            console.log('Music started successfully');
+                        } else {
+                            console.error('Failed to start music');
+                        }
+                    }).catch(error => {
+                        console.error('Error playing music:', error);
+                    });
+                } else {
+                    console.error('unifiedMusic not found');
+                }
+            } catch (error) {
+                console.error('Error in statusPlayMusic:', error);
+            }
+        }
+        
+        window.statusNextTrack = function() {
+            try {
+                console.log('statusNextTrack called');
+                if (window.statusMusicEnabled && typeof unifiedMusic !== 'undefined') {
+                    unifiedMusic.stop();
+                    setTimeout(async () => {
+                        const success = await unifiedMusic.playRandomTrack();
+                        if (success) {
+                            window.statusMusicPlaying = true;
+                            window.monitorPlaybackForAutoAdvance();
+                            console.log('Next track started');
+                        }
+                    }, 500);
+                } else {
+                    console.log('Music not enabled or unifiedMusic not found');
+                }
+            } catch (error) {
+                console.error('Error in statusNextTrack:', error);
+            }
+        }
+        
+        window.statusToggleShuffle = function() {
+            try {
+                console.log('statusToggleShuffle called');
+                window.statusShuffleMode = !window.statusShuffleMode;
+                const shuffleBtn = document.getElementById('status-shuffle-btn');
+                
+                if (shuffleBtn) {
+                    shuffleBtn.style.color = window.statusShuffleMode ? '#4CAF50' : '';
+                    shuffleBtn.title = window.statusShuffleMode ? 'Shuffle: ON' : 'Shuffle: OFF';
+                }
+                
+                localStorage.setItem('musicShuffleMode', window.statusShuffleMode.toString());
+                console.log('Shuffle mode:', window.statusShuffleMode ? 'ON' : 'OFF');
+            } catch (error) {
+                console.error('Error in statusToggleShuffle:', error);
+            }
+        }
+        
+        window.statusStopMusic = function() {
+            try {
+                console.log('statusStopMusic called');
+                const playBtn = document.getElementById('status-play-btn');
+                
+                if (typeof unifiedMusic !== 'undefined') {
+                    unifiedMusic.stop();
+                }
+                
+                if (playBtn) {
+                    playBtn.style.color = '';
+                }
+                
+                window.statusMusicPlaying = false;
+                console.log('Music stopped');
+            } catch (error) {
+                console.error('Error in statusStopMusic:', error);
+            }
+        }
+        
+        // Monitor playback for auto-advance
+        window.monitorPlaybackForAutoAdvance = function() {
+            const checkStatus = () => {
+                if (!window.statusMusicEnabled) return;
+                
+                const status = unifiedMusic.getStatus();
+                if (status.playing) {
+                    // Still playing, check again in 2 seconds
+                    setTimeout(checkStatus, 2000);
+                } else if (window.statusMusicPlaying) {
+                    // Track finished, auto-advance
+                    console.log('Track finished, auto-advancing...');
+                    window.statusNextTrack();
+                }
+            };
+            
+            setTimeout(checkStatus, 2000);
+        }
+        
+        // Capture frame function
+        function captureFrame(camera) {
+            fetch(`/api/capture/${camera}`, {
+                method: 'POST'
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showMessage(`Image captured from ${camera.toUpperCase()} camera: ${data.filename}`, 'success');
+                    // Refresh gallery if it's visible
+                    if (document.getElementById('gallery-content')) {
+                        refreshGallery();
+                    }
+                } else {
+                    showMessage(`Failed to capture from ${camera.toUpperCase()}: ${data.error}`, 'error');
+                }
+            })
+            .catch(error => {
+                showMessage(`Error capturing from ${camera.toUpperCase()}: ${error}`, 'error');
+                console.error('Capture error:', error);
+            });
+        }
+        
+        // Image modal functions
+        function openImageModal(src) {
+            const modal = document.getElementById('image-modal');
+            const modalImg = document.getElementById('modal-image');
+            if (modal && modalImg) {
+                modal.style.display = 'block';
+                modalImg.src = src;
+            }
+        }
+        
+        function closeImageModal() {
+            const modal = document.getElementById('image-modal');
+            if (modal) {
+                modal.style.display = 'none';
+            }
+        }
     </script>
     <!-- Image Modal -->
     <div id="image-modal" class="image-modal" onclick="closeImageModal()">

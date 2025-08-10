@@ -38,7 +38,7 @@ function showSection(sectionId) {
     // Handle special section initialization
     if (sectionId === 'stacked') {
         setupStackedImageHandlers();
-    } else if (sectionId === 'browser') {
+    } else if (sectionId === 'gallery') {
         refreshGallery();
     }
     

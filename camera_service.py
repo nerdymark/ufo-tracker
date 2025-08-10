@@ -79,8 +79,8 @@ def periodic_frame_capture():
                 except Exception as e:
                     logger.error(f"Error capturing HQ frame: {e}")
             
-            # Wait before next capture - synchronized with JavaScript stacking (2 second intervals)
-            time.sleep(2.0)  # Capture every 2 seconds to match JS stacking frequency
+            # Wait before next capture - 2 frames per second (0.5 second intervals)
+            time.sleep(0.5)  # Capture 2 frames per second
             
         except Exception as e:
             logger.error(f"Error in periodic frame capture: {e}")

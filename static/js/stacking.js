@@ -3,8 +3,8 @@
 let stackedImageHandlers = false;
 let stackingBuffers = { ir: [], hq: [] };
 let stackingSettings = {
-    ir: { count: 5, longExposure: false, infiniteExposure: false },
-    hq: { count: 5, longExposure: false, infiniteExposure: false }
+    ir: { count: 5, longExposure: false, juicedExposure: false, infiniteExposure: false },
+    hq: { count: 5, longExposure: false, juicedExposure: false, infiniteExposure: false }
 };
 let stackingIntervals = { ir: null, hq: null };
 
@@ -12,7 +12,6 @@ let stackingIntervals = { ir: null, hq: null };
 function setupStackedImageHandlers() {
     if (stackedImageHandlers) return; // Already setup
     
-    console.log('Setting up stacked image handlers');
     stackedImageHandlers = true;
     
     // Setup click handlers for stacked images
@@ -30,10 +29,6 @@ function setupStackedImageHandlers() {
 }
 
 function startStacking(camera) {
-    const button = document.getElementById(`${camera}-start-stacking`);
-    const status = document.getElementById(`${camera}-stacking-status`);
-    
-    console.log(`Starting client-side stacking for ${camera} camera`);
     showMessage(`Image stacking started for ${camera.toUpperCase()} camera`, 'success');
     updateStackingButton(camera, true);
     updateStackingStatus(camera, 'Active');
@@ -43,7 +38,6 @@ function startStacking(camera) {
 }
 
 function stopStacking(camera) {
-    console.log(`Stopping client-side stacking for ${camera} camera`);
     showMessage(`Image stacking stopped for ${camera.toUpperCase()} camera`, 'success');
     updateStackingButton(camera, false);
     updateStackingStatus(camera, 'Stopped');
@@ -129,52 +123,71 @@ function enhanceImages(camera) {
 }
 
 function saveStackedImage(camera) {
+    console.log(`Attempting to save stacked image for ${camera} camera`);
     const preview = document.getElementById(`stacked-${camera}-preview`);
+    console.log('Preview element:', preview);
     
-    if (!preview || !preview.src || preview.src.includes('base64')) {
-        // If no stacked image available, generate one first
-        if (stackingBuffers[camera].length > 0) {
-            performClientSideStacking(camera);
-            setTimeout(() => saveStackedImage(camera), 1000); // Retry after stacking
-            return;
-        } else {
-            showMessage(`No stacked image available for ${camera.toUpperCase()} camera. Add some frames first.`, 'warning');
-            return;
-        }
+    if (!preview || !preview.src) {
+        showMessage(`No stacked image available for ${camera.toUpperCase()} camera. Add some frames first.`, 'warning');
+        return;
     }
     
-    // Convert image to blob and save it
-    const canvas = document.createElement('canvas');
-    const ctx = canvas.getContext('2d');
-    const img = new Image();
+    // Check if it's a data URL (which is what we want for stacked images)
+    const isDataUrl = preview.src.startsWith('data:image');
     
-    img.onload = function() {
-        canvas.width = img.width;
-        canvas.height = img.height;
-        ctx.drawImage(img, 0, 0);
-        
-        canvas.toBlob(function(blob) {
-            // Create download link
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-            a.href = url;
-            a.download = `stacked_${camera}_${timestamp}.jpg`;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
-            
-            showMessage(`Stacked image downloaded for ${camera.toUpperCase()} camera`, 'success');
-            console.log(`Stacked image saved for ${camera}`);
-        }, 'image/jpeg', 0.9);
-    };
+    if (!isDataUrl) {
+        // Not a data URL, might be a regular image URL - skip
+        showMessage(`No stacked image data available for ${camera.toUpperCase()} camera.`, 'warning');
+        return;
+    }
     
-    img.onerror = function() {
-        showMessage(`Error accessing stacked image for ${camera.toUpperCase()} camera`, 'error');
-    };
+    // The src is already a data URL from our stacking, so we can send it directly
+    const dataUrl = preview.src;
     
-    img.src = preview.src;
+    console.log('Sending save request to server...');
+    fetch('/api/save_stack', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            camera: camera,
+            image: dataUrl
+        })
+    })
+    .then(response => {
+        console.log('Save response status:', response.status);
+        return response.json();
+    })
+    .then(data => {
+        console.log('Save response data:', data);
+        if (data.success) {
+            showMessage(`Stacked image saved: ${data.filename}`, 'success');
+            // Refresh gallery if visible
+            if (document.getElementById('gallery-content')) {
+                console.log('Refreshing gallery after save...');
+                refreshGallery();
+            }
+        } else {
+            console.error('Save failed:', data.error);
+            showMessage(`Failed to save stacked image: ${data.error}`, 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Save fetch error:', error);
+        showMessage('Error saving stacked image to server', 'warning');
+    });
+    
+    // Also create a download link
+    const a = document.createElement('a');
+    const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+    a.href = dataUrl;
+    a.download = `stacked_${camera}_${timestamp}.jpg`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    
+    console.log(`Download initiated for stacked ${camera} image`);
 }
 
 // Stacking settings
@@ -192,7 +205,6 @@ function updateStackingSettings(camera) {
     // Update local settings (client-side only)
     stackingSettings[camera].count = settings.frame_count;
     
-    console.log(`Updated stacking settings for ${camera}:`, settings);
     showMessage(`Stacking settings updated for ${camera.toUpperCase()} camera`, 'success');
 }
 
@@ -214,7 +226,7 @@ function updateStackCount(camera) {
         const count = parseInt(slider.value);
         display.textContent = count;
         stackingSettings[camera].count = count;
-        console.log(`${camera} stack count updated to:`, count);
+        // Stack count updated
     }
 }
 
@@ -222,7 +234,6 @@ function toggleLongExposure(camera) {
     const checkbox = document.getElementById(`${camera}-long-exposure`);
     if (checkbox) {
         stackingSettings[camera].longExposure = checkbox.checked;
-        console.log(`${camera} long exposure:`, checkbox.checked);
         
         if (checkbox.checked) {
             showMessage(`Long exposure mode enabled for ${camera.toUpperCase()} camera`, 'info');
@@ -232,21 +243,54 @@ function toggleLongExposure(camera) {
     }
 }
 
-function toggleInfiniteExposure(camera) {
-    const checkbox = document.getElementById(`${camera}-infinite-exposure`);
+function toggleJuicedExposure(camera) {
+    const checkbox = document.getElementById(`${camera}-juiced-exposure`);
     if (checkbox) {
-        stackingSettings[camera].infiniteExposure = checkbox.checked;
-        console.log(`${camera} infinite exposure:`, checkbox.checked);
+        stackingSettings[camera].juicedExposure = checkbox.checked;
         
         if (checkbox.checked) {
-            showMessage(`Infinite exposure mode enabled for ${camera.toUpperCase()} camera`, 'info');
-            // Disable long exposure if infinite is enabled
+            showMessage(`Juiced exposure mode enabled for ${camera.toUpperCase()} camera`, 'info');
+        } else {
+            showMessage(`Juiced exposure mode disabled for ${camera.toUpperCase()} camera`, 'info');
+        }
+    }
+}
+
+function toggleInfiniteExposure(camera) {
+    const checkbox = document.getElementById(`${camera}-infinite-exposure`);
+    const slider = document.getElementById(`${camera}-stack-count`);
+    
+    if (checkbox) {
+        stackingSettings[camera].infiniteExposure = checkbox.checked;
+        
+        if (checkbox.checked) {
+            // Lock the slider and disable other modes
+            if (slider) {
+                slider.disabled = true;
+                slider.style.opacity = '0.5';
+            }
+            
+            // Disable other exposure modes
             const longExposureCheckbox = document.getElementById(`${camera}-long-exposure`);
+            const juicedExposureCheckbox = document.getElementById(`${camera}-juiced-exposure`);
             if (longExposureCheckbox) {
                 longExposureCheckbox.checked = false;
                 stackingSettings[camera].longExposure = false;
             }
+            if (juicedExposureCheckbox) {
+                juicedExposureCheckbox.checked = false;
+                stackingSettings[camera].juicedExposure = false;
+            }
+            
+            // Clear existing buffer and start infinite stacking
+            clearStackingBuffer(camera);
+            showMessage(`Infinite exposure mode enabled for ${camera.toUpperCase()} camera - stacking continuously`, 'info');
         } else {
+            // Unlock the slider
+            if (slider) {
+                slider.disabled = false;
+                slider.style.opacity = '1';
+            }
             showMessage(`Infinite exposure mode disabled for ${camera.toUpperCase()} camera`, 'info');
         }
     }
@@ -276,17 +320,18 @@ function updateStackedImage(camera) {
                     timestamp: Date.now()
                 });
                 
-                // Keep only the specified number of frames
-                const maxFrames = stackingSettings[camera].count;
-                if (stackingBuffers[camera].length > maxFrames) {
-                    stackingBuffers[camera] = stackingBuffers[camera].slice(-maxFrames);
+                // Keep only the specified number of frames (unless infinite exposure)
+                if (!stackingSettings[camera].infiniteExposure) {
+                    const maxFrames = stackingSettings[camera].count;
+                    if (stackingBuffers[camera].length > maxFrames) {
+                        stackingBuffers[camera] = stackingBuffers[camera].slice(-maxFrames);
+                    }
                 }
                 
                 // Perform client-side stacking
                 performClientSideStacking(camera);
                 
-                console.log(`${camera} stacking buffer size:`, stackingBuffers[camera].length);
-                showMessage(`Frame added to ${camera.toUpperCase()} stacking buffer (${stackingBuffers[camera].length}/${maxFrames})`, 'info');
+                // Buffer size tracking removed for cleaner output
             };
             reader.readAsDataURL(blob);
         })
@@ -305,7 +350,6 @@ function clearStackingBuffer(camera) {
         preview.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTI4MCIgaGVpZ2h0PSI3MjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjEyODAiIGhlaWdodD0iNzIwIiBmaWxsPSIjMDAwIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGRvbWluYW50LWJhc2VsaW5lPSJtaWRkbGUiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZpbGw9IndoaXRlIj5TdGFja2luZyBidWZmZXIgY2xlYXJlZDwvdGV4dD48L3N2Zz4=';
     }
     
-    console.log(`${camera} stacking buffer cleared`);
     showMessage(`Stacking buffer cleared for ${camera.toUpperCase()} camera`, 'success');
 }
 
@@ -318,83 +362,72 @@ function performClientSideStacking(camera) {
         return;
     }
     
-    console.log(`Performing client-side stacking for ${camera} with ${buffer.length} frames`);
+    // Performing client-side stacking
     
     // Create canvas for stacking operations
     const canvas = document.createElement('canvas');
     const ctx = canvas.getContext('2d');
     
-    // Set canvas size (will be updated when first image loads)
-    canvas.width = 640;
-    canvas.height = 480;
-    
-    // Load all images and stack them
-    const images = [];
-    let loadedCount = 0;
-    
-    buffer.forEach((frameData, index) => {
-        const img = new Image();
-        img.onload = function() {
-            images[index] = img;
-            loadedCount++;
-            
-            // Update canvas size based on first image
-            if (index === 0) {
-                canvas.width = img.width;
-                canvas.height = img.height;
-            }
-            
-            // When all images are loaded, perform stacking
-            if (loadedCount === buffer.length) {
-                stackImages(camera, canvas, ctx, images, settings);
-            }
-        };
-        img.onerror = function() {
-            console.error(`Failed to load image ${index} for stacking`);
-            loadedCount++;
-            if (loadedCount === buffer.length) {
-                stackImages(camera, canvas, ctx, images.filter(Boolean), settings);
-            }
-        };
-        img.src = frameData.data;
-    });
+    // Process frames sequentially to avoid memory issues
+    processFramesSequentially(camera, canvas, ctx, buffer, settings, 0);
 }
 
-function stackImages(camera, canvas, ctx, images, settings) {
-    if (images.length === 0) {
-        console.error('No valid images for stacking');
+function processFramesSequentially(camera, canvas, ctx, buffer, settings, frameIndex) {
+    if (frameIndex >= buffer.length) {
+        // All frames processed, update preview
+        updateStackedPreview(camera, canvas);
         return;
     }
     
-    const width = canvas.width;
-    const height = canvas.height;
+    const img = new Image();
+    img.onload = function() {
+        // Set canvas size based on first image
+        if (frameIndex === 0) {
+            canvas.width = img.width;
+            canvas.height = img.height;
+            
+            // Clear canvas for first frame
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Set initial composite mode
+            if (settings.infiniteExposure) {
+                // True infinite exposure uses lighten mode like long exposure
+                ctx.globalCompositeOperation = 'lighten';
+                ctx.globalAlpha = 1.0;
+            } else if (settings.juicedExposure) {
+                ctx.globalCompositeOperation = 'lighter';
+                // Reduced alpha to prevent overexposure - each frame adds 30% brightness
+                ctx.globalAlpha = 0.3;
+            } else if (settings.longExposure) {
+                ctx.globalCompositeOperation = 'lighten';
+                ctx.globalAlpha = 1.0;
+            } else {
+                ctx.globalCompositeOperation = 'source-over';
+                ctx.globalAlpha = 1.0 / buffer.length;
+            }
+        }
+        
+        // Draw the frame onto the canvas
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        
+        // Process next frame
+        processFramesSequentially(camera, canvas, ctx, buffer, settings, frameIndex + 1);
+    };
     
-    // Clear canvas
-    ctx.clearRect(0, 0, width, height);
+    img.onerror = function() {
+        console.error(`Failed to load image ${frameIndex} for stacking`);
+        // Skip this frame and continue with next
+        processFramesSequentially(camera, canvas, ctx, buffer, settings, frameIndex + 1);
+    };
     
-    if (settings.infiniteExposure) {
-        // Infinite exposure: additive blending
-        ctx.globalCompositeOperation = 'lighter';
-        images.forEach(img => {
-            ctx.drawImage(img, 0, 0, width, height);
-        });
-    } else if (settings.longExposure) {
-        // Long exposure: maximum pixel values
-        ctx.globalCompositeOperation = 'lighten';
-        images.forEach(img => {
-            ctx.drawImage(img, 0, 0, width, height);
-        });
-    } else {
-        // Normal stacking: average
-        ctx.globalAlpha = 1.0 / images.length;
-        images.forEach(img => {
-            ctx.drawImage(img, 0, 0, width, height);
-        });
-        ctx.globalAlpha = 1.0;
-    }
-    
+    img.src = buffer[frameIndex].data;
+}
+
+function updateStackedPreview(camera, canvas) {
     // Reset composite operation
+    const ctx = canvas.getContext('2d');
     ctx.globalCompositeOperation = 'source-over';
+    ctx.globalAlpha = 1.0;
     
     // Update preview image
     const preview = document.getElementById(`stacked-${camera}-preview`);
@@ -402,13 +435,12 @@ function stackImages(camera, canvas, ctx, images, settings) {
         preview.src = canvas.toDataURL('image/jpeg', 0.9);
     }
     
-    console.log(`Client-side stacking completed for ${camera} with ${images.length} frames`);
-    showMessage(`Stacked image updated for ${camera.toUpperCase()} (${images.length} frames)`, 'success');
+    // Client-side stacking completed
 }
 
 // Auto-stacking management
 function startAutoStacking() {
-    console.log('Starting auto-stacking for IR and HQ cameras');
+    // Starting auto-stacking for both cameras
     
     // Clear any existing intervals
     stopAutoStacking();
@@ -430,7 +462,7 @@ function startAutoStacking() {
 }
 
 function startAutoStackingForCamera(camera) {
-    console.log(`Starting auto-stacking for ${camera} camera`);
+    // Starting auto-stacking for camera
     
     // Clear any existing interval for this camera
     if (stackingIntervals[camera]) {
@@ -447,7 +479,7 @@ function startAutoStackingForCamera(camera) {
 }
 
 function stopAutoStackingForCamera(camera) {
-    console.log(`Stopping auto-stacking for ${camera} camera`);
+    // Stopping auto-stacking for camera
     
     if (stackingIntervals[camera]) {
         clearInterval(stackingIntervals[camera]);
@@ -456,6 +488,8 @@ function stopAutoStackingForCamera(camera) {
 }
 
 function stopAutoStacking() {
+    // Stopping auto-stacking for both cameras
+    
     if (stackingIntervals.ir) {
         clearInterval(stackingIntervals.ir);
         stackingIntervals.ir = null;
@@ -466,5 +500,5 @@ function stopAutoStacking() {
         stackingIntervals.hq = null;
     }
     
-    console.log('Auto-stacking stopped');
+    // Auto-stacking stopped
 }

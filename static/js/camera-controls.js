@@ -325,7 +325,13 @@ function updateExposureDisplay(camera) {
     const display = document.getElementById(camera + '-exposure-value');
     if (slider && display) {
         const value = parseInt(slider.value);
-        display.textContent = (value / 1000).toFixed(1) + 'ms';
+        if (value >= 1000000) {
+            // Convert to seconds for values >= 1 second
+            display.textContent = (value / 1000000).toFixed(1) + 's';
+        } else {
+            // Keep milliseconds for values < 1 second
+            display.textContent = (value / 1000).toFixed(1) + 'ms';
+        }
     }
 }
 

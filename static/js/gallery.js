@@ -2,19 +2,26 @@
 
 // Gallery management
 function refreshGallery() {
+    console.log('Refreshing gallery...');
     fetch('/api/gallery/images')
-    .then(response => response.json())
+    .then(response => {
+        console.log('Gallery response status:', response.status);
+        return response.json();
+    })
     .then(data => {
+        console.log('Gallery data received:', data);
         if (data.success) {
+            console.log('Number of images:', data.images?.length || 0);
             displayGalleryImages(data.images || []);
             showMessage(`Gallery refreshed - ${data.images?.length || 0} images found`, 'info');
         } else {
+            console.error('Gallery failed:', data.error);
             showMessage('Failed to load gallery: ' + (data.error || 'Unknown error'), 'error');
         }
     })
     .catch(error => {
+        console.error('Gallery fetch error:', error);
         showMessage('Error loading gallery: ' + error, 'error');
-        console.error('Gallery error:', error);
     });
 }
 
@@ -27,7 +34,13 @@ function displayGalleryImages(images) {
         return;
     }
     
-    const galleryHtml = images.map(image => `
+    const galleryHtml = images.map(image => {
+        // For delete, just use the filename without the path
+        // The server will figure out which directory it's in
+        const deleteFilename = image.name;
+        console.log(`Gallery item: ${image.name}, type: ${image.type}, delete will use: ${deleteFilename}`);
+        
+        return `
         <div class="gallery-item">
             <img src="${image.url}" alt="${image.name}" 
                  onclick="openImageModal('${image.url}')"
@@ -41,12 +54,12 @@ function displayGalleryImages(images) {
                 <button class="btn btn-small btn-primary" onclick="downloadImage('${image.url}', '${image.name}')">
                     📥 Download
                 </button>
-                <button class="btn btn-small btn-danger" onclick="deleteImage('${image.name}')">
+                <button class="btn btn-small btn-danger" onclick="deleteImage('${deleteFilename}')">
                     🗑️ Delete
                 </button>
             </div>
         </div>
-    `).join('');
+    `}).join('');
     
     galleryContent.innerHTML = galleryHtml;
 }
@@ -81,7 +94,9 @@ function downloadImage(url, filename) {
 }
 
 function deleteImage(filename) {
+    console.log('Attempting to delete:', filename);
     if (confirm(`Are you sure you want to delete ${filename}?`)) {
+        console.log('User confirmed deletion');
         fetch('/api/gallery/delete', {
             method: 'POST',
             headers: {
@@ -89,19 +104,26 @@ function deleteImage(filename) {
             },
             body: JSON.stringify({ filename: filename })
         })
-        .then(response => response.json())
+        .then(response => {
+            console.log('Delete response status:', response.status);
+            return response.json();
+        })
         .then(data => {
+            console.log('Delete response data:', data);
             if (data.success) {
                 showMessage(`${filename} deleted`, 'success');
                 refreshGallery();
             } else {
+                console.error('Delete failed:', data.error);
                 showMessage('Delete failed: ' + (data.error || 'Unknown error'), 'error');
             }
         })
         .catch(error => {
+            console.error('Delete fetch error:', error);
             showMessage('Error deleting image: ' + error, 'error');
-            console.error('Delete error:', error);
         });
+    } else {
+        console.log('User cancelled deletion');
     }
 }
 
@@ -193,4 +215,28 @@ function uploadImages() {
     };
     
     input.click();
+}
+
+// Filter functionality for image browser
+function filterImages(type) {
+    console.log(`Filtering images by type: ${type}`);
+    // For now, just refresh the gallery - filtering can be implemented later
+    refreshGallery();
+    
+    // Update filter button states
+    const filterButtons = document.querySelectorAll('[id^="filter-"]');
+    filterButtons.forEach(btn => {
+        btn.classList.remove('active');
+        btn.classList.add('btn-secondary');
+        btn.classList.remove('btn-primary');
+    });
+    
+    // Set active filter button
+    const activeButton = document.getElementById(`filter-${type}`);
+    if (activeButton) {
+        activeButton.classList.remove('btn-secondary');
+        activeButton.classList.add('btn-primary', 'active');
+    }
+    
+    showMessage(`Showing ${type === 'all' ? 'all' : type} images`, 'info');
 }

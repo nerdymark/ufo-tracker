@@ -1829,6 +1829,347 @@ def clear_all_detection_images():
         logger.error(f"Error clearing all detection images: {e}")
         return jsonify({"success": False, "error": str(e)}), 503
 
+# ============= CAPTURE ENDPOINTS =============
+
+@app.route('/api/capture/<camera_type>', methods=['POST'])
+def api_capture_frame(camera_type):
+    """Capture a single frame from the specified camera"""
+    try:
+        from datetime import datetime
+        import os
+        
+        # Validate camera type
+        if camera_type not in ['ir', 'hq']:
+            return jsonify({
+                'success': False,
+                'error': 'Invalid camera type. Use "ir" or "hq"'
+            }), 400
+        
+        # Get the appropriate camera
+        camera = None
+        if camera_type == 'ir':
+            camera = camera_manager.ir_camera
+        else:
+            camera = camera_manager.hq_camera
+        
+        if not camera or not camera.is_active():
+            return jsonify({
+                'success': False,
+                'error': f'{camera_type.upper()} camera not available'
+            }), 503
+        
+        # Get a frame from the camera
+        frame = camera.get_frame()
+        if frame is None:
+            return jsonify({
+                'success': False,
+                'error': 'Failed to capture frame'
+            }), 500
+        
+        # Save to gallery/images directory
+        save_path = 'static/gallery/images'
+        os.makedirs(save_path, exist_ok=True)
+        
+        # Generate filename with timestamp
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        filename = f'{camera_type}_capture_{timestamp}.jpg'
+        filepath = os.path.join(save_path, filename)
+        
+        # Save the frame
+        success = cv2.imwrite(filepath, frame)
+        
+        if success:
+            logger.info(f"Captured frame from {camera_type} camera: {filename}")
+            return jsonify({
+                'success': True,
+                'filename': filename,
+                'path': filepath,
+                'message': f'Image captured successfully'
+            })
+        else:
+            return jsonify({
+                'success': False,
+                'error': 'Failed to save image'
+            }), 500
+            
+    except Exception as e:
+        logger.error(f"Capture error for {camera_type}: {e}")
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+@app.route('/api/save_stack', methods=['POST'])
+def api_save_stack():
+    """Save a stacked image from client-side processing"""
+    try:
+        import base64
+        from datetime import datetime
+        import os
+        
+        data = request.json
+        if not data or 'image' not in data:
+            return jsonify({
+                'success': False,
+                'error': 'No image data provided'
+            }), 400
+        
+        camera_type = data.get('camera', 'unknown')
+        image_data = data['image']
+        
+        # Remove data URL prefix if present
+        if ',' in image_data:
+            image_data = image_data.split(',')[1]
+        
+        # Decode base64 image
+        image_bytes = base64.b64decode(image_data)
+        
+        # Save to gallery/stacks directory
+        save_path = 'static/gallery/stacks'
+        os.makedirs(save_path, exist_ok=True)
+        
+        # Generate filename with timestamp
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        filename = f'stacked_{camera_type}_{timestamp}.jpg'
+        filepath = os.path.join(save_path, filename)
+        
+        # Save the image
+        with open(filepath, 'wb') as f:
+            f.write(image_bytes)
+        
+        logger.info(f"Saved stacked image: {filename}")
+        return jsonify({
+            'success': True,
+            'filename': filename,
+            'path': filepath,
+            'message': 'Stacked image saved successfully'
+        })
+        
+    except Exception as e:
+        logger.error(f"Save stack error: {e}")
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+@app.route('/api/gallery/images')
+def api_gallery_images():
+    """Get list of all images from multiple gallery directories"""
+    try:
+        images = []
+        
+        # Get gallery directories from config
+        gallery_dirs = Config.STORAGE.get('gallery_dirs', [
+            ('static/gallery/images', '/static/gallery/images/'),
+            ('static/gallery/stacks', '/static/gallery/stacks/'),
+            ('detections', '/detections/')
+        ])
+        
+        for dir_path, url_prefix in gallery_dirs:
+            # Create directory if it doesn't exist
+            os.makedirs(dir_path, exist_ok=True)
+            
+            # Get all image files from this directory
+            if os.path.exists(dir_path):
+                for filename in os.listdir(dir_path):
+                    if filename.lower().endswith(('.jpg', '.jpeg', '.png', '.gif')):
+                        filepath = os.path.join(dir_path, filename)
+                        try:
+                            stat = os.stat(filepath)
+                            images.append({
+                                'name': filename,
+                                'url': url_prefix + filename,
+                                'size': stat.st_size,
+                                'date': datetime.fromtimestamp(stat.st_mtime).isoformat(),
+                                'type': dir_path.split('/')[-1]  # Add type for categorization
+                            })
+                        except Exception as e:
+                            logger.error(f"Error processing gallery image {filename}: {e}")
+        
+        # Sort by date (newest first)
+        images.sort(key=lambda x: x['date'], reverse=True)
+        
+        return jsonify({
+            'success': True,
+            'images': images,
+            'count': len(images)
+        })
+        
+    except Exception as e:
+        logger.error(f"Gallery images error: {e}")
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+@app.route('/api/gallery/delete', methods=['POST'])
+def api_gallery_delete():
+    """Delete a specific image from the gallery"""
+    try:
+        data = request.json
+        filename = data.get('filename')
+        
+        if not filename:
+            return jsonify({
+                'success': False,
+                'error': 'No filename provided'
+            }), 400
+        
+        # Security check - prevent directory traversal
+        if '..' in filename or '\\' in filename:
+            return jsonify({
+                'success': False,
+                'error': 'Invalid filename'
+            }), 400
+        
+        # Handle filenames with subdirectory (e.g., "stacks/image.jpg")
+        if '/' in filename:
+            # Split into directory and filename
+            parts = filename.split('/')
+            if len(parts) == 2:
+                subdir = parts[0]
+                file = parts[1]
+                # Get the absolute base directory of the app
+                base_dir = os.path.dirname(os.path.abspath(__file__))
+                
+                # Only allow known subdirectories
+                if subdir in ['images', 'stacks', 'detections']:
+                    filepath = os.path.join(base_dir, 'static/gallery', subdir, file)
+                    if not os.path.exists(filepath):
+                        # Try without base_dir
+                        filepath = os.path.join('static/gallery', subdir, file)
+                else:
+                    return jsonify({
+                        'success': False,
+                        'error': 'Invalid directory'
+                    }), 400
+            else:
+                return jsonify({
+                    'success': False,
+                    'error': 'Invalid path format'
+                }), 400
+        else:
+            # Get the absolute base directory of the app
+            base_dir = os.path.dirname(os.path.abspath(__file__))
+            
+            # Try multiple locations for backward compatibility
+            possible_paths = [
+                os.path.join(base_dir, 'static/gallery/images', filename),
+                os.path.join(base_dir, 'static/gallery/stacks', filename),
+                os.path.join(base_dir, 'detections', filename),
+                os.path.join(base_dir, Config.STORAGE['save_path'], filename),
+                # Also try relative paths in case app is running from correct directory
+                os.path.join('static/gallery/images', filename),
+                os.path.join('static/gallery/stacks', filename),
+                os.path.join('detections', filename),
+            ]
+            
+            logger.info(f"Searching for file '{filename}' in directories...")
+            logger.info(f"Current working directory: {os.getcwd()}")
+            logger.info(f"App base directory: {base_dir}")
+            
+            filepath = None
+            for path in possible_paths:
+                abs_path = os.path.abspath(path)
+                logger.info(f"Checking path: {abs_path} - exists: {os.path.exists(abs_path)}")
+                if os.path.exists(abs_path):
+                    filepath = abs_path
+                    logger.info(f"Found file at: {filepath}")
+                    break
+            
+            if not filepath:
+                logger.error(f"File not found in any gallery directory: {filename}")
+                logger.error(f"Searched paths: {possible_paths}")
+                return jsonify({
+                    'success': False,
+                    'error': 'File not found - check server logs'
+                }), 404
+        
+        # Final check if file exists
+        if filepath and not os.path.exists(filepath):
+            logger.error(f"File not found at final check: {filepath}")
+            return jsonify({
+                'success': False,
+                'error': 'File not found at final check'
+            }), 404
+        
+        if not filepath:
+            return jsonify({
+                'success': False,
+                'error': 'File path not determined'
+            }), 404
+        
+        # Delete the file
+        os.remove(filepath)
+        logger.info(f"Deleted gallery image: {filepath}")
+        
+        return jsonify({
+            'success': True,
+            'message': f'Deleted {filename}'
+        })
+        
+    except Exception as e:
+        logger.error(f"Gallery delete error: {e}")
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+@app.route('/api/gallery/clear', methods=['POST'])
+def api_gallery_clear():
+    """Clear all images from the gallery"""
+    try:
+        gallery_path = Config.STORAGE['save_path']
+        
+        if not os.path.exists(gallery_path):
+            return jsonify({
+                'success': True,
+                'message': 'Gallery already empty'
+            })
+        
+        count = 0
+        for filename in os.listdir(gallery_path):
+            if filename.lower().endswith(('.jpg', '.jpeg', '.png', '.gif')):
+                try:
+                    os.remove(os.path.join(gallery_path, filename))
+                    count += 1
+                except Exception as e:
+                    logger.error(f"Error deleting {filename}: {e}")
+        
+        logger.info(f"Cleared gallery: deleted {count} images")
+        
+        return jsonify({
+            'success': True,
+            'message': f'Deleted {count} images'
+        })
+        
+    except Exception as e:
+        logger.error(f"Gallery clear error: {e}")
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+@app.route('/detections/<filename>')
+def serve_gallery_image(filename):
+    """Serve gallery images from the detections directory"""
+    try:
+        # Security check - prevent directory traversal
+        if '..' in filename or '/' in filename or '\\' in filename:
+            return "Invalid filename", 400
+        
+        gallery_path = Config.STORAGE['save_path']
+        filepath = os.path.join(gallery_path, filename)
+        
+        if os.path.exists(filepath):
+            return send_file(filepath, mimetype='image/jpeg')
+        else:
+            return "File not found", 404
+            
+    except Exception as e:
+        logger.error(f"Error serving gallery image {filename}: {e}")
+        return "Error serving image", 500
+
 # ============= TIMELAPSE ENDPOINTS (DISABLED) =============
 
 @app.route('/api/timelapses')

@@ -650,10 +650,19 @@ class IRCamera:
             return False
         
         try:
-            # For IR camera, use current video configuration for consistent results
-            # IR cameras typically don't benefit from still mode switching
-            self._camera.capture_file(filepath)
-            logger.info(f"IR still captured to {filepath}")
+            if high_quality:
+                # Switch to still configuration for full resolution capture
+                still_config = self._camera.create_still_configuration(
+                    main={"size": (3280, 2464)},  # Full IMX219 sensor resolution
+                    raw={"size": (3280, 2464)}
+                )
+                # Capture with the still configuration
+                self._camera.switch_mode_and_capture_file(still_config, filepath)
+                logger.info(f"High-quality IR still captured to {filepath} at 3280x2464")
+            else:
+                # Use current video configuration for faster capture
+                self._camera.capture_file(filepath)
+                logger.info(f"IR still captured to {filepath}")
             return True
             
         except Exception as e:

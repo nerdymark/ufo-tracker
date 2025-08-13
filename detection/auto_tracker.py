@@ -103,7 +103,7 @@ class CameraCorrelation:
             logger.error(f"Error calibrating camera correlation: {e}")
             return False
     
-    def map_ir_to_hq(self, ir_point: Tuple[int, int], hq_resolution: Tuple[int, int]) -> Optional[Tuple[int, int]]:
+    def map_ir_to_hq(self, ir_point: Tuple[int, int], hq_resolution: Tuple[int, int], ir_resolution: Tuple[int, int] = (1280, 720)) -> Optional[Tuple[int, int]]:
         """Map a point from IR camera space to HQ camera space"""
         if not self.calibration_valid or self.homography_matrix is None:
             return None
@@ -119,7 +119,7 @@ class CameraCorrelation:
             x, y = transformed[0][0]
             
             # Scale to HQ camera resolution (homography was calculated for resized HQ frame)
-            ir_w, ir_h = 1920, 1080  # IR camera resolution from config
+            ir_w, ir_h = ir_resolution  # Use actual IR camera streaming resolution
             hq_w, hq_h = hq_resolution
             
             # Scale coordinates to full HQ resolution
@@ -136,7 +136,7 @@ class CameraCorrelation:
             logger.error(f"Error mapping IR point to HQ: {e}")
             return None
     
-    def map_ir_bbox_to_hq(self, ir_bbox: Tuple[int, int, int, int], hq_resolution: Tuple[int, int]) -> Optional[Tuple[int, int, int, int]]:
+    def map_ir_bbox_to_hq(self, ir_bbox: Tuple[int, int, int, int], hq_resolution: Tuple[int, int], ir_resolution: Tuple[int, int] = (1280, 720)) -> Optional[Tuple[int, int, int, int]]:
         """Map a bounding box from IR camera space to HQ camera space"""
         if not self.calibration_valid:
             return None
@@ -153,7 +153,7 @@ class CameraCorrelation:
         
         mapped_corners = []
         for corner in corners:
-            mapped = self.map_ir_to_hq(corner, hq_resolution)
+            mapped = self.map_ir_to_hq(corner, hq_resolution, ir_resolution)
             if mapped is None:
                 return None
             mapped_corners.append(mapped)
@@ -468,8 +468,9 @@ class AutoTracker:
                 # Map IR detection to HQ camera coordinates
                 ir_bbox = target_detection['bbox']
                 hq_resolution = self.camera_manager.hq_camera.resolution if self.camera_manager.hq_camera else (4056, 3040)
+                ir_resolution = self.camera_manager.ir_camera.resolution if self.camera_manager.ir_camera else (1280, 720)
                 
-                hq_bbox = self.camera_correlation.map_ir_bbox_to_hq(ir_bbox, hq_resolution)
+                hq_bbox = self.camera_correlation.map_ir_bbox_to_hq(ir_bbox, hq_resolution, ir_resolution)
                 
                 if hq_bbox:
                     # Set smooth ROI target

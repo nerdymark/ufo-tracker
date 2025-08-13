@@ -341,6 +341,111 @@
             backdrop-filter: blur(15px);
         }
 
+        /* Feature Tracking Styles */
+        .feature-tracking-description {
+            color: #aaa;
+            font-size: 14px;
+            margin-bottom: 15px;
+            font-style: italic;
+        }
+
+        .feature-frame-container {
+            margin: 15px 0;
+            border: 2px dashed rgba(100, 200, 255, 0.3);
+            border-radius: 8px;
+            padding: 10px;
+            background: rgba(0, 0, 0, 0.3);
+            min-height: 300px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .feature-tracking-canvas {
+            display: block;
+            max-width: 100%;
+            border: 1px solid rgba(100, 200, 255, 0.2);
+            border-radius: 4px;
+            cursor: crosshair;
+            background: #000;
+        }
+
+        .feature-tracking-canvas:hover {
+            border-color: rgba(100, 200, 255, 0.5);
+        }
+
+        .feature-status {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: bold;
+            margin-left: 10px;
+        }
+
+        .feature-status.status-good {
+            background: rgba(40, 167, 69, 0.2);
+            color: #28a745;
+            border: 1px solid #28a745;
+        }
+
+        .feature-status.status-waiting {
+            background: rgba(255, 193, 7, 0.2);
+            color: #ffc107;
+            border: 1px solid #ffc107;
+        }
+
+        .feature-status.status-active {
+            background: rgba(220, 53, 69, 0.2);
+            color: #dc3545;
+            border: 1px solid #dc3545;
+        }
+
+        .feature-instructions {
+            background: rgba(23, 162, 184, 0.1);
+            border: 1px solid rgba(23, 162, 184, 0.3);
+            border-radius: 6px;
+            padding: 12px;
+            margin: 15px 0;
+            font-size: 14px;
+        }
+
+        .feature-instructions p {
+            margin: 5px 0;
+            color: #e0e0e0;
+        }
+
+        .feature-instructions strong {
+            color: #64c8ff;
+        }
+
+        .feature-camera-btn.active {
+            background: rgba(23, 162, 184, 0.3);
+            border-color: #17a2b8;
+            color: #17a2b8;
+        }
+
+        /* Detection Statistics */
+        .detection-stat {
+            text-align: center;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 8px;
+            padding: 10px;
+            border: 1px solid rgba(100, 200, 255, 0.2);
+        }
+
+        .detection-stat .value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #64c8ff;
+            display: block;
+        }
+
+        .detection-stat .label {
+            font-size: 12px;
+            color: #aaa;
+            margin-top: 4px;
+        }
+
         .gallery-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
@@ -580,6 +685,30 @@
             width: 20px;
             height: 20px;
             accent-color: #4CAF50;
+        }
+
+        /* Music Effects Controls */
+        .effect-control {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 10px;
+        }
+        
+        .effect-control .checkbox-group {
+            margin-bottom: 8px;
+        }
+        
+        .effect-control input[type="range"] {
+            width: 100%;
+            margin: 5px 0;
+        }
+        
+        .effect-value {
+            font-size: 12px;
+            color: #64c8ff;
+            font-weight: bold;
+            float: right;
         }
 
         /* Detection Panel */
@@ -1133,7 +1262,6 @@
         <div class="nav-tabs">
             <button class="nav-tab active" onclick="showSection('cameras')">📹 Live Cameras</button>
             <button class="nav-tab" onclick="showSection('controls')">⚙️ Camera Controls</button>
-            <button class="nav-tab disabled" style="opacity: 0.5; cursor: not-allowed;" title="Motion Detection disabled">🎯 Motion Detection</button>
             <button class="nav-tab" onclick="showSection('gallery')">🖼️ Gallery</button>
             <button class="nav-tab" onclick="showSection('settings')">🔧 System Settings</button>
         </div>
@@ -1146,6 +1274,7 @@
                     <button class="btn btn-secondary" onclick="setViewMode('stacked')" id="stacked-mode-btn">📚 Image Stacking</button>
                     <button class="btn btn-warning disabled" title="Feature alignment disabled for compatibility" disabled>🎯 Feature Aligned</button>
                     <button class="btn btn-success" onclick="setViewMode('autotrack')" id="autotrack-mode-btn">🎯 Auto Tracking</button>
+                    <button class="btn btn-info" onclick="showADSBView()" id="adsb-mode-btn">🛩️ Flight Tracker</button>
                 </div>
                 <div class="btn-group" style="margin-left: 20px;">
                     <!-- Camera streams now auto-load on page load -->
@@ -1159,7 +1288,7 @@
                     <div class="camera-panel">
                         <h3>📡 IR Camera (Live Stream)</h3>
                         <div class="camera-preview">
-                            <img id="ir-live" data-src="http://10.0.1.164:5001/ir_feed" alt="IR Camera Live" onclick="toggleFullscreen('ir')" style="cursor: pointer;" src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzIwIiBoZWlnaHQ9IjI0MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMzIwIiBoZWlnaHQ9IjI0MCIgZmlsbD0iIzMzMyIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBkb21pbmFudC1iYXNlbGluZT0ibWlkZGxlIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmaWxsPSJ3aGl0ZSI+SVIgQ2FtZXJhIExvYWRpbmcuLi48L3RleHQ+PC9zdmc+">
+                            <img id="ir-live" data-src="http://10.0.1.164:5001/ir_feed" alt="IR Camera Live" onclick="toggleFullscreen('ir')" style="cursor: pointer;" src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzIwIiBoZWlnaHQ9IjI0MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KICA8ZGVmcz4KICAgIDxsaW5lYXJHcmFkaWVudCBpZD0iYmdHcmFkMzIwIiB4MT0iMCUiIHkxPSIwJSIgeDI9IjEwMCUiIHkyPSIxMDAlIj4KICAgICAgPHN0b3Agb2Zmc2V0PSIwJSIgc3RvcC1jb2xvcj0iIzAwMTEyMiIgc3RvcC1vcGFjaXR5PSIxIiAvPgogICAgICA8c3RvcCBvZmZzZXQ9IjUwJSIgc3RvcC1jb2xvcj0iIzAwMDgxNCIgc3RvcC1vcGFjaXR5PSIxIiAvPgogICAgICA8c3RvcCBvZmZzZXQ9IjEwMCUiIHN0b3AtY29sb3I9IiMxYTAwMzMiIHN0b3Atb3BhY2l0eT0iMSIgLz4KICAgIDwvbGluZWFyR3JhZGllbnQ+CiAgICA8bGluZWFyR3JhZGllbnQgaWQ9InRleHRHcmFkMzIwIiB4MT0iMCUiIHkxPSIwJSIgeDI9IjEwMCUiIHkyPSIwJSI+CiAgICAgIDxzdG9wIG9mZnNldD0iMCUiIHN0b3AtY29sb3I9IiMwMGZmZmYiIHN0b3Atb3BhY2l0eT0iMC44IiAvPgogICAgICA8c3RvcCBvZmZzZXQ9IjUwJSIgc3RvcC1jb2xvcj0iIzY0YzhmZiIgc3RvcC1vcGFjaXR5PSIxIiAvPgogICAgICA8c3RvcCBvZmZzZXQ9IjEwMCUiIHN0b3AtY29sb3I9IiMwMGZmZmYiIHN0b3Atb3BhY2l0eT0iMC44IiAvPgogICAgPC9saW5lYXJHcmFkaWVudD4KICAgIDxmaWx0ZXIgaWQ9Imdsb3czMjAiPgogICAgICA8ZmVHYXVzc2lhbkJsdXIgc3RkRGV2aWF0aW9uPSIzIiByZXN1bHQ9ImNvbG9yZWRCbHVyIi8+CiAgICAgIDxmZU1lcmdlPiAKICAgICAgICA8ZmVNZXJnZU5vZGUgaW49ImNvbG9yZWRCbHVyIi8+CiAgICAgICAgPGZlTWVyZ2VOb2RlIGluPSJTb3VyY2VHcmFwaGljIi8+CiAgICAgIDwvZmVNZXJnZT4KICAgIDwvZmlsdGVyPgogICAgPGZpbHRlciBpZD0ic2NhbjMyMCI+CiAgICAgIDxmZVR1cmJ1bGVuY2UgYmFzZUZyZXF1ZW5jeT0iMC45IiBudW1PY3RhdmVzPSI0IiByZXN1bHQ9Im5vaXNlIi8+CiAgICAgIDxmZUNvbG9yTWF0cml4IGluPSJub2lzZSIgdHlwZT0ic2F0dXJhdGUiIHZhbHVlcz0iMCIvPgogICAgICA8ZmVDb21wb25lbnRUcmFuc2Zlcj4KICAgICAgICA8ZmVGdW5jQSB0eXBlPSJkaXNjcmV0ZSIgdGFibGVWYWx1ZXM9IjAuNSAwLjIgMC44IDAuMyAwLjEgMC43Ii8+CiAgICAgIDwvZmVDb21wb25lbnRUcmFuc2Zlcj4KICAgIDwvZmlsdGVyPgogIDwvZGVmcz4KICA8IS0tIEJhY2tncm91bmQgLS0+CiAgPHJlY3Qgd2lkdGg9IjMyMCIgaGVpZ2h0PSIyNDAiIGZpbGw9InVybCgjYmdHcmFkMzIwKSIvPgogIDwhLS0gR3JpZCBwYXR0ZXJuIC0tPgogIDxwYXR0ZXJuIGlkPSJncmlkMzIwIiB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHBhdHRlcm5Vbml0cz0idXNlclNwYWNlT25Vc2UiPgogICAgPHBhdGggZD0iTSA0MCAwIEwgMCAwIDAgNDAiIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzAwZmZmZiIgc3Ryb2tlLXdpZHRoPSIwLjUiIG9wYWNpdHk9IjAuMTUiLz4KICA8L3BhdHRlcm4+CiAgPHJlY3Qgd2lkdGg9IjMyMCIgaGVpZ2h0PSIyNDAiIGZpbGw9InVybCgjZ3JpZDMyMCkiLz4KICA8IS0tIFNjYW4gbGluZXMgLS0+CiAgPHJlY3Qgd2lkdGg9IjMyMCIgaGVpZ2h0PSIyNDAiIGZpbGw9InVybCgjc2NhbjMyMCkiIG9wYWNpdHk9IjAuMSIvPgogIDwhLS0gQm9yZGVyIC0tPgogIDxyZWN0IHg9IjIiIHk9IjIiIHdpZHRoPSIzMTYiIGhlaWdodD0iMjM2IiBmaWxsPSJub25lIiBzdHJva2U9IiMwMGZmZmYiIHN0cm9rZS13aWR0aD0iMiIgb3BhY2l0eT0iMC42Ii8+CiAgPCEtLSBDb3JuZXIgYWNjZW50cyAtLT4KICA8cGF0aCBkPSJNIDEwIDEwIEwgMzAgMTAgTCAzMCAzMCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjNjRjOGZmIiBzdHJva2Utd2lkdGg9IjMiIG9wYWNpdHk9IjAuOCIvPgogIDxwYXRoIGQ9Ik0gMzEwIDEwIEwgMjkwIDEwIEwgMjkwIDMwIiBmaWxsPSJub25lIiBzdHJva2U9IiM2NGM4ZmYiIHN0cm9rZS13aWR0aD0iMyIgb3BhY2l0eT0iMC44Ii8+CiAgPHBhdGggZD0iTSAxMCAyMzAgTCAzMCAyMzAgTCAzMCAyMTAiIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzY0YzhmZiIgc3Ryb2tlLXdpZHRoPSIzIiBvcGFjaXR5PSIwLjgiLz4KICA8cGF0aCBkPSJNIDMxMCAyMzAgTCAyOTAgMjMwIEwgMjkwIDIxMCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjNjRjOGZmIiBzdHJva2Utd2lkdGg9IjMiIG9wYWNpdHk9IjAuOCIvPgogIDwhLS0gSWNvbiAtLT4KICA8dGV4dCB4PSIxNjAiIHk9IjEwMCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZm9udC1mYW1pbHk9Im1vbm9zcGFjZSIgZm9udC1zaXplPSIzMCIgZmlsbD0idXJsKCN0ZXh0R3JhZDMyMCkiIGZpbHRlcj0idXJsKCNnbG93MzIwKSI+8J+ToTwvdGV4dD4KICA8IS0tIE1haW4gdGV4dCAtLT4KICA8dGV4dCB4PSIxNjAiIHk9IjEzMCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZm9udC1mYW1pbHk9IidDb3VyaWVyIE5ldycsIG1vbm9zcGFjZSIgZm9udC13ZWlnaHQ9ImJvbGQiIGZvbnQtc2l6ZT0iMTYiIGZpbGw9InVybCgjdGV4dEdyYWQzMjApIiBmaWx0ZXI9InVybCgjZ2xvdzMyMCkiPklSIENBTUVSQSBMT0FESU5HLi4uPC90ZXh0PgogIDwhLS0gU3RhdHVzIGluZGljYXRvciAtLT4KICA8Y2lyY2xlIGN4PSIyOTAiIGN5PSIzMCIgcj0iNCIgZmlsbD0iIzAwZmYwMCIgb3BhY2l0eT0iMC44Ij4KICAgIDxhbmltYXRlIGF0dHJpYnV0ZU5hbWU9Im9wYWNpdHkiIHZhbHVlcz0iMC44OzAuMzswLjgiIGR1cj0iMnMiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+CiAgPC9jaXJjbGU+CiAgPCEtLSBMb2FkaW5nIGFuaW1hdGlvbiAtLT4KICA8cmVjdCB4PSIxMTAiIHk9IjE0NSIgd2lkdGg9IjEwMCIgaGVpZ2h0PSI0IiBmaWxsPSJub25lIiBzdHJva2U9IiMwMGZmZmYiIHN0cm9rZS13aWR0aD0iMiIgb3BhY2l0eT0iMC41Ii8+CiAgPHJlY3QgeD0iMTEwIiB5PSIxNDUiIHdpZHRoPSIyMCIgaGVpZ2h0PSI0IiBmaWxsPSIjNjRjOGZmIj4KICAgIDxhbmltYXRlVHJhbnNmb3JtIGF0dHJpYnV0ZU5hbWU9InRyYW5zZm9ybSIgdHlwZT0idHJhbnNsYXRlIiB2YWx1ZXM9IjAsMDsgODAsMDsgMCwwIiBkdXI9IjNzIiByZXBlYXRDb3VudD0iaW5kZWZpbml0ZSIvPgogIDwvcmVjdD4KPC9zdmc+">
                             <div class="camera-overlay">IR Live</div>
                         </div>
                         <div class="btn-group">
@@ -1172,7 +1301,7 @@
                     <div class="camera-panel">
                         <h3>📷 HQ Camera (Live Stream)</h3>
                         <div class="camera-preview">
-                            <img id="hq-live" data-src="http://10.0.1.164:5001/hq_feed" alt="HQ Camera Live" onclick="toggleFullscreen('hq')" style="cursor: pointer;" src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzIwIiBoZWlnaHQ9IjI0MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMzIwIiBoZWlnaHQ9IjI0MCIgZmlsbD0iIzMzMyIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBkb21pbmFudC1iYXNlbGluZT0ibWlkZGxlIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmaWxsPSJ3aGl0ZSI+SFEgQ2FtZXJhIExvYWRpbmcuLi48L3RleHQ+PC9zdmc+">
+                            <img id="hq-live" data-src="http://10.0.1.164:5001/hq_feed" alt="HQ Camera Live" onclick="toggleFullscreen('hq')" style="cursor: pointer;" src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzIwIiBoZWlnaHQ9IjI0MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KICA8ZGVmcz4KICAgIDxsaW5lYXJHcmFkaWVudCBpZD0iYmdHcmFkMzIwIiB4MT0iMCUiIHkxPSIwJSIgeDI9IjEwMCUiIHkyPSIxMDAlIj4KICAgICAgPHN0b3Agb2Zmc2V0PSIwJSIgc3RvcC1jb2xvcj0iIzAwMTEyMiIgc3RvcC1vcGFjaXR5PSIxIiAvPgogICAgICA8c3RvcCBvZmZzZXQ9IjUwJSIgc3RvcC1jb2xvcj0iIzAwMDgxNCIgc3RvcC1vcGFjaXR5PSIxIiAvPgogICAgICA8c3RvcCBvZmZzZXQ9IjEwMCUiIHN0b3AtY29sb3I9IiMxYTAwMzMiIHN0b3Atb3BhY2l0eT0iMSIgLz4KICAgIDwvbGluZWFyR3JhZGllbnQ+CiAgICA8bGluZWFyR3JhZGllbnQgaWQ9InRleHRHcmFkMzIwIiB4MT0iMCUiIHkxPSIwJSIgeDI9IjEwMCUiIHkyPSIwJSI+CiAgICAgIDxzdG9wIG9mZnNldD0iMCUiIHN0b3AtY29sb3I9IiMwMGZmZmYiIHN0b3Atb3BhY2l0eT0iMC44IiAvPgogICAgICA8c3RvcCBvZmZzZXQ9IjUwJSIgc3RvcC1jb2xvcj0iIzY0YzhmZiIgc3RvcC1vcGFjaXR5PSIxIiAvPgogICAgICA8c3RvcCBvZmZzZXQ9IjEwMCUiIHN0b3AtY29sb3I9IiMwMGZmZmYiIHN0b3Atb3BhY2l0eT0iMC44IiAvPgogICAgPC9saW5lYXJHcmFkaWVudD4KICAgIDxmaWx0ZXIgaWQ9Imdsb3czMjAiPgogICAgICA8ZmVHYXVzc2lhbkJsdXIgc3RkRGV2aWF0aW9uPSIzIiByZXN1bHQ9ImNvbG9yZWRCbHVyIi8+CiAgICAgIDxmZU1lcmdlPiAKICAgICAgICA8ZmVNZXJnZU5vZGUgaW49ImNvbG9yZWRCbHVyIi8+CiAgICAgICAgPGZlTWVyZ2VOb2RlIGluPSJTb3VyY2VHcmFwaGljIi8+CiAgICAgIDwvZmVNZXJnZT4KICAgIDwvZmlsdGVyPgogICAgPGZpbHRlciBpZD0ic2NhbjMyMCI+CiAgICAgIDxmZVR1cmJ1bGVuY2UgYmFzZUZyZXF1ZW5jeT0iMC45IiBudW1PY3RhdmVzPSI0IiByZXN1bHQ9Im5vaXNlIi8+CiAgICAgIDxmZUNvbG9yTWF0cml4IGluPSJub2lzZSIgdHlwZT0ic2F0dXJhdGUiIHZhbHVlcz0iMCIvPgogICAgICA8ZmVDb21wb25lbnRUcmFuc2Zlcj4KICAgICAgICA8ZmVGdW5jQSB0eXBlPSJkaXNjcmV0ZSIgdGFibGVWYWx1ZXM9IjAuNSAwLjIgMC44IDAuMyAwLjEgMC43Ii8+CiAgICAgIDwvZmVDb21wb25lbnRUcmFuc2Zlcj4KICAgIDwvZmlsdGVyPgogIDwvZGVmcz4KICA8IS0tIEJhY2tncm91bmQgLS0+CiAgPHJlY3Qgd2lkdGg9IjMyMCIgaGVpZ2h0PSIyNDAiIGZpbGw9InVybCgjYmdHcmFkMzIwKSIvPgogIDwhLS0gR3JpZCBwYXR0ZXJuIC0tPgogIDxwYXR0ZXJuIGlkPSJncmlkMzIwIiB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHBhdHRlcm5Vbml0cz0idXNlclNwYWNlT25Vc2UiPgogICAgPHBhdGggZD0iTSA0MCAwIEwgMCAwIDAgNDAiIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzAwZmZmZiIgc3Ryb2tlLXdpZHRoPSIwLjUiIG9wYWNpdHk9IjAuMTUiLz4KICA8L3BhdHRlcm4+CiAgPHJlY3Qgd2lkdGg9IjMyMCIgaGVpZ2h0PSIyNDAiIGZpbGw9InVybCgjZ3JpZDMyMCkiLz4KICA8IS0tIFNjYW4gbGluZXMgLS0+CiAgPHJlY3Qgd2lkdGg9IjMyMCIgaGVpZ2h0PSIyNDAiIGZpbGw9InVybCgjc2NhbjMyMCkiIG9wYWNpdHk9IjAuMSIvPgogIDwhLS0gQm9yZGVyIC0tPgogIDxyZWN0IHg9IjIiIHk9IjIiIHdpZHRoPSIzMTYiIGhlaWdodD0iMjM2IiBmaWxsPSJub25lIiBzdHJva2U9IiMwMGZmZmYiIHN0cm9rZS13aWR0aD0iMiIgb3BhY2l0eT0iMC42Ii8+CiAgPCEtLSBDb3JuZXIgYWNjZW50cyAtLT4KICA8cGF0aCBkPSJNIDEwIDEwIEwgMzAgMTAgTCAzMCAzMCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjNjRjOGZmIiBzdHJva2Utd2lkdGg9IjMiIG9wYWNpdHk9IjAuOCIvPgogIDxwYXRoIGQ9Ik0gMzEwIDEwIEwgMjkwIDEwIEwgMjkwIDMwIiBmaWxsPSJub25lIiBzdHJva2U9IiM2NGM4ZmYiIHN0cm9rZS13aWR0aD0iMyIgb3BhY2l0eT0iMC44Ii8+CiAgPHBhdGggZD0iTSAxMCAyMzAgTCAzMCAyMzAgTCAzMCAyMTAiIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzY0YzhmZiIgc3Ryb2tlLXdpZHRoPSIzIiBvcGFjaXR5PSIwLjgiLz4KICA8cGF0aCBkPSJNIDMxMCAyMzAgTCAyOTAgMjMwIEwgMjkwIDIxMCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjNjRjOGZmIiBzdHJva2Utd2lkdGg9IjMiIG9wYWNpdHk9IjAuOCIvPgogIDwhLS0gSWNvbiAtLT4KICA8dGV4dCB4PSIxNjAiIHk9IjEwMCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZm9udC1mYW1pbHk9Im1vbm9zcGFjZSIgZm9udC1zaXplPSIzMCIgZmlsbD0idXJsKCN0ZXh0R3JhZDMyMCkiIGZpbHRlcj0idXJsKCNnbG93MzIwKSI+8J+TtzwvdGV4dD4KICA8IS0tIE1haW4gdGV4dCAtLT4KICA8dGV4dCB4PSIxNjAiIHk9IjEzMCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZm9udC1mYW1pbHk9IidDb3VyaWVyIE5ldycsIG1vbm9zcGFjZSIgZm9udC13ZWlnaHQ9ImJvbGQiIGZvbnQtc2l6ZT0iMTYiIGZpbGw9InVybCgjdGV4dEdyYWQzMjApIiBmaWx0ZXI9InVybCgjZ2xvdzMyMCkiPkhRIENBTUVSQSBMT0FESU5HLi4uPC90ZXh0PgogIDwhLS0gU3RhdHVzIGluZGljYXRvciAtLT4KICA8Y2lyY2xlIGN4PSIyOTAiIGN5PSIzMCIgcj0iNCIgZmlsbD0iIzAwZmYwMCIgb3BhY2l0eT0iMC44Ij4KICAgIDxhbmltYXRlIGF0dHJpYnV0ZU5hbWU9Im9wYWNpdHkiIHZhbHVlcz0iMC44OzAuMzswLjgiIGR1cj0iMnMiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+CiAgPC9jaXJjbGU+CiAgPCEtLSBMb2FkaW5nIGFuaW1hdGlvbiAtLT4KICA8cmVjdCB4PSIxMTAiIHk9IjE0NSIgd2lkdGg9IjEwMCIgaGVpZ2h0PSI0IiBmaWxsPSJub25lIiBzdHJva2U9IiMwMGZmZmYiIHN0cm9rZS13aWR0aD0iMiIgb3BhY2l0eT0iMC41Ii8+CiAgPHJlY3QgeD0iMTEwIiB5PSIxNDUiIHdpZHRoPSIyMCIgaGVpZ2h0PSI0IiBmaWxsPSIjNjRjOGZmIj4KICAgIDxhbmltYXRlVHJhbnNmb3JtIGF0dHJpYnV0ZU5hbWU9InRyYW5zZm9ybSIgdHlwZT0idHJhbnNsYXRlIiB2YWx1ZXM9IjAsMDsgODAsMDsgMCwwIiBkdXI9IjNzIiByZXBlYXRDb3VudD0iaW5kZWZpbml0ZSIvPgogIDwvcmVjdD4KPC9zdmc+">
                             <div class="camera-overlay">HQ Live</div>
                         </div>
                         <div class="btn-group">
@@ -1185,7 +1314,10 @@
                 <!-- Auto Tracking Mode -->
                 <div id="autotrack-cameras" style="display: none;">
                     <div class="tracking-status-panel">
-                        <h3>🎯 Client-Side Auto Tracking System</h3>
+                        <h3>🎯 Auto Tracking System</h3>
+                        <p class="text-muted" style="margin-bottom: 15px; font-size: 0.9em;">
+                            Client-side visual tracking with optional motor control for physical pan/tilt movement.
+                        </p>
                         <div class="tracking-controls">
                             <div class="btn-group">
                                 <button class="btn btn-success" id="enable-tracking-btn" onclick="toggleClientAutoTracking()">Enable Tracking</button>
@@ -1195,6 +1327,28 @@
                                 <button class="btn btn-secondary" id="auto-record-btn" onclick="toggleAutoRecord()">📹 Auto-Record</button>
                             </div>
                         </div>
+                        
+                        <!-- Motor Control Section -->
+                        <div class="motor-controls" style="margin-top: 20px; padding: 15px; background: rgba(255, 165, 0, 0.1); border-radius: 8px; border-left: 4px solid #ff9800;">
+                            <h4>🎯 Physical Motor Tracking</h4>
+                            <p class="text-muted" style="margin-bottom: 15px; font-size: 0.9em;">
+                                Enable stepper motors to physically move the camera mount based on detected motion.
+                            </p>
+                            
+                            <div class="btn-group" style="margin-bottom: 15px;">
+                                <button class="btn btn-success" id="motor-tracking-btn" onclick="toggleMotorTracking()" title="Toggle motor tracking on/off">🚀 Start Motor Tracking</button>
+                                <button class="btn btn-info" onclick="calibrateAutoTracking()" title="Calibrate motor positions">🔧 Calibrate Motors</button>
+                                <button class="btn btn-secondary" onclick="updateAutoTrackingStatus()" title="Refresh auto-tracking status">🔄 Refresh Status</button>
+                            </div>
+                            
+                            <div class="status-grid" style="max-width: 600px;">
+                                <div class="status-item">
+                                    <span class="status-label">Motor Status:</span>
+                                    <span id="auto-tracking-status" class="status-value">Unknown</span>
+                                </div>
+                            </div>
+                        </div>
+                        
                         <div class="tracking-status">
                             <div class="status-grid">
                                 <div class="status-item">
@@ -1219,6 +1373,7 @@
                                 <input type="range" id="motion-sensitivity" min="10" max="100" value="40" onchange="updateSensitivity()">
                                 <span id="sensitivity-display">40</span>
                             </div>
+                            
                         </div>
                     </div>
                     
@@ -1338,6 +1493,143 @@
                             </div>
                         </div>
                     </div>
+                    
+                    <!-- Motion Detection Panel -->
+                    <div class="tracking-settings-panel">
+                        <h4>🎯 Motion Detection & Auto-Capture</h4>
+                        <div class="feature-tracking-description">
+                            Advanced client-side motion detection with automatic snapshot capture and annotations.
+                        </div>
+                        
+                        <!-- Motion Detection Status -->
+                        <div class="detection-info" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin: 15px 0;">
+                            <div class="detection-stat">
+                                <div class="value" id="motion-objects-detected">0</div>
+                                <div class="label">Objects Detected</div>
+                            </div>
+                            <div class="detection-stat">
+                                <div class="value" id="motion-sensitivity-level">Medium</div>
+                                <div class="label">Sensitivity Level</div>
+                            </div>
+                            <div class="detection-stat">
+                                <div class="value" id="motion-processing-fps">0</div>
+                                <div class="label">Processing FPS</div>
+                            </div>
+                            <div class="detection-stat">
+                                <div class="value" id="motion-snapshots-count">0</div>
+                                <div class="label">Snapshots Captured</div>
+                            </div>
+                        </div>
+                        
+                        <!-- Motion Detection Controls -->
+                        <div class="control-group">
+                            <div class="btn-group">
+                                <button class="btn btn-success" id="motion-enable-btn" onclick="toggleMotionDetection()">🎯 Enable Detection</button>
+                                <button class="btn btn-primary" onclick="captureMotionSnapshot()">📷 Capture Snapshot</button>
+                                <button class="btn btn-info" onclick="testMotionDetection()">🧪 Test Detection</button>
+                                <button class="btn btn-warning" onclick="clearMotionOverlays()">🧹 Clear Overlays</button>
+                            </div>
+                        </div>
+                        
+                        <!-- Motion Settings -->
+                        <div class="settings-grid">
+                            <div class="setting-group">
+                                <label for="motion-sensitivity-slider">Sensitivity:</label>
+                                <input type="range" id="motion-sensitivity-slider" min="10" max="100" value="40" 
+                                       oninput="updateMotionSensitivity()" class="control-input">
+                                <div class="range-display">
+                                    <span>10</span>
+                                    <span id="motion-sensitivity-display">40</span>
+                                    <span>100</span>
+                                </div>
+                            </div>
+                            <div class="setting-group">
+                                <label for="motion-capture-threshold">Auto-Capture Threshold:</label>
+                                <input type="number" id="motion-capture-threshold" min="1" max="10" value="2" 
+                                       onchange="updateMotionCaptureThreshold()" class="control-input">
+                                <small class="text-muted">Objects needed to trigger capture</small>
+                            </div>
+                            <div class="setting-group">
+                                <div class="checkbox-group">
+                                    <input type="checkbox" id="motion-auto-capture" checked onchange="toggleMotionAutoCapture()">
+                                    <label for="motion-auto-capture">Auto-Capture Enabled</label>
+                                </div>
+                            </div>
+                            <div class="setting-group">
+                                <label for="motion-capture-camera">Capture Camera:</label>
+                                <select id="motion-capture-camera" class="control-input">
+                                    <option value="hq">HQ Camera</option>
+                                    <option value="ir">IR Camera</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Point-and-Click Feature Tracking Panel -->
+                    <div class="tracking-settings-panel">
+                        <h4>🎯 Point & Click Feature Tracking</h4>
+                        <div class="feature-tracking-description">
+                            Select any feature on a still frame and track it with motors. Runs in background while you navigate.
+                        </div>
+                        
+                        <!-- Feature Tracking Container -->
+                        <div id="feature-tracking-container">
+                            <!-- Camera Selection -->
+                            <div class="control-group">
+                                <label>Camera Source:</label>
+                                <div class="btn-group">
+                                    <button class="btn btn-sm btn-outline-info feature-camera-btn active" 
+                                            data-camera="ir" onclick="featureTracking.currentCamera = 'ir'; updateFeatureTrackingUI()">
+                                        📡 IR Camera
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-info feature-camera-btn" 
+                                            data-camera="hq" onclick="featureTracking.currentCamera = 'hq'; updateFeatureTrackingUI()">
+                                        📷 HQ Camera
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <!-- Load Frame Button -->
+                            <div class="control-group">
+                                <button class="btn btn-primary" id="load-feature-frame-btn" 
+                                        onclick="loadFeatureTrackingFrame(featureTracking.currentCamera)">
+                                    📸 Load Still Frame
+                                </button>
+                                <div class="feature-status" id="feature-select-status">⭕ No Feature Selected</div>
+                            </div>
+                            
+                            <!-- Canvas for Frame Display -->
+                            <div class="feature-frame-container">
+                                <canvas id="feature-tracking-canvas" class="feature-tracking-canvas"></canvas>
+                            </div>
+                            
+                            <!-- Instructions -->
+                            <div class="feature-instructions" id="feature-tracking-instructions">
+                                <p>📷 <strong>Step 1:</strong> Load a still frame from IR or HQ camera</p>
+                                <p>🎯 <strong>Step 2:</strong> Click on a feature in the image to select it</p>
+                                <p>🚀 <strong>Step 3:</strong> Start tracking to follow the feature with motors</p>
+                            </div>
+                            
+                            <!-- Control Buttons -->
+                            <div class="control-group">
+                                <button class="btn btn-success" id="start-feature-tracking-btn" 
+                                        onclick="toggleFeatureTracking()" disabled>
+                                    ▶️ Start Tracking
+                                </button>
+                                <button class="btn btn-danger" id="stop-feature-tracking-btn" 
+                                        onclick="stopFeatureTracking()" disabled style="display: none;">
+                                    ⏹️ Stop Tracking
+                                </button>
+                                <button class="btn btn-warning" id="clear-feature-selection-btn" 
+                                        onclick="clearFeatureSelection()" disabled>
+                                    🗑️ Clear Selection
+                                </button>
+                                <button class="btn btn-info" onclick="updateFeatureTrackingStatus()">
+                                    🔄 Refresh Status
+                                </button>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
 
@@ -1349,19 +1641,19 @@
                             <h3>📚 IR Camera Stacking <span class="live-indicator">● LIVE</span></h3>
                             <div class="camera-preview">
                                 <img id="stacked-ir-preview" alt="Stacked IR Image" 
-                                     src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTI4MCIgaGVpZ2h0PSI3MjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjEyODAiIGhlaWdodD0iNzIwIiBmaWxsPSIjMDAwIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGRvbWluYW50LWJhc2VsaW5lPSJtaWRkbGUiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZpbGw9IndoaXRlIj5TdGFja2luZyBJUi4uLjwvdGV4dD48L3N2Zz4="
+                                     src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTI4MCIgaGVpZ2h0PSI3MjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CiAgPGRlZnM+CiAgICA8bGluZWFyR3JhZGllbnQgaWQ9ImJnR3JhZDEyODAiIHgxPSIwJSIgeTE9IjAlIiB4Mj0iMTAwJSIgeTI9IjEwMCUiPgogICAgICA8c3RvcCBvZmZzZXQ9IjAlIiBzdG9wLWNvbG9yPSIjMDAxMTIyIiBzdG9wLW9wYWNpdHk9IjEiIC8+CiAgICAgIDxzdG9wIG9mZnNldD0iNTAlIiBzdG9wLWNvbG9yPSIjMDAwODE0IiBzdG9wLW9wYWNpdHk9IjEiIC8+CiAgICAgIDxzdG9wIG9mZnNldD0iMTAwJSIgc3RvcC1jb2xvcj0iIzFhMDAzMyIgc3RvcC1vcGFjaXR5PSIxIiAvPgogICAgPC9saW5lYXJHcmFkaWVudD4KICAgIDxsaW5lYXJHcmFkaWVudCBpZD0idGV4dEdyYWQxMjgwIiB4MT0iMCUiIHkxPSIwJSIgeDI9IjEwMCUiIHkyPSIwJSI+CiAgICAgIDxzdG9wIG9mZnNldD0iMCUiIHN0b3AtY29sb3I9IiMwMGZmZmYiIHN0b3Atb3BhY2l0eT0iMC44IiAvPgogICAgICA8c3RvcCBvZmZzZXQ9IjUwJSIgc3RvcC1jb2xvcj0iIzY0YzhmZiIgc3RvcC1vcGFjaXR5PSIxIiAvPgogICAgICA8c3RvcCBvZmZzZXQ9IjEwMCUiIHN0b3AtY29sb3I9IiMwMGZmZmYiIHN0b3Atb3BhY2l0eT0iMC44IiAvPgogICAgPC9saW5lYXJHcmFkaWVudD4KICAgIDxmaWx0ZXIgaWQ9Imdsb3cxMjgwIj4KICAgICAgPGZlR2F1c3NpYW5CbHVyIHN0ZERldmlhdGlvbj0iMyIgcmVzdWx0PSJjb2xvcmVkQmx1ciIvPgogICAgICA8ZmVNZXJnZT4gCiAgICAgICAgPGZlTWVyZ2VOb2RlIGluPSJjb2xvcmVkQmx1ciIvPgogICAgICAgIDxmZU1lcmdlTm9kZSBpbj0iU291cmNlR3JhcGhpYyIvPgogICAgICA8L2ZlTWVyZ2U+CiAgICA8L2ZpbHRlcj4KICAgIDxmaWx0ZXIgaWQ9InNjYW4xMjgwIj4KICAgICAgPGZlVHVyYnVsZW5jZSBiYXNlRnJlcXVlbmN5PSIwLjkiIG51bU9jdGF2ZXM9IjQiIHJlc3VsdD0ibm9pc2UiLz4KICAgICAgPGZlQ29sb3JNYXRyaXggaW49Im5vaXNlIiB0eXBlPSJzYXR1cmF0ZSIgdmFsdWVzPSIwIi8+CiAgICAgIDxmZUNvbXBvbmVudFRyYW5zZmVyPgogICAgICAgIDxmZUZ1bmNBIHR5cGU9ImRpc2NyZXRlIiB0YWJsZVZhbHVlcz0iMC41IDAuMiAwLjggMC4zIDAuMSAwLjciLz4KICAgICAgPC9mZUNvbXBvbmVudFRyYW5zZmVyPgogICAgPC9maWx0ZXI+CiAgPC9kZWZzPgogIAogIDwhLS0gQmFja2dyb3VuZCAtLT4KICA8cmVjdCB3aWR0aD0iMTI4MCIgaGVpZ2h0PSI3MjAiIGZpbGw9InVybCgjYmdHcmFkMTI4MCkiLz4KICA8IS0tIEdyaWQgcGF0dGVybiAtLT4KICA8cGF0dGVybiBpZD0iZ3JpZDEyODAiIHdpZHRoPSI0MCIgaGVpZ2h0PSI0MCIgcGF0dGVyblVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+CiAgICA8cGF0aCBkPSJNIDQwIDAgTCAwIDAgMCA0MCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjMDBmZmZmIiBzdHJva2Utd2lkdGg9IjAuNSIgb3BhY2l0eT0iMC4xNSIvPgogIDwvcGF0dGVybj4KICA8cmVjdCB3aWR0aD0iMTI4MCIgaGVpZ2h0PSI3MjAiIGZpbGw9InVybCgjZ3JpZDEyODApIi8+CiAgPCEtLSBTY2FuIGxpbmVzIC0tPgogIDxyZWN0IHdpZHRoPSIxMjgwIiBoZWlnaHQ9IjcyMCIgZmlsbD0idXJsKCNzY2FuMTI4MCkiIG9wYWNpdHk9IjAuMSIvPgogIDwhLS0gQm9yZGVyIC0tPgogIDxyZWN0IHg9IjIiIHk9IjIiIHdpZHRoPSIxMjc2IiBoZWlnaHQ9IjcxNiIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjMDBmZmZmIiBzdHJva2Utd2lkdGg9IjIiIG9wYWNpdHk9IjAuNiIvPgogIDwhLS0gQ29ybmVyIGFjY2VudHMgLS0+CiAgPHBhdGggZD0iTSAxMCAxMCBMIDMwIDEwIEwgMzAgMzAiIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzY0YzhmZiIgc3Ryb2tlLXdpZHRoPSIzIiBvcGFjaXR5PSIwLjgiLz4KICA8cGF0aCBkPSJNIDEyNzAgMTAgTCAxMjUwIDEwIEwgMTI1MCAzMCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjNjRjOGZmIiBzdHJva2Utd2lkdGg9IjMiIG9wYWNpdHk9IjAuOCIvPgogIDxwYXRoIGQ9Ik0gMTAgNzEwIEwgMzAgNzEwIEwgMzAgNjkwIiBmaWxsPSJub25lIiBzdHJva2U9IiM2NGM4ZmYiIHN0cm9rZS13aWR0aD0iMyIgb3BhY2l0eT0iMC44Ii8+CiAgPHBhdGggZD0iTSAxMjcwIDcxMCBMIDEyNTAgNzEwIEwgMTI1MCA2OTAiIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzY0YzhmZiIgc3Ryb2tlLXdpZHRoPSIzIiBvcGFjaXR5PSIwLjgiLz4KICA8IS0tIEljb24gLS0+CiAgPHRleHQgeD0iNjQwIiB5PSIzNDAiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZvbnQtZmFtaWx5PSJtb25vc3BhY2UiIGZvbnQtc2l6ZT0iOTAiIGZpbGw9InVybCgjdGV4dEdyYWQxMjgwKSIgZmlsdGVyPSJ1cmwoI2dsb3cxMjgwKSI+8J+TmjwvdGV4dD4KICA8IS0tIE1haW4gdGV4dCAtLT4KICA8dGV4dCB4PSI2NDAiIHk9IjM3MCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZm9udC1mYW1pbHk9IidDb3VyaWVyIE5ldycsIG1vbm9zcGFjZSIgZm9udC13ZWlnaHQ9ImJvbGQiIGZvbnQtc2l6ZT0iNDgiIGZpbGw9InVybCgjdGV4dEdyYWQxMjgwKSIgZmlsdGVyPSJ1cmwoI2dsb3cxMjgwKSI+U1RBQ0tJTkcgSVIgRlJBTUVTLi4uPC90ZXh0PgogIDwhLS0gU3RhdHVzIGluZGljYXRvciAtLT4KICA8Y2lyY2xlIGN4PSIxMjUwIiBjeT0iMzAiIHI9IjQiIGZpbGw9IiMwMGZmMDAiIG9wYWNpdHk9IjAuOCI+CiAgICA8YW5pbWF0ZSBhdHRyaWJ1dGVOYW1lPSJvcGFjaXR5IiB2YWx1ZXM9IjAuODswLjM7MC44IiBkdXI9IjJzIiByZXBlYXRDb3VudD0iaW5kZWZpbml0ZSIvPgogIDwvY2lyY2xlPgogIDwhLS0gTG9hZGluZyBhbmltYXRpb24gLS0+CiAgPHJlY3QgeD0iNTkwIiB5PSIzODUiIHdpZHRoPSIxMDAiIGhlaWdodD0iNCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjMDBmZmZmIiBzdHJva2Utd2lkdGg9IjIiIG9wYWNpdHk9IjAuNSIvPgogIDxyZWN0IHg9IjU5MCIgeT0iMzg1IiB3aWR0aD0iMjAiIGhlaWdodD0iNCIgZmlsbD0iIzY0YzhmZiI+CiAgICA8YW5pbWF0ZVRyYW5zZm9ybSBhdHRyaWJ1dGVOYW1lPSJ0cmFuc2Zvcm0iIHR5cGU9InRyYW5zbGF0ZSIgdmFsdWVzPSIwLDA7IDgwLDA7IDAsMCIgZHVyPSIzcyIgcmVwZWF0Q291bnQ9ImluZGVmaW5pdGUiLz4KICA8L3JlY3Q+Cjwvc3ZnPg=="
                                      onclick="toggleFullscreen('stacked-ir')" style="cursor: pointer;">
                                 <div class="camera-overlay">Stacked IR</div>
                             </div>
                             <div class="control-group">
                                 <label for="ir-stack-count">Stack Count</label>
                                 <input type="range" id="ir-stack-count" class="control-input" 
-                                       min="2" max="100" step="1" value="5"
+                                       min="2" max="1000" step="1" value="5"
                                        oninput="updateStackCount('ir')">
                                 <div class="range-display">
                                     <span>2</span>
                                     <span id="ir-stack-count-value">5</span>
-                                    <span>100</span>
+                                    <span>1000</span>
                                 </div>
                             </div>
                             <div class="control-group">
@@ -1380,9 +1672,9 @@
                                 </label>
                             </div>
                             <div class="control-group">
-                                <label title="True infinite exposure - locks stack count and continuously adds frames using Long Exposure technique. Click to start/stop infinite stacking.">
-                                    <input type="checkbox" id="ir-infinite-exposure" onchange="toggleInfiniteExposure('ir')">
-                                    ♾️ Infinite Exposure Mode
+                                <label title="Ignore frame count limit - disable stack count and use all available frames">
+                                    <input type="checkbox" id="ir-ignore-count" onchange="toggleIgnoreCount('ir')">
+                                    🔓 Ignore Count Limit
                                 </label>
                             </div>
                             <div class="btn-group">
@@ -1398,19 +1690,19 @@
                             <h3>📚 HQ Camera Stacking <span class="live-indicator">● LIVE</span></h3>
                             <div class="camera-preview">
                                 <img id="stacked-hq-preview" alt="Stacked HQ Image"
-                                     src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTI4MCIgaGVpZ2h0PSI3MjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjEyODAiIGhlaWdodD0iNzIwIiBmaWxsPSIjMDAwIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGRvbWluYW50LWJhc2VsaW5lPSJtaWRkbGUiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZpbGw9IndoaXRlIj5TdGFja2luZyBIUS4uLjwvdGV4dD48L3N2Zz4="
+                                     src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTI4MCIgaGVpZ2h0PSI3MjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CiAgPGRlZnM+CiAgICA8bGluZWFyR3JhZGllbnQgaWQ9ImJnR3JhZDEyODAiIHgxPSIwJSIgeTE9IjAlIiB4Mj0iMTAwJSIgeTI9IjEwMCUiPgogICAgICA8c3RvcCBvZmZzZXQ9IjAlIiBzdG9wLWNvbG9yPSIjMDAxMTIyIiBzdG9wLW9wYWNpdHk9IjEiIC8+CiAgICAgIDxzdG9wIG9mZnNldD0iNTAlIiBzdG9wLWNvbG9yPSIjMDAwODE0IiBzdG9wLW9wYWNpdHk9IjEiIC8+CiAgICAgIDxzdG9wIG9mZnNldD0iMTAwJSIgc3RvcC1jb2xvcj0iIzFhMDAzMyIgc3RvcC1vcGFjaXR5PSIxIiAvPgogICAgPC9saW5lYXJHcmFkaWVudD4KICAgIDxsaW5lYXJHcmFkaWVudCBpZD0idGV4dEdyYWQxMjgwIiB4MT0iMCUiIHkxPSIwJSIgeDI9IjEwMCUiIHkyPSIwJSI+CiAgICAgIDxzdG9wIG9mZnNldD0iMCUiIHN0b3AtY29sb3I9IiMwMGZmZmYiIHN0b3Atb3BhY2l0eT0iMC44IiAvPgogICAgICA8c3RvcCBvZmZzZXQ9IjUwJSIgc3RvcC1jb2xvcj0iIzY0YzhmZiIgc3RvcC1vcGFjaXR5PSIxIiAvPgogICAgICA8c3RvcCBvZmZzZXQ9IjEwMCUiIHN0b3AtY29sb3I9IiMwMGZmZmYiIHN0b3Atb3BhY2l0eT0iMC44IiAvPgogICAgPC9saW5lYXJHcmFkaWVudD4KICAgIDxmaWx0ZXIgaWQ9Imdsb3cxMjgwIj4KICAgICAgPGZlR2F1c3NpYW5CbHVyIHN0ZERldmlhdGlvbj0iMyIgcmVzdWx0PSJjb2xvcmVkQmx1ciIvPgogICAgICA8ZmVNZXJnZT4gCiAgICAgICAgPGZlTWVyZ2VOb2RlIGluPSJjb2xvcmVkQmx1ciIvPgogICAgICAgIDxmZU1lcmdlTm9kZSBpbj0iU291cmNlR3JhcGhpYyIvPgogICAgICA8L2ZlTWVyZ2U+CiAgICA8L2ZpbHRlcj4KICAgIDxmaWx0ZXIgaWQ9InNjYW4xMjgwIj4KICAgICAgPGZlVHVyYnVsZW5jZSBiYXNlRnJlcXVlbmN5PSIwLjkiIG51bU9jdGF2ZXM9IjQiIHJlc3VsdD0ibm9pc2UiLz4KICAgICAgPGZlQ29sb3JNYXRyaXggaW49Im5vaXNlIiB0eXBlPSJzYXR1cmF0ZSIgdmFsdWVzPSIwIi8+CiAgICAgIDxmZUNvbXBvbmVudFRyYW5zZmVyPgogICAgICAgIDxmZUZ1bmNBIHR5cGU9ImRpc2NyZXRlIiB0YWJsZVZhbHVlcz0iMC41IDAuMiAwLjggMC4zIDAuMSAwLjciLz4KICAgICAgPC9mZUNvbXBvbmVudFRyYW5zZmVyPgogICAgPC9maWx0ZXI+CiAgPC9kZWZzPgogIAogIDwhLS0gQmFja2dyb3VuZCAtLT4KICA8cmVjdCB3aWR0aD0iMTI4MCIgaGVpZ2h0PSI3MjAiIGZpbGw9InVybCgjYmdHcmFkMTI4MCkiLz4KICA8IS0tIEdyaWQgcGF0dGVybiAtLT4KICA8cGF0dGVybiBpZD0iZ3JpZDEyODAiIHdpZHRoPSI0MCIgaGVpZ2h0PSI0MCIgcGF0dGVyblVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+CiAgICA8cGF0aCBkPSJNIDQwIDAgTCAwIDAgMCA0MCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjMDBmZmZmIiBzdHJva2Utd2lkdGg9IjAuNSIgb3BhY2l0eT0iMC4xNSIvPgogIDwvcGF0dGVybj4KICA8cmVjdCB3aWR0aD0iMTI4MCIgaGVpZ2h0PSI3MjAiIGZpbGw9InVybCgjZ3JpZDEyODApIi8+CiAgPCEtLSBTY2FuIGxpbmVzIC0tPgogIDxyZWN0IHdpZHRoPSIxMjgwIiBoZWlnaHQ9IjcyMCIgZmlsbD0idXJsKCNzY2FuMTI4MCkiIG9wYWNpdHk9IjAuMSIvPgogIDwhLS0gQm9yZGVyIC0tPgogIDxyZWN0IHg9IjIiIHk9IjIiIHdpZHRoPSIxMjc2IiBoZWlnaHQ9IjcxNiIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjMDBmZmZmIiBzdHJva2Utd2lkdGg9IjIiIG9wYWNpdHk9IjAuNiIvPgogIDwhLS0gQ29ybmVyIGFjY2VudHMgLS0+CiAgPHBhdGggZD0iTSAxMCAxMCBMIDMwIDEwIEwgMzAgMzAiIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzY0YzhmZiIgc3Ryb2tlLXdpZHRoPSIzIiBvcGFjaXR5PSIwLjgiLz4KICA8cGF0aCBkPSJNIDEyNzAgMTAgTCAxMjUwIDEwIEwgMTI1MCAzMCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjNjRjOGZmIiBzdHJva2Utd2lkdGg9IjMiIG9wYWNpdHk9IjAuOCIvPgogIDxwYXRoIGQ9Ik0gMTAgNzEwIEwgMzAgNzEwIEwgMzAgNjkwIiBmaWxsPSJub25lIiBzdHJva2U9IiM2NGM4ZmYiIHN0cm9rZS13aWR0aD0iMyIgb3BhY2l0eT0iMC44Ii8+CiAgPHBhdGggZD0iTSAxMjcwIDcxMCBMIDEyNTAgNzEwIEwgMTI1MCA2OTAiIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzY0YzhmZiIgc3Ryb2tlLXdpZHRoPSIzIiBvcGFjaXR5PSIwLjgiLz4KICA8IS0tIEljb24gLS0+CiAgPHRleHQgeD0iNjQwIiB5PSIzNDAiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZvbnQtZmFtaWx5PSJtb25vc3BhY2UiIGZvbnQtc2l6ZT0iOTAiIGZpbGw9InVybCgjdGV4dEdyYWQxMjgwKSIgZmlsdGVyPSJ1cmwoI2dsb3cxMjgwKSI+8J+TmjwvdGV4dD4KICA8IS0tIE1haW4gdGV4dCAtLT4KICA8dGV4dCB4PSI2NDAiIHk9IjM3MCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZm9udC1mYW1pbHk9IidDb3VyaWVyIE5ldycsIG1vbm9zcGFjZSIgZm9udC13ZWlnaHQ9ImJvbGQiIGZvbnQtc2l6ZT0iNDgiIGZpbGw9InVybCgjdGV4dEdyYWQxMjgwKSIgZmlsdGVyPSJ1cmwoI2dsb3cxMjgwKSI+U1RBQ0tJTkcgSFEgRlJBTUVTLi4uPC90ZXh0PgogIDwhLS0gU3RhdHVzIGluZGljYXRvciAtLT4KICA8Y2lyY2xlIGN4PSIxMjUwIiBjeT0iMzAiIHI9IjQiIGZpbGw9IiMwMGZmMDAiIG9wYWNpdHk9IjAuOCI+CiAgICA8YW5pbWF0ZSBhdHRyaWJ1dGVOYW1lPSJvcGFjaXR5IiB2YWx1ZXM9IjAuODswLjM7MC44IiBkdXI9IjJzIiByZXBlYXRDb3VudD0iaW5kZWZpbml0ZSIvPgogIDwvY2lyY2xlPgogIDwhLS0gTG9hZGluZyBhbmltYXRpb24gLS0+CiAgPHJlY3QgeD0iNTkwIiB5PSIzODUiIHdpZHRoPSIxMDAiIGhlaWdodD0iNCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjMDBmZmZmIiBzdHJva2Utd2lkdGg9IjIiIG9wYWNpdHk9IjAuNSIvPgogIDxyZWN0IHg9IjU5MCIgeT0iMzg1IiB3aWR0aD0iMjAiIGhlaWdodD0iNCIgZmlsbD0iIzY0YzhmZiI+CiAgICA8YW5pbWF0ZVRyYW5zZm9ybSBhdHRyaWJ1dGVOYW1lPSJ0cmFuc2Zvcm0iIHR5cGU9InRyYW5zbGF0ZSIgdmFsdWVzPSIwLDA7IDgwLDA7IDAsMCIgZHVyPSIzcyIgcmVwZWF0Q291bnQ9ImluZGVmaW5pdGUiLz4KICA8L3JlY3Q+Cjwvc3ZnPg=="
                                      onclick="toggleFullscreen('stacked-hq')" style="cursor: pointer;">
                                 <div class="camera-overlay">Stacked HQ</div>
                             </div>
                             <div class="control-group">
                                 <label for="hq-stack-count">Stack Count</label>
                                 <input type="range" id="hq-stack-count" class="control-input" 
-                                       min="2" max="100" step="1" value="5"
+                                       min="2" max="1000" step="1" value="5"
                                        oninput="updateStackCount('hq')">
                                 <div class="range-display">
                                     <span>2</span>
                                     <span id="hq-stack-count-value">5</span>
-                                    <span>100</span>
+                                    <span>1000</span>
                                 </div>
                             </div>
                             <div class="control-group">
@@ -1429,9 +1721,9 @@
                                 </label>
                             </div>
                             <div class="control-group">
-                                <label title="True infinite exposure - locks stack count and continuously adds frames using Long Exposure technique. Click to start/stop infinite stacking.">
-                                    <input type="checkbox" id="hq-infinite-exposure" onchange="toggleInfiniteExposure('hq')">
-                                    ♾️ Infinite Exposure Mode
+                                <label title="Ignore frame count limit - disable stack count and use all available frames">
+                                    <input type="checkbox" id="hq-ignore-count" onchange="toggleIgnoreCount('hq')">
+                                    🔓 Ignore Count Limit
                                 </label>
                             </div>
                             <div class="btn-group">
@@ -1728,40 +2020,6 @@
             </div>
         </div>
 
-        <!-- Motion Detection Section (Disabled) -->
-        <div id="detection" class="content-section">
-            <div class="detection-panel" style="opacity: 0.5;">
-                <h2>🎯 Motion Detection Status (Disabled)</h2>
-                <div style="background: rgba(255, 107, 107, 0.2); padding: 15px; border-radius: 8px; margin-bottom: 20px; border-left: 4px solid #ff6b6b;">
-                    <p style="color: #ff6b6b; margin: 0;">Motion detection has been disabled for performance optimization. Use manual zoom controls above for zooming instead of auto-tracking.</p>
-                </div>
-                <div class="detection-info">
-                    <div class="detection-stat">
-                        <div class="value" id="detection-objects">0</div>
-                        <div class="label">Objects Detected</div>
-                    </div>
-                    <div class="detection-stat">
-                        <div class="value" id="detection-sensitivity">Medium</div>
-                        <div class="label">Sensitivity</div>
-                    </div>
-                    <div class="detection-stat">
-                        <div class="value" id="detection-fps">0</div>
-                        <div class="label">FPS</div>
-                    </div>
-                    <div class="detection-stat">
-                        <div class="value" id="detection-uptime">00:00:00</div>
-                        <div class="label">Uptime</div>
-                    </div>
-                </div>
-                
-                <div class="btn-group">
-                    <button class="btn btn-primary" onclick="toggleDetection()">▶️ Start/Stop</button>
-                    <button class="btn btn-secondary" onclick="refreshDetectionStatus()">🔄 Refresh</button>
-                    <button class="btn btn-warning" onclick="adjustSensitivity()">🎚️ Sensitivity</button>
-                    <button class="btn btn-danger" onclick="clearDetections()">🗑️ Clear</button>
-                </div>
-            </div>
-        </div>
 
         <!-- Gallery Section -->
         <div id="gallery" class="content-section">
@@ -1836,6 +2094,105 @@
                     </p>
                 </div>
                 
+                <!-- Timelapse Controls -->
+                <div class="control-group">
+                    <h3>🎬 Timelapse System</h3>
+                    <p style="font-size: 14px; color: #999; margin-bottom: 15px;">Automatic hourly timelapse video generation</p>
+                    
+                    <div style="margin-bottom: 15px;">
+                        <div class="status-grid">
+                            <div class="status-item">
+                                <span class="status-label">Service Status:</span>
+                                <span id="timelapse-status" class="status-value">Loading...</span>
+                            </div>
+                            <div class="status-item">
+                                <span class="status-label">Current Hour:</span>
+                                <span id="current-hour" class="status-value">--</span>
+                            </div>
+                            <div class="status-item">
+                                <span class="status-label">Videos Created:</span>
+                                <span id="videos-count" class="status-value">0</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="btn-group" style="margin-bottom: 15px;">
+                        <button class="btn btn-success" onclick="startTimelapseService()">▶️ Start Service</button>
+                        <button class="btn btn-danger" onclick="stopTimelapseService()">⏹️ Stop Service</button>
+                        <button class="btn btn-info" onclick="refreshTimelapseStatus()">🔄 Refresh Status</button>
+                        <button class="btn btn-warning" onclick="cleanupOldTimelapses()">🗑️ Cleanup Old</button>
+                    </div>
+                    
+                    <div id="timelapse-videos-list" style="max-height: 200px; overflow-y: auto; background: rgba(0,0,0,0.2); border-radius: 4px; padding: 10px;">
+                        <div style="text-align: center; color: #999;">Loading timelapse videos...</div>
+                    </div>
+                </div>
+                
+                <!-- Music Effects Controls -->
+                <div class="control-group">
+                    <h3>🎵 Music Effects</h3>
+                    <p style="font-size: 14px; color: #999; margin-bottom: 15px;">Audio effects for ambient music generation</p>
+                    
+                    <!-- Effect Presets -->
+                    <div style="margin-bottom: 15px;">
+                        <label>Effect Presets:</label>
+                        <div class="btn-group" style="margin-top: 5px;">
+                            <button class="btn btn-sm btn-secondary" onclick="setMusicEffectPreset('ambient')">🌙 Ambient</button>
+                            <button class="btn btn-sm btn-secondary" onclick="setMusicEffectPreset('space')">🌌 Space</button>
+                            <button class="btn btn-sm btn-secondary" onclick="setMusicEffectPreset('ethereal')">✨ Ethereal</button>
+                            <button class="btn btn-sm btn-secondary" onclick="setMusicEffectPreset('dreamy')">☁️ Dreamy</button>
+                            <button class="btn btn-sm btn-secondary" onclick="setMusicEffectPreset('cosmic')">🪐 Cosmic</button>
+                        </div>
+                    </div>
+                    
+                    <!-- Individual Effect Controls -->
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px; margin-bottom: 15px;">
+                        <!-- Reverb -->
+                        <div class="effect-control">
+                            <div class="checkbox-group">
+                                <input type="checkbox" id="effect-reverb" onchange="toggleMusicEffect('reverb', this.checked)" checked>
+                                <label for="effect-reverb">🏛️ Reverb</label>
+                            </div>
+                            <input type="range" id="reverb-level" min="0" max="1" step="0.1" value="0.3" 
+                                   oninput="setMusicEffectParam('reverb', 'level', this.value)">
+                            <span class="effect-value" id="reverb-level-display">30%</span>
+                        </div>
+                        
+                        <!-- Chorus -->
+                        <div class="effect-control">
+                            <div class="checkbox-group">
+                                <input type="checkbox" id="effect-chorus" onchange="toggleMusicEffect('chorus', this.checked)">
+                                <label for="effect-chorus">🎭 Chorus</label>
+                            </div>
+                            <input type="range" id="chorus-level" min="0" max="1" step="0.1" value="0.4" 
+                                   oninput="setMusicEffectParam('chorus', 'level', this.value)">
+                            <span class="effect-value" id="chorus-level-display">40%</span>
+                        </div>
+                        
+                        <!-- Flanger -->
+                        <div class="effect-control">
+                            <div class="checkbox-group">
+                                <input type="checkbox" id="effect-flanger" onchange="toggleMusicEffect('flanger', this.checked)">
+                                <label for="effect-flanger">🌊 Flanger</label>
+                            </div>
+                            <input type="range" id="flanger-level" min="0" max="1" step="0.1" value="0.3" 
+                                   oninput="setMusicEffectParam('flanger', 'level', this.value)">
+                            <span class="effect-value" id="flanger-level-display">30%</span>
+                        </div>
+                        
+                        <!-- Delay -->
+                        <div class="effect-control">
+                            <div class="checkbox-group">
+                                <input type="checkbox" id="effect-delay" onchange="toggleMusicEffect('delay', this.checked)">
+                                <label for="effect-delay">⏰ Delay</label>
+                            </div>
+                            <input type="range" id="delay-level" min="0" max="1" step="0.1" value="0.2" 
+                                   oninput="setMusicEffectParam('delay', 'level', this.value)">
+                            <span class="effect-value" id="delay-level-display">20%</span>
+                        </div>
+                    </div>
+                </div>
+                
                 <div class="btn-group">
                     <button class="btn btn-primary" onclick="saveSettings()">💾 Save Settings</button>
                     <button class="btn btn-secondary" onclick="resetSettings()">🔄 Reset</button>
@@ -1856,14 +2213,465 @@
     <script src="/static/js/camera-controls.js"></script>
     <script src="/static/js/pantilt-controls.js"></script>
     <script src="/static/js/tracking.js"></script>
+    <script src="/static/js/feature-tracking.js"></script>
+    <script src="/static/js/adsb-tracker.js"></script>
     <script src="/static/js/motion-detection.js"></script>
     <script src="/static/js/gallery.js"></script>
-    <script src="/static/js/stacking.js"></script>
+    <script src="/static/js/stacking-optimized.js"></script>
     
     <script>
         // Server IP passed from Flask - needed by all modules
         const serverIP = '{{ server_ip }}';
+        window.serverIP = serverIP;  // Make available globally for other scripts
         console.log('Server IP:', serverIP);
+        
+        // Music Effects Control Functions
+        function setMusicEffectPreset(presetName) {
+            if (typeof unifiedMusic !== 'undefined') {
+                unifiedMusic.setPresetEffects(presetName);
+                updateEffectControlsUI();
+                showMessage(`Music effects preset "${presetName}" applied`, 'info');
+            }
+        }
+        
+        function toggleMusicEffect(effectName, enabled) {
+            if (typeof unifiedMusic !== 'undefined') {
+                unifiedMusic.setEffectEnabled(effectName, enabled);
+                showMessage(`${effectName} effect ${enabled ? 'enabled' : 'disabled'}`, 'info');
+            }
+        }
+        
+        function setMusicEffectParam(effectName, parameter, value) {
+            if (typeof unifiedMusic !== 'undefined') {
+                const numValue = parseFloat(value);
+                unifiedMusic.setEffectParameter(effectName, parameter, numValue);
+                
+                // Update display
+                const displayElement = document.getElementById(`${effectName}-${parameter}-display`);
+                if (displayElement) {
+                    displayElement.textContent = Math.round(numValue * 100) + '%';
+                }
+            }
+        }
+        
+        function updateEffectControlsUI() {
+            if (typeof unifiedMusic !== 'undefined' && unifiedMusic.effects) {
+                Object.keys(unifiedMusic.effects).forEach(effectName => {
+                    const effect = unifiedMusic.effects[effectName];
+                    
+                    // Update checkbox
+                    const checkbox = document.getElementById(`effect-${effectName}`);
+                    if (checkbox) {
+                        checkbox.checked = effect.enabled;
+                    }
+                    
+                    // Update level slider and display
+                    Object.keys(effect).forEach(param => {
+                        if (param !== 'enabled') {
+                            const slider = document.getElementById(`${effectName}-${param}`);
+                            const display = document.getElementById(`${effectName}-${param}-display`);
+                            
+                            if (slider && typeof effect[param] === 'number') {
+                                slider.value = effect[param];
+                            }
+                            if (display && typeof effect[param] === 'number') {
+                                display.textContent = Math.round(effect[param] * 100) + '%';
+                            }
+                        }
+                    });
+                });
+            }
+        }
+        
+        // Timelapse Control Functions
+        function refreshTimelapseStatus() {
+            fetch('/api/timelapse/status')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        const status = data.status;
+                        document.getElementById('timelapse-status').textContent = status.running ? 'Running' : 'Stopped';
+                        document.getElementById('timelapse-status').style.color = status.running ? '#4CAF50' : '#666';
+                        document.getElementById('current-hour').textContent = status.current_hour || '--';
+                    }
+                })
+                .catch(error => {
+                    console.error('Error fetching timelapse status:', error);
+                    document.getElementById('timelapse-status').textContent = 'Error';
+                    document.getElementById('timelapse-status').style.color = '#ff6b6b';
+                });
+                
+            // Also refresh videos list
+            refreshTimelapseVideos();
+        }
+        
+        function refreshTimelapseVideos() {
+            fetch('/api/timelapse/videos')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        const videos = data.videos;
+                        document.getElementById('videos-count').textContent = videos.length;
+                        
+                        const videosList = document.getElementById('timelapse-videos-list');
+                        if (videos.length === 0) {
+                            videosList.innerHTML = '<div style="text-align: center; color: #999;">No timelapse videos found</div>';
+                        } else {
+                            videosList.innerHTML = videos.slice(0, 10).map(video => `
+                                <div style="display: flex; justify-content: between; align-items: center; padding: 5px; border-bottom: 1px solid rgba(255,255,255,0.1);">
+                                    <div style="flex: 1;">
+                                        <strong>${video.name}</strong><br>
+                                        <small style="color: #999;">${video.type} | ${formatBytes(video.size)} | ${new Date(video.date).toLocaleString()}</small>
+                                    </div>
+                                    <div>
+                                        <button class="btn btn-sm btn-primary" onclick="playTimelapseVideo('${video.url}')">▶️</button>
+                                        <button class="btn btn-sm btn-danger" onclick="deleteTimelapseVideo('${video.name}')">🗑️</button>
+                                    </div>
+                                </div>
+                            `).join('');
+                        }
+                    }
+                })
+                .catch(error => {
+                    console.error('Error fetching timelapse videos:', error);
+                });
+        }
+        
+        function playTimelapseVideo(url) {
+            window.open(url, '_blank');
+        }
+        
+        function deleteTimelapseVideo(filename) {
+            if (confirm(`Delete timelapse video "${filename}"?`)) {
+                fetch('/api/timelapse/delete', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({filename: filename})
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        showMessage(data.message, 'success');
+                        refreshTimelapseVideos();
+                    } else {
+                        showMessage(data.error, 'error');
+                    }
+                });
+            }
+        }
+        
+        function cleanupOldTimelapses() {
+            if (confirm('Delete timelapse videos older than 7 days?')) {
+                fetch('/api/timelapse/cleanup', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({days: 7})
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        showMessage(data.message, 'success');
+                        refreshTimelapseVideos();
+                    } else {
+                        showMessage(data.error, 'error');
+                    }
+                });
+            }
+        }
+        
+        function startTimelapseService() {
+            showMessage('Timelapse service management is handled by system services', 'info');
+            // In production, this would start the actual service
+        }
+        
+        function stopTimelapseService() {
+            showMessage('Timelapse service management is handled by system services', 'info');
+            // In production, this would stop the actual service
+        }
+        
+        // Motion Detection Control Functions
+        function toggleAutoCapture() {
+            const checkbox = document.getElementById('auto-capture-enabled');
+            if (typeof autoCapture !== 'undefined') {
+                autoCapture.enabled = checkbox.checked;
+                showMessage(`Auto-capture ${checkbox.checked ? 'enabled' : 'disabled'}`, 'info');
+            }
+        }
+        
+        function updateCaptureThreshold() {
+            const input = document.getElementById('capture-threshold');
+            if (typeof autoCapture !== 'undefined') {
+                autoCapture.threshold = parseInt(input.value) || 2;
+                showMessage(`Capture threshold set to ${autoCapture.threshold} objects`, 'info');
+            }
+        }
+        
+        function testMotionDetection() {
+            // Simulate motion detection for testing
+            const testAreas = [
+                {x: 100, y: 100, width: 50, height: 50, intensity: 75},
+                {x: 200, y: 150, width: 40, height: 60, intensity: 85}
+            ];
+            
+            if (typeof captureMotionSnapshot === 'function') {
+                captureMotionSnapshot(testAreas, 'hq');
+                showMessage('Test motion detection snapshot captured', 'success');
+            }
+        }
+        
+        function updateSensitivity() {
+            const slider = document.getElementById('motion-sensitivity');
+            const display = document.getElementById('sensitivity-display');
+            
+            if (slider && display) {
+                const value = parseInt(slider.value);
+                display.textContent = value;
+                
+                // Update global motion sensitivity
+                if (typeof motionSensitivity !== 'undefined') {
+                    motionSensitivity = value;
+                }
+                
+                // Update status display
+                const statusElement = document.getElementById('sensitivity-value');
+                if (statusElement) {
+                    let level = 'Low';
+                    if (value > 30) level = 'Medium';
+                    if (value > 60) level = 'High';
+                    statusElement.textContent = level;
+                }
+            }
+        }
+        
+        // Utility function for file size formatting
+        function formatBytes(bytes, decimals = 2) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const dm = decimals < 0 ? 0 : decimals;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
+        }
+        
+        // Motion Detection Section Functions
+        let motionSnapshotCount = 0;
+        
+        function toggleMotionDetection() {
+            const btn = document.getElementById('motion-enable-btn');
+            if (!motionDetectionActive) {
+                // Start motion detection
+                if (typeof startClientMotionDetection === 'function') {
+                    startClientMotionDetection();
+                    motionDetectionActive = true;
+                    btn.textContent = '⏹️ Stop Detection';
+                    btn.classList.remove('btn-success');
+                    btn.classList.add('btn-danger');
+                    showMessage('Motion detection started', 'success');
+                    
+                    // Initialize motion feeds
+                    initializeMotionFeeds();
+                }
+            } else {
+                // Stop motion detection
+                if (typeof stopClientMotionDetection === 'function') {
+                    stopClientMotionDetection();
+                    motionDetectionActive = false;
+                    btn.textContent = '🎯 Enable Detection';
+                    btn.classList.remove('btn-danger');
+                    btn.classList.add('btn-success');
+                    showMessage('Motion detection stopped', 'info');
+                }
+            }
+        }
+        
+        function initializeMotionFeeds() {
+            console.log('Initializing motion detection feeds');
+            
+            // Set up motion detection feeds with MJPEG streams from port 5001
+            const irImg = document.getElementById('motion-ir-feed');
+            const hqImg = document.getElementById('motion-hq-feed');
+            
+            if (irImg) {
+                irImg.src = `http://${serverIP}:5001/ir_feed?t=${Date.now()}`;
+                console.log('IR motion feed initialized with:', irImg.src);
+            }
+            
+            if (hqImg) {
+                hqImg.src = `http://${serverIP}:5001/hq_feed?t=${Date.now()}`;
+                console.log('HQ motion feed initialized with:', hqImg.src);
+            }
+            
+            // Initialize motion detection canvases if the function exists
+            if (typeof initializeMotionDetection === 'function') {
+                setTimeout(() => {
+                    initializeMotionDetection();
+                }, 1000);
+            }
+        }
+        
+        function refreshMotionFeed(camera) {
+            const img = document.getElementById(`motion-${camera}-feed`);
+            if (img) {
+                // Use MJPEG feeds from port 5001 for continuous streaming
+                img.src = `http://${serverIP}:5001/${camera}_feed?t=${Date.now()}`;
+                console.log(`${camera} motion feed refreshed with:`, img.src);
+            }
+        }
+        
+        function captureMotionFrame(camera) {
+            const currentMotionAreas = typeof motionState !== 'undefined' && motionState.ir.motionAreas ? 
+                                      motionState.ir.motionAreas : [];
+            
+            if (typeof captureMotionSnapshot === 'function') {
+                captureMotionSnapshot(currentMotionAreas, camera);
+                motionSnapshotCount++;
+                document.getElementById('motion-snapshots-count').textContent = motionSnapshotCount;
+            }
+        }
+        
+        // Motion Detection page button functions
+        function toggleDetection() {
+            if (typeof startClientMotionDetection === 'function' && typeof stopClientMotionDetection === 'function') {
+                if (motionDetectionActive) {
+                    stopClientMotionDetection();
+                    showMessage('Motion detection stopped', 'info');
+                } else {
+                    startClientMotionDetection();
+                    showMessage('Motion detection started', 'success');
+                }
+            } else {
+                showMessage('Motion detection functions not available', 'error');
+            }
+        }
+        
+        function refreshDetectionStatus() {
+            // Refresh the feeds
+            refreshMotionFeed('ir');
+            refreshMotionFeed('hq');
+            showMessage('Detection status refreshed', 'info');
+        }
+        
+        function adjustSensitivity() {
+            const slider = document.getElementById('motion-sensitivity-slider');
+            if (slider) {
+                const value = prompt('Enter sensitivity value (10-100):', slider.value || '40');
+                if (value && !isNaN(value)) {
+                    const numValue = parseInt(value);
+                    if (numValue >= 10 && numValue <= 100) {
+                        slider.value = numValue;
+                        if (typeof updateMotionSensitivity === 'function') {
+                            updateMotionSensitivity();
+                        }
+                        showMessage(`Sensitivity set to ${numValue}`, 'success');
+                    } else {
+                        showMessage('Sensitivity must be between 10 and 100', 'error');
+                    }
+                }
+            } else {
+                showMessage('Sensitivity control not found', 'error');
+            }
+        }
+        
+        function clearDetections() {
+            if (typeof clearOverlays === 'function') {
+                clearOverlays();
+                showMessage('Detection overlays cleared', 'info');
+            } else {
+                showMessage('Clear function not available', 'error');
+            }
+        }
+        
+        function updateMotionSensitivity() {
+            const slider = document.getElementById('motion-sensitivity-slider');
+            const display = document.getElementById('motion-sensitivity-display');
+            const levelDisplay = document.getElementById('motion-sensitivity-level');
+            
+            if (slider && display) {
+                const value = parseInt(slider.value);
+                display.textContent = value;
+                
+                // Update motion sensitivity globally
+                if (typeof motionSensitivity !== 'undefined') {
+                    motionSensitivity = value;
+                }
+                
+                // Update level display
+                if (levelDisplay) {
+                    let level = 'Low';
+                    if (value > 30) level = 'Medium';
+                    if (value > 60) level = 'High';
+                    levelDisplay.textContent = level;
+                }
+            }
+        }
+        
+        function updateMotionCaptureThreshold() {
+            const input = document.getElementById('motion-capture-threshold');
+            if (input && typeof autoCapture !== 'undefined') {
+                autoCapture.threshold = parseInt(input.value) || 2;
+                showMessage(`Capture threshold set to ${autoCapture.threshold} objects`, 'info');
+            }
+        }
+        
+        function toggleMotionAutoCapture() {
+            const checkbox = document.getElementById('motion-auto-capture');
+            if (checkbox && typeof autoCapture !== 'undefined') {
+                autoCapture.enabled = checkbox.checked;
+                showMessage(`Auto-capture ${checkbox.checked ? 'enabled' : 'disabled'}`, 'info');
+            }
+        }
+        
+        function clearMotionOverlays() {
+            if (typeof clearOverlays === 'function') {
+                clearOverlays();
+                showMessage('Motion overlays cleared', 'info');
+            }
+        }
+        
+        function captureMotionSnapshot() {
+            const camera = document.getElementById('motion-capture-camera')?.value || 'hq';
+            
+            // Direct API call to capture snapshot
+            fetch('/api/motion/capture', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ camera: camera })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    motionSnapshotCount++;
+                    document.getElementById('motion-snapshots-count').textContent = motionSnapshotCount;
+                    showMessage(`Motion snapshot captured: ${data.filename}`, 'success');
+                } else {
+                    showMessage(`Failed to capture snapshot: ${data.error}`, 'error');
+                }
+            })
+            .catch(error => {
+                showMessage(`Error capturing snapshot: ${error}`, 'error');
+                console.error('Capture error:', error);
+            });
+        }
+        
+        // Update motion detection stats periodically
+        function updateMotionStats() {
+            if (motionDetectionActive && typeof processingFPS !== 'undefined') {
+                document.getElementById('motion-processing-fps').textContent = processingFPS || 0;
+                
+                if (typeof motionState !== 'undefined' && motionState.ir.motionAreas) {
+                    document.getElementById('motion-objects-detected').textContent = motionState.ir.motionAreas.length;
+                }
+            }
+        }
+        
+        // Initialize timelapse status on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            setTimeout(() => {
+                refreshTimelapseStatus();
+                // Start motion stats updates
+                setInterval(updateMotionStats, 1000);
+            }, 1000);
+        });
         
         // Status bar music controls - use window object to avoid conflicts
         window.statusMusicEnabled = false;
@@ -2019,6 +2827,36 @@
             if (modal) {
                 modal.style.display = 'none';
             }
+        }
+        
+        // ADSB Flight Tracker Functions
+        function showADSBView() {
+            // Simple implementation - show alert with flight data for now
+            fetch('/api/adsb/flights')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        const flightCount = data.flight_count;
+                        const flightInfo = data.flights.slice(0, 5).map(flight => {
+                            const callsign = flight.flight !== 'N/A' ? flight.flight : 'Unknown';
+                            const altitude = flight.altitude ? Math.round(flight.altitude).toLocaleString() : 'N/A';
+                            const distance = flight.distance_miles;
+                            const bearing = Math.round(flight.bearing_degrees);
+                            return `${callsign}: ${distance} mi, ${altitude} ft, ${bearing}°`;
+                        }).join('\n');
+                        
+                        const message = flightCount > 0 ? 
+                            `🛩️ ${flightCount} flights within 5 miles:\n\n${flightInfo}${flightCount > 5 ? '\n... and more' : ''}` :
+                            '📡 No flights detected within 5 miles';
+                            
+                        alert(message);
+                    } else {
+                        alert('❌ Failed to fetch flight data: ' + data.error);
+                    }
+                })
+                .catch(error => {
+                    alert('💥 Error fetching flight data: ' + error.message);
+                });
         }
     </script>
     <!-- Image Modal -->

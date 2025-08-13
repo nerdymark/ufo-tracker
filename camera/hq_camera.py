@@ -657,8 +657,8 @@ class HQCamera:
             if high_quality:
                 # Temporarily switch to still configuration for maximum quality
                 still_config = self._camera.create_still_configuration(
-                    main={"size": (2592, 1944)},  # Maximum sensor resolution
-                    raw={"size": (2592, 1944)}
+                    main={"size": (4056, 3040)},  # Full IMX477 sensor resolution
+                    raw={"size": (4056, 3040)}
                 )
                 
                 # Capture with the still configuration

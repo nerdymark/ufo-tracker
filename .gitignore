@@ -1,4 +1,5 @@
 # UFO Tracker .gitignore
+# Updated: Pan-tilt control implementation with WASD keyboard integration
 
 # Python
 __pycache__/
@@ -99,3 +100,10 @@ docs/_build/
 .cache/
 *.pid
 *.sock
+
+# Pan-tilt calibration and position data
+pantilt_calibration.json
+pantilt_positions.json
+
+# Service status files
+*.status

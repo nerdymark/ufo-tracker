@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-UFO Tracker is a Raspberry Pi-based dual-camera system for detecting and tracking unidentified flying objects. It uses OpenCV for motion detection, Flask for web streaming, and supports both infrared and high-quality cameras with different operational modes.
+UFO Tracker is a Raspberry Pi-based dual-camera system for detecting and tracking unidentified flying objects. It uses OpenCV for motion detection, Flask for web streaming, and supports both infrared and high-quality cameras with different operational modes. The system now includes complete pan-tilt control with WASD keyboard integration.
 
 ## Key Commands
 
@@ -17,6 +17,12 @@ UFO Tracker is a Raspberry Pi-based dual-camera system for detecting and trackin
 ./run.sh
 # or directly:
 source venv/bin/activate && python app.py
+
+# The system now uses multiple services:
+# - api_service.py (main API, port 5000) - includes pan-tilt endpoints
+# - camera_service.py (camera streams, port 5001)
+# - frame_service.py (frame capture, port 5002)
+# - satellite_service.py (satellite tracking, port 5003)
 
 # Install as service (auto-start on boot)
 ./install_service.sh
@@ -45,12 +51,20 @@ sudo systemctl start ufo-tracker
 # Stop service  
 sudo systemctl stop ufo-tracker
 
+# Restart service (preferred method)
+sudo systemctl restart ufo-tracker
+
 # Check service status
 sudo systemctl status ufo-tracker
 
 # View logs
 sudo journalctl -u ufo-tracker -f
 ```
+
+### Important: Service Management Rules
+- **ALWAYS use systemctl commands** instead of pkill
+- **NEVER run the app directly** - it should run as a service
+- Use `sudo systemctl restart ufo-tracker` to restart after changes
 
 ## Architecture Overview
 
@@ -120,13 +134,46 @@ Configuration is centralized in `config/config.py` (copied from `config.example.
    - Frame caching reduces load for multiple viewers
    - Configurable resolution and framerate for performance tuning
 
+## Service Architecture
+
+The system now uses a microservice architecture with separate services:
+
+- `api_service.py`: Main API service (port 5000) - includes new pan-tilt endpoints
+- `camera_service.py`: Camera streaming service (port 5001)
+- `frame_service.py`: Frame capture service (port 5002)  
+- `satellite_service.py`: Satellite tracking service (port 5003)
+- `timelapse_service.py`: Timelapse functionality service
+
+### New Pan-Tilt API Endpoints
+
+**WASD Control Endpoints** (api_service.py, port 5000):
+- `GET /api/pantilt/status` - Get pan-tilt status and position
+- `POST /api/pantilt/move_relative` - Move relative to current position (for WASD control)
+  - Parameters: `pan_steps`, `tilt_steps`, `fine_step` (boolean)
+  - `fine_step: true` reduces movement to 10% for precise control
+- `POST /api/pantilt/enable_motors` - Enable stepper motors (auto-called when WASD starts)
+- `POST /api/pantilt/disable_motors` - Disable stepper motors  
+- `POST /api/pantilt/start_keepalive` - Keep motors powered during long exposures
+- `POST /api/pantilt/stop_keepalive` - Stop keepalive pulses
+- `POST /api/pantilt/home` - Home mechanism to center position
+
+**WASD Integration**:
+- JavaScript in `static/js/pantilt-controls.js` handles WASD key binding
+- W/A/S/D keys control tilt up/pan left/tilt down/pan right
+- Shift+WASD enables fine movement (10% of normal step size)
+- Available in Live Cameras and Auto Tracking dashboard modes
+- Toggle button: "⌨️ WASD: OFF" becomes "⌨️ WASD: ON" when active
+
 ## File Structure Notes
 
-- `app.py`: Main Flask application with route definitions
+- `api_service.py`: Main API service with pan-tilt endpoints
+- `app.py`: Legacy main Flask application (still used for some routes)
 - `camera/`: Camera abstraction layer with streaming support
 - `detection/`: Motion detection and object tracking algorithms
-- `hardware/`: Hardware interface code (pan-tilt placeholder)
+- `hardware/`: Hardware interface code (complete pan-tilt implementation)
+- `services/`: Service layer code (ADSB, compass, sensors)
 - `templates/`: HTML templates including unified dashboard
+- `static/js/pantilt-controls.js`: WASD keyboard control implementation
 - `static/`: CSS and JavaScript for web interface
 - `config/`: Configuration files (copy example to create config.py)
 - `detections/`: Directory for saved detection images

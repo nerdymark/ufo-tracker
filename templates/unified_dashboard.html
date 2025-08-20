@@ -1209,6 +1209,225 @@
             0%, 100% { opacity: 0.3; transform: scale(1); }
             50% { opacity: 1; transform: scale(1.5); }
         }
+
+        /* Flight Tracker Widget Styles */
+        #flight-tracker-widget {
+            min-height: 350px;
+        }
+        
+        #satellite-tracker-widget {
+            min-height: 350px;
+        }
+        
+        #motion-sensor-widget {
+            min-height: 350px;
+        }
+        
+        .flight-tracker-content, .satellite-tracker-content, .motion-sensor-content {
+            margin-bottom: 15px;
+        }
+        
+        .flight-tracker-stats, .satellite-tracker-stats, .motion-sensor-stats {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 15px;
+            padding: 10px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 8px;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        
+        .stat-item {
+            display: flex;
+            flex-direction: column;
+            text-align: center;
+        }
+        
+        .stat-label {
+            font-size: 0.8em;
+            color: #aaa;
+            margin-bottom: 2px;
+        }
+        
+        .stat-value {
+            font-weight: bold;
+            color: #17a2b8;
+            font-size: 1.1em;
+        }
+        
+        .flights-list, .satellites-list {
+            max-height: 200px;
+            overflow-y: auto;
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 8px;
+            padding: 8px;
+            background: rgba(0,0,0,0.3);
+        }
+        
+        .flight-loading, .satellite-loading, .motion-loading {
+            text-align: center;
+            padding: 20px;
+            color: #666;
+        }
+        
+        .motion-data-display {
+            max-height: 200px;
+            overflow-y: auto;
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 8px;
+            padding: 8px;
+            background: rgba(0,0,0,0.3);
+        }
+        
+        .motion-data-item {
+            background: rgba(255,20,147,0.15);
+            border-radius: 6px;
+            padding: 8px;
+            margin-bottom: 6px;
+            border-left: 3px solid #ff1493;
+            transition: background-color 0.3s ease;
+        }
+        
+        .motion-data-item:hover {
+            background: rgba(255,20,147,0.25);
+        }
+        
+        .motion-data-item.status-motion {
+            border-left-color: #ff4500;
+        }
+        
+        .motion-data-item.status-stable {
+            border-left-color: #32cd32;
+        }
+        
+        .motion-data-item.calibrated {
+            border-left-color: #1e90ff;
+        }
+        
+        .motion-data-item.uncalibrated {
+            border-left-color: #ffa500;
+        }
+        
+        .adsb-flight-item {
+            background: rgba(255,255,255,0.08);
+            border-radius: 6px;
+            padding: 8px;
+            margin-bottom: 6px;
+            border-left: 3px solid #17a2b8;
+            transition: background-color 0.3s ease;
+        }
+        
+        .adsb-flight-item:hover {
+            background: rgba(255,255,255,0.12);
+        }
+        
+        .adsb-flight-item.distance-close { 
+            border-left-color: #dc3545; 
+        }
+        
+        .adsb-flight-item.distance-medium { 
+            border-left-color: #ffc107; 
+        }
+        
+        .adsb-flight-item.distance-far { 
+            border-left-color: #28a745; 
+        }
+        
+        .satellite-item {
+            background: rgba(255,165,0,0.15);
+            border-radius: 6px;
+            padding: 8px;
+            margin-bottom: 6px;
+            border-left: 3px solid #ffa500;
+            transition: background-color 0.3s ease;
+        }
+        
+        .satellite-item:hover {
+            background: rgba(255,165,0,0.25);
+        }
+        
+        .satellite-item.category-space-station { 
+            border-left-color: #ff4500; 
+        }
+        
+        .satellite-item.category-communications { 
+            border-left-color: #1e90ff; 
+        }
+        
+        .satellite-item.category-earth-observation { 
+            border-left-color: #32cd32; 
+        }
+        
+        .satellite-item.category-navigation { 
+            border-left-color: #ffd700; 
+        }
+        
+        .satellite-item.category-weather { 
+            border-left-color: #87ceeb; 
+        }
+        
+        .satellite-item.category-science { 
+            border-left-color: #da70d6; 
+        }
+        
+        .flight-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 6px;
+            font-weight: bold;
+        }
+        
+        .flight-callsign { 
+            color: #17a2b8; 
+            font-size: 0.95em;
+        }
+        
+        .flight-distance { 
+            color: #ffc107; 
+            font-size: 0.9em;
+        }
+        
+        .flight-details {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 4px;
+            margin-bottom: 4px;
+        }
+        
+        .flight-detail {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.85em;
+        }
+        
+        .detail-label { 
+            color: #aaa; 
+        }
+        
+        .detail-value { 
+            color: #fff; 
+            font-weight: bold; 
+        }
+        
+        .flight-meta {
+            font-size: 0.75em;
+            color: #666;
+            margin-top: 4px;
+        }
+        
+        #adsb-connection-status.status-connected { 
+            color: #28a745; 
+        }
+        
+        #adsb-connection-status.status-disconnected { 
+            color: #dc3545; 
+        }
+        
+        .adsb-no-flights {
+            text-align: center;
+            padding: 15px;
+            color: #666;
+        }
     </style>
 </head>
 <body>
@@ -1225,20 +1444,10 @@
         <!-- System Status Bar - Always Visible -->
         <div class="status-bar">
             <div class="status-grid-horizontal">
-                <div class="status-item-compact">
-                    <span class="status-label">IR:</span>
-                    <span id="ir-status-bar">Loading...</span>
-                    <span class="status-indicator-small" id="ir-indicator-bar"></span>
-                </div>
-                <div class="status-item-compact">
-                    <span class="status-label">HQ:</span>
-                    <span id="hq-status-bar">Loading...</span>
-                    <span class="status-indicator-small" id="hq-indicator-bar"></span>
-                </div>
-                <div class="status-item-compact">
-                    <span class="status-label">Motion:</span>
-                    <span id="motion-status-bar">Loading...</span>
-                    <span class="status-indicator-small" id="motion-indicator-bar"></span>
+                <div class="status-item-compact" onclick="showCompassDetails()" style="cursor: pointer;" title="Click for compass details">
+                    <span class="status-label">Compass:</span>
+                    <span id="compass-status-bar">Loading...</span>
+                    <span class="status-indicator-small" id="compass-indicator-bar"></span>
                 </div>
                 <div class="status-item-compact">
                     <span class="status-label">Storage:</span>
@@ -1294,6 +1503,7 @@
                         <div class="btn-group">
                             <button class="btn btn-primary" onclick="refreshStream('ir')">🔄 Refresh Stream</button>
                             <button class="btn btn-warning" onclick="captureFrame('ir')">📸 Capture</button>
+                            <button class="btn btn-secondary" id="wasd-toggle-btn-live" onclick="toggleWASDControl()" title="Enable WASD keyboard control">⌨️ WASD: OFF</button>
                         </div>
                     </div>
 
@@ -1307,6 +1517,102 @@
                         <div class="btn-group">
                             <button class="btn btn-primary" onclick="refreshStream('hq')">🔄 Refresh Stream</button>
                             <button class="btn btn-warning" onclick="captureFrame('hq')">📸 Capture</button>
+                        </div>
+                    </div>
+                    
+                    <!-- ADSB Flight Tracker Widget -->
+                    <div class="camera-panel" id="flight-tracker-widget">
+                        <h3>🛩️ Flight Tracker <span id="adsb-connection-status" class="status-indicator">Connecting...</span></h3>
+                        <div class="flight-tracker-content">
+                            <div class="flight-tracker-stats">
+                                <div class="stat-item">
+                                    <span class="stat-label">Flights:</span>
+                                    <span id="adsb-flight-count" class="stat-value">0</span>
+                                </div>
+                                <div class="stat-item">
+                                    <span class="stat-label">Range:</span>
+                                    <span class="stat-value" id="adsb-range">10mi</span>
+                                </div>
+                                <div class="stat-item">
+                                    <span class="stat-label">Updated:</span>
+                                    <span id="adsb-last-update" class="stat-value">Never</span>
+                                </div>
+                            </div>
+                            <div id="adsb-flights-list" class="flights-list">
+                                <div class="flight-loading">
+                                    <p>📡 Initializing flight tracker...</p>
+                                    <small>Connecting to PiAware SkyAware</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="btn-group">
+                            <button class="btn btn-primary btn-sm" onclick="refreshADSBData()">🔄 Refresh</button>
+                            <button class="btn btn-secondary btn-sm" onclick="showADSBDetails()">📊 Details</button>
+                            <button class="btn btn-info btn-sm" onclick="toggleADSBTracking()" id="adsb-toggle-btn">⏹️ Stop ADSB</button>
+                        </div>
+                    </div>
+                    
+                    <!-- Satellite Tracker Widget -->
+                    <div class="camera-panel" id="satellite-tracker-widget">
+                        <h3>🛰️ Satellite Tracker <span id="satellite-connection-status" class="status-indicator">Connecting...</span></h3>
+                        <div class="satellite-tracker-content">
+                            <div class="satellite-tracker-stats">
+                                <div class="stat-item">
+                                    <span class="stat-label">Satellites:</span>
+                                    <span id="satellite-count" class="stat-value">0</span>
+                                </div>
+                                <div class="stat-item">
+                                    <span class="stat-label">Min Elev:</span>
+                                    <span class="stat-value" id="satellite-min-elevation">10°</span>
+                                </div>
+                                <div class="stat-item">
+                                    <span class="stat-label">Updated:</span>
+                                    <span id="satellite-last-update" class="stat-value">Never</span>
+                                </div>
+                            </div>
+                            <div id="satellite-list" class="satellites-list">
+                                <div class="satellite-loading">
+                                    <p>🛰️ Initializing satellite tracker...</p>
+                                    <small>Loading TLE data from CelesTrak</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="btn-group">
+                            <button class="btn btn-primary btn-sm" onclick="refreshSatelliteData()">🔄 Refresh</button>
+                            <button class="btn btn-secondary btn-sm" onclick="showSatelliteDetails()">📊 Details</button>
+                            <button class="btn btn-info btn-sm" onclick="toggleSatelliteTracking()" id="satellite-toggle-btn">⏹️ Stop Tracking</button>
+                        </div>
+                    </div>
+                    
+                    <!-- Motion Sensor Widget -->
+                    <div class="camera-panel" id="motion-sensor-widget">
+                        <h3>📱 Motion Sensor <span id="motion-connection-status" class="status-indicator">Connecting...</span></h3>
+                        <div class="motion-sensor-content">
+                            <div class="motion-sensor-stats">
+                                <div class="stat-item">
+                                    <span class="stat-label">Status:</span>
+                                    <span id="motion-status" class="stat-value">Unknown</span>
+                                </div>
+                                <div class="stat-item">
+                                    <span class="stat-label">Stability:</span>
+                                    <span id="motion-stability" class="stat-value">0%</span>
+                                </div>
+                                <div class="stat-item">
+                                    <span class="stat-label">Temperature:</span>
+                                    <span id="motion-temperature" class="stat-value">0°C</span>
+                                </div>
+                            </div>
+                            <div id="motion-data-display" class="motion-data-display">
+                                <div class="motion-loading">
+                                    <p>📱 Initializing motion sensor...</p>
+                                    <small>Connecting to MPU-6050 via I2C</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="btn-group">
+                            <button class="btn btn-primary btn-sm" onclick="refreshMotionData()">🔄 Refresh</button>
+                            <button class="btn btn-warning btn-sm" onclick="calibrateMotionSensor()">⚙️ Calibrate</button>
+                            <button class="btn btn-secondary btn-sm" onclick="showMotionDetails()">📊 Details</button>
                         </div>
                     </div>
                 </div>
@@ -1339,6 +1645,7 @@
                                 <button class="btn btn-success" id="motor-tracking-btn" onclick="toggleMotorTracking()" title="Toggle motor tracking on/off">🚀 Start Motor Tracking</button>
                                 <button class="btn btn-info" onclick="calibrateAutoTracking()" title="Calibrate motor positions">🔧 Calibrate Motors</button>
                                 <button class="btn btn-secondary" onclick="updateAutoTrackingStatus()" title="Refresh auto-tracking status">🔄 Refresh Status</button>
+                                <button class="btn btn-secondary" id="wasd-toggle-btn" onclick="toggleWASDControl()" title="Enable WASD keyboard control">⌨️ WASD: OFF</button>
                             </div>
                             
                             <div class="status-grid" style="max-width: 600px;">
@@ -1642,7 +1949,7 @@
                             <div class="camera-preview">
                                 <img id="stacked-ir-preview" alt="Stacked IR Image" 
                                      src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTI4MCIgaGVpZ2h0PSI3MjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CiAgPGRlZnM+CiAgICA8bGluZWFyR3JhZGllbnQgaWQ9ImJnR3JhZDEyODAiIHgxPSIwJSIgeTE9IjAlIiB4Mj0iMTAwJSIgeTI9IjEwMCUiPgogICAgICA8c3RvcCBvZmZzZXQ9IjAlIiBzdG9wLWNvbG9yPSIjMDAxMTIyIiBzdG9wLW9wYWNpdHk9IjEiIC8+CiAgICAgIDxzdG9wIG9mZnNldD0iNTAlIiBzdG9wLWNvbG9yPSIjMDAwODE0IiBzdG9wLW9wYWNpdHk9IjEiIC8+CiAgICAgIDxzdG9wIG9mZnNldD0iMTAwJSIgc3RvcC1jb2xvcj0iIzFhMDAzMyIgc3RvcC1vcGFjaXR5PSIxIiAvPgogICAgPC9saW5lYXJHcmFkaWVudD4KICAgIDxsaW5lYXJHcmFkaWVudCBpZD0idGV4dEdyYWQxMjgwIiB4MT0iMCUiIHkxPSIwJSIgeDI9IjEwMCUiIHkyPSIwJSI+CiAgICAgIDxzdG9wIG9mZnNldD0iMCUiIHN0b3AtY29sb3I9IiMwMGZmZmYiIHN0b3Atb3BhY2l0eT0iMC44IiAvPgogICAgICA8c3RvcCBvZmZzZXQ9IjUwJSIgc3RvcC1jb2xvcj0iIzY0YzhmZiIgc3RvcC1vcGFjaXR5PSIxIiAvPgogICAgICA8c3RvcCBvZmZzZXQ9IjEwMCUiIHN0b3AtY29sb3I9IiMwMGZmZmYiIHN0b3Atb3BhY2l0eT0iMC44IiAvPgogICAgPC9saW5lYXJHcmFkaWVudD4KICAgIDxmaWx0ZXIgaWQ9Imdsb3cxMjgwIj4KICAgICAgPGZlR2F1c3NpYW5CbHVyIHN0ZERldmlhdGlvbj0iMyIgcmVzdWx0PSJjb2xvcmVkQmx1ciIvPgogICAgICA8ZmVNZXJnZT4gCiAgICAgICAgPGZlTWVyZ2VOb2RlIGluPSJjb2xvcmVkQmx1ciIvPgogICAgICAgIDxmZU1lcmdlTm9kZSBpbj0iU291cmNlR3JhcGhpYyIvPgogICAgICA8L2ZlTWVyZ2U+CiAgICA8L2ZpbHRlcj4KICAgIDxmaWx0ZXIgaWQ9InNjYW4xMjgwIj4KICAgICAgPGZlVHVyYnVsZW5jZSBiYXNlRnJlcXVlbmN5PSIwLjkiIG51bU9jdGF2ZXM9IjQiIHJlc3VsdD0ibm9pc2UiLz4KICAgICAgPGZlQ29sb3JNYXRyaXggaW49Im5vaXNlIiB0eXBlPSJzYXR1cmF0ZSIgdmFsdWVzPSIwIi8+CiAgICAgIDxmZUNvbXBvbmVudFRyYW5zZmVyPgogICAgICAgIDxmZUZ1bmNBIHR5cGU9ImRpc2NyZXRlIiB0YWJsZVZhbHVlcz0iMC41IDAuMiAwLjggMC4zIDAuMSAwLjciLz4KICAgICAgPC9mZUNvbXBvbmVudFRyYW5zZmVyPgogICAgPC9maWx0ZXI+CiAgPC9kZWZzPgogIAogIDwhLS0gQmFja2dyb3VuZCAtLT4KICA8cmVjdCB3aWR0aD0iMTI4MCIgaGVpZ2h0PSI3MjAiIGZpbGw9InVybCgjYmdHcmFkMTI4MCkiLz4KICA8IS0tIEdyaWQgcGF0dGVybiAtLT4KICA8cGF0dGVybiBpZD0iZ3JpZDEyODAiIHdpZHRoPSI0MCIgaGVpZ2h0PSI0MCIgcGF0dGVyblVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+CiAgICA8cGF0aCBkPSJNIDQwIDAgTCAwIDAgMCA0MCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjMDBmZmZmIiBzdHJva2Utd2lkdGg9IjAuNSIgb3BhY2l0eT0iMC4xNSIvPgogIDwvcGF0dGVybj4KICA8cmVjdCB3aWR0aD0iMTI4MCIgaGVpZ2h0PSI3MjAiIGZpbGw9InVybCgjZ3JpZDEyODApIi8+CiAgPCEtLSBTY2FuIGxpbmVzIC0tPgogIDxyZWN0IHdpZHRoPSIxMjgwIiBoZWlnaHQ9IjcyMCIgZmlsbD0idXJsKCNzY2FuMTI4MCkiIG9wYWNpdHk9IjAuMSIvPgogIDwhLS0gQm9yZGVyIC0tPgogIDxyZWN0IHg9IjIiIHk9IjIiIHdpZHRoPSIxMjc2IiBoZWlnaHQ9IjcxNiIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjMDBmZmZmIiBzdHJva2Utd2lkdGg9IjIiIG9wYWNpdHk9IjAuNiIvPgogIDwhLS0gQ29ybmVyIGFjY2VudHMgLS0+CiAgPHBhdGggZD0iTSAxMCAxMCBMIDMwIDEwIEwgMzAgMzAiIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzY0YzhmZiIgc3Ryb2tlLXdpZHRoPSIzIiBvcGFjaXR5PSIwLjgiLz4KICA8cGF0aCBkPSJNIDEyNzAgMTAgTCAxMjUwIDEwIEwgMTI1MCAzMCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjNjRjOGZmIiBzdHJva2Utd2lkdGg9IjMiIG9wYWNpdHk9IjAuOCIvPgogIDxwYXRoIGQ9Ik0gMTAgNzEwIEwgMzAgNzEwIEwgMzAgNjkwIiBmaWxsPSJub25lIiBzdHJva2U9IiM2NGM4ZmYiIHN0cm9rZS13aWR0aD0iMyIgb3BhY2l0eT0iMC44Ii8+CiAgPHBhdGggZD0iTSAxMjcwIDcxMCBMIDEyNTAgNzEwIEwgMTI1MCA2OTAiIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzY0YzhmZiIgc3Ryb2tlLXdpZHRoPSIzIiBvcGFjaXR5PSIwLjgiLz4KICA8IS0tIEljb24gLS0+CiAgPHRleHQgeD0iNjQwIiB5PSIzNDAiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZvbnQtZmFtaWx5PSJtb25vc3BhY2UiIGZvbnQtc2l6ZT0iOTAiIGZpbGw9InVybCgjdGV4dEdyYWQxMjgwKSIgZmlsdGVyPSJ1cmwoI2dsb3cxMjgwKSI+8J+TmjwvdGV4dD4KICA8IS0tIE1haW4gdGV4dCAtLT4KICA8dGV4dCB4PSI2NDAiIHk9IjM3MCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZm9udC1mYW1pbHk9IidDb3VyaWVyIE5ldycsIG1vbm9zcGFjZSIgZm9udC13ZWlnaHQ9ImJvbGQiIGZvbnQtc2l6ZT0iNDgiIGZpbGw9InVybCgjdGV4dEdyYWQxMjgwKSIgZmlsdGVyPSJ1cmwoI2dsb3cxMjgwKSI+U1RBQ0tJTkcgSVIgRlJBTUVTLi4uPC90ZXh0PgogIDwhLS0gU3RhdHVzIGluZGljYXRvciAtLT4KICA8Y2lyY2xlIGN4PSIxMjUwIiBjeT0iMzAiIHI9IjQiIGZpbGw9IiMwMGZmMDAiIG9wYWNpdHk9IjAuOCI+CiAgICA8YW5pbWF0ZSBhdHRyaWJ1dGVOYW1lPSJvcGFjaXR5IiB2YWx1ZXM9IjAuODswLjM7MC44IiBkdXI9IjJzIiByZXBlYXRDb3VudD0iaW5kZWZpbml0ZSIvPgogIDwvY2lyY2xlPgogIDwhLS0gTG9hZGluZyBhbmltYXRpb24gLS0+CiAgPHJlY3QgeD0iNTkwIiB5PSIzODUiIHdpZHRoPSIxMDAiIGhlaWdodD0iNCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjMDBmZmZmIiBzdHJva2Utd2lkdGg9IjIiIG9wYWNpdHk9IjAuNSIvPgogIDxyZWN0IHg9IjU5MCIgeT0iMzg1IiB3aWR0aD0iMjAiIGhlaWdodD0iNCIgZmlsbD0iIzY0YzhmZiI+CiAgICA8YW5pbWF0ZVRyYW5zZm9ybSBhdHRyaWJ1dGVOYW1lPSJ0cmFuc2Zvcm0iIHR5cGU9InRyYW5zbGF0ZSIgdmFsdWVzPSIwLDA7IDgwLDA7IDAsMCIgZHVyPSIzcyIgcmVwZWF0Q291bnQ9ImluZGVmaW5pdGUiLz4KICA8L3JlY3Q+Cjwvc3ZnPg=="
-                                     onclick="toggleFullscreen('stacked-ir')" style="cursor: pointer;">
+                                     onclick="toggleStackedFullscreen('ir')" style="cursor: pointer;">
                                 <div class="camera-overlay">Stacked IR</div>
                             </div>
                             <div class="control-group">
@@ -1691,7 +1998,7 @@
                             <div class="camera-preview">
                                 <img id="stacked-hq-preview" alt="Stacked HQ Image"
                                      src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTI4MCIgaGVpZ2h0PSI3MjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CiAgPGRlZnM+CiAgICA8bGluZWFyR3JhZGllbnQgaWQ9ImJnR3JhZDEyODAiIHgxPSIwJSIgeTE9IjAlIiB4Mj0iMTAwJSIgeTI9IjEwMCUiPgogICAgICA8c3RvcCBvZmZzZXQ9IjAlIiBzdG9wLWNvbG9yPSIjMDAxMTIyIiBzdG9wLW9wYWNpdHk9IjEiIC8+CiAgICAgIDxzdG9wIG9mZnNldD0iNTAlIiBzdG9wLWNvbG9yPSIjMDAwODE0IiBzdG9wLW9wYWNpdHk9IjEiIC8+CiAgICAgIDxzdG9wIG9mZnNldD0iMTAwJSIgc3RvcC1jb2xvcj0iIzFhMDAzMyIgc3RvcC1vcGFjaXR5PSIxIiAvPgogICAgPC9saW5lYXJHcmFkaWVudD4KICAgIDxsaW5lYXJHcmFkaWVudCBpZD0idGV4dEdyYWQxMjgwIiB4MT0iMCUiIHkxPSIwJSIgeDI9IjEwMCUiIHkyPSIwJSI+CiAgICAgIDxzdG9wIG9mZnNldD0iMCUiIHN0b3AtY29sb3I9IiMwMGZmZmYiIHN0b3Atb3BhY2l0eT0iMC44IiAvPgogICAgICA8c3RvcCBvZmZzZXQ9IjUwJSIgc3RvcC1jb2xvcj0iIzY0YzhmZiIgc3RvcC1vcGFjaXR5PSIxIiAvPgogICAgICA8c3RvcCBvZmZzZXQ9IjEwMCUiIHN0b3AtY29sb3I9IiMwMGZmZmYiIHN0b3Atb3BhY2l0eT0iMC44IiAvPgogICAgPC9saW5lYXJHcmFkaWVudD4KICAgIDxmaWx0ZXIgaWQ9Imdsb3cxMjgwIj4KICAgICAgPGZlR2F1c3NpYW5CbHVyIHN0ZERldmlhdGlvbj0iMyIgcmVzdWx0PSJjb2xvcmVkQmx1ciIvPgogICAgICA8ZmVNZXJnZT4gCiAgICAgICAgPGZlTWVyZ2VOb2RlIGluPSJjb2xvcmVkQmx1ciIvPgogICAgICAgIDxmZU1lcmdlTm9kZSBpbj0iU291cmNlR3JhcGhpYyIvPgogICAgICA8L2ZlTWVyZ2U+CiAgICA8L2ZpbHRlcj4KICAgIDxmaWx0ZXIgaWQ9InNjYW4xMjgwIj4KICAgICAgPGZlVHVyYnVsZW5jZSBiYXNlRnJlcXVlbmN5PSIwLjkiIG51bU9jdGF2ZXM9IjQiIHJlc3VsdD0ibm9pc2UiLz4KICAgICAgPGZlQ29sb3JNYXRyaXggaW49Im5vaXNlIiB0eXBlPSJzYXR1cmF0ZSIgdmFsdWVzPSIwIi8+CiAgICAgIDxmZUNvbXBvbmVudFRyYW5zZmVyPgogICAgICAgIDxmZUZ1bmNBIHR5cGU9ImRpc2NyZXRlIiB0YWJsZVZhbHVlcz0iMC41IDAuMiAwLjggMC4zIDAuMSAwLjciLz4KICAgICAgPC9mZUNvbXBvbmVudFRyYW5zZmVyPgogICAgPC9maWx0ZXI+CiAgPC9kZWZzPgogIAogIDwhLS0gQmFja2dyb3VuZCAtLT4KICA8cmVjdCB3aWR0aD0iMTI4MCIgaGVpZ2h0PSI3MjAiIGZpbGw9InVybCgjYmdHcmFkMTI4MCkiLz4KICA8IS0tIEdyaWQgcGF0dGVybiAtLT4KICA8cGF0dGVybiBpZD0iZ3JpZDEyODAiIHdpZHRoPSI0MCIgaGVpZ2h0PSI0MCIgcGF0dGVyblVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+CiAgICA8cGF0aCBkPSJNIDQwIDAgTCAwIDAgMCA0MCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjMDBmZmZmIiBzdHJva2Utd2lkdGg9IjAuNSIgb3BhY2l0eT0iMC4xNSIvPgogIDwvcGF0dGVybj4KICA8cmVjdCB3aWR0aD0iMTI4MCIgaGVpZ2h0PSI3MjAiIGZpbGw9InVybCgjZ3JpZDEyODApIi8+CiAgPCEtLSBTY2FuIGxpbmVzIC0tPgogIDxyZWN0IHdpZHRoPSIxMjgwIiBoZWlnaHQ9IjcyMCIgZmlsbD0idXJsKCNzY2FuMTI4MCkiIG9wYWNpdHk9IjAuMSIvPgogIDwhLS0gQm9yZGVyIC0tPgogIDxyZWN0IHg9IjIiIHk9IjIiIHdpZHRoPSIxMjc2IiBoZWlnaHQ9IjcxNiIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjMDBmZmZmIiBzdHJva2Utd2lkdGg9IjIiIG9wYWNpdHk9IjAuNiIvPgogIDwhLS0gQ29ybmVyIGFjY2VudHMgLS0+CiAgPHBhdGggZD0iTSAxMCAxMCBMIDMwIDEwIEwgMzAgMzAiIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzY0YzhmZiIgc3Ryb2tlLXdpZHRoPSIzIiBvcGFjaXR5PSIwLjgiLz4KICA8cGF0aCBkPSJNIDEyNzAgMTAgTCAxMjUwIDEwIEwgMTI1MCAzMCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjNjRjOGZmIiBzdHJva2Utd2lkdGg9IjMiIG9wYWNpdHk9IjAuOCIvPgogIDxwYXRoIGQ9Ik0gMTAgNzEwIEwgMzAgNzEwIEwgMzAgNjkwIiBmaWxsPSJub25lIiBzdHJva2U9IiM2NGM4ZmYiIHN0cm9rZS13aWR0aD0iMyIgb3BhY2l0eT0iMC44Ii8+CiAgPHBhdGggZD0iTSAxMjcwIDcxMCBMIDEyNTAgNzEwIEwgMTI1MCA2OTAiIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzY0YzhmZiIgc3Ryb2tlLXdpZHRoPSIzIiBvcGFjaXR5PSIwLjgiLz4KICA8IS0tIEljb24gLS0+CiAgPHRleHQgeD0iNjQwIiB5PSIzNDAiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZvbnQtZmFtaWx5PSJtb25vc3BhY2UiIGZvbnQtc2l6ZT0iOTAiIGZpbGw9InVybCgjdGV4dEdyYWQxMjgwKSIgZmlsdGVyPSJ1cmwoI2dsb3cxMjgwKSI+8J+TmjwvdGV4dD4KICA8IS0tIE1haW4gdGV4dCAtLT4KICA8dGV4dCB4PSI2NDAiIHk9IjM3MCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZm9udC1mYW1pbHk9IidDb3VyaWVyIE5ldycsIG1vbm9zcGFjZSIgZm9udC13ZWlnaHQ9ImJvbGQiIGZvbnQtc2l6ZT0iNDgiIGZpbGw9InVybCgjdGV4dEdyYWQxMjgwKSIgZmlsdGVyPSJ1cmwoI2dsb3cxMjgwKSI+U1RBQ0tJTkcgSFEgRlJBTUVTLi4uPC90ZXh0PgogIDwhLS0gU3RhdHVzIGluZGljYXRvciAtLT4KICA8Y2lyY2xlIGN4PSIxMjUwIiBjeT0iMzAiIHI9IjQiIGZpbGw9IiMwMGZmMDAiIG9wYWNpdHk9IjAuOCI+CiAgICA8YW5pbWF0ZSBhdHRyaWJ1dGVOYW1lPSJvcGFjaXR5IiB2YWx1ZXM9IjAuODswLjM7MC44IiBkdXI9IjJzIiByZXBlYXRDb3VudD0iaW5kZWZpbml0ZSIvPgogIDwvY2lyY2xlPgogIDwhLS0gTG9hZGluZyBhbmltYXRpb24gLS0+CiAgPHJlY3QgeD0iNTkwIiB5PSIzODUiIHdpZHRoPSIxMDAiIGhlaWdodD0iNCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjMDBmZmZmIiBzdHJva2Utd2lkdGg9IjIiIG9wYWNpdHk9IjAuNSIvPgogIDxyZWN0IHg9IjU5MCIgeT0iMzg1IiB3aWR0aD0iMjAiIGhlaWdodD0iNCIgZmlsbD0iIzY0YzhmZiI+CiAgICA8YW5pbWF0ZVRyYW5zZm9ybSBhdHRyaWJ1dGVOYW1lPSJ0cmFuc2Zvcm0iIHR5cGU9InRyYW5zbGF0ZSIgdmFsdWVzPSIwLDA7IDgwLDA7IDAsMCIgZHVyPSIzcyIgcmVwZWF0Q291bnQ9ImluZGVmaW5pdGUiLz4KICA8L3JlY3Q+Cjwvc3ZnPg=="
-                                     onclick="toggleFullscreen('stacked-hq')" style="cursor: pointer;">
+                                     onclick="toggleStackedFullscreen('hq')" style="cursor: pointer;">
                                 <div class="camera-overlay">Stacked HQ</div>
                             </div>
                             <div class="control-group">
@@ -1958,7 +2265,7 @@
                         <div style="display: grid; grid-template-columns: 1fr auto 1fr; gap: 10px; align-items: center; margin: 15px 0;">
                             <!-- Top row -->
                             <div></div>
-                            <button class="btn btn-secondary" onclick="movePanTilt('move_relative', {tilt_steps: 10})" title="Tilt Up">⬆️</button>
+                            <button class="btn btn-secondary" onclick="movePanTilt('move_relative', {tilt_steps: -10})" title="Tilt Up">⬆️</button>
                             <div></div>
                             
                             <!-- Middle row -->
@@ -1968,7 +2275,7 @@
                             
                             <!-- Bottom row -->
                             <div></div>
-                            <button class="btn btn-secondary" onclick="movePanTilt('move_relative', {tilt_steps: -10})" title="Tilt Down">⬇️</button>
+                            <button class="btn btn-secondary" onclick="movePanTilt('move_relative', {tilt_steps: 10})" title="Tilt Down">⬇️</button>
                             <div></div>
                         </div>
                     </div>
@@ -2015,6 +2322,79 @@
                     <div class="btn-group">
                         <button class="btn btn-primary" onclick="refreshPanTiltStatus()">🔄 Refresh Status</button>
                         <button class="btn btn-secondary" onclick="togglePanTiltAutoRefresh()">⏰ Auto: OFF</button>
+                    </div>
+                </div>
+                
+                <!-- Compass & Trajectory Controls -->
+                <div class="camera-panel">
+                    <h3>🧭 Compass & Trajectory Controls</h3>
+                    
+                    <div class="control-group">
+                        <h4>Compass Calibration</h4>
+                        <div class="status-grid">
+                            <div class="status-item">
+                                <span class="status-label">Heading:</span>
+                                <span id="compass-heading" class="status-value">--°</span>
+                            </div>
+                            <div class="status-item">
+                                <span class="status-label">Status:</span>
+                                <span id="compass-status" class="status-value">Not Calibrated</span>
+                            </div>
+                        </div>
+                        <div class="btn-group" style="margin-top: 10px;">
+                            <button class="btn btn-warning" onclick="calibrateCompass()">🎯 Point North & Calibrate</button>
+                            <button class="btn btn-info" onclick="updateCompassReading()">🔄 Update Reading</button>
+                        </div>
+                    </div>
+                    
+                    <div class="control-group">
+                        <h4>Field of View Settings</h4>
+                        <label for="fov-horizontal">Horizontal FOV (degrees)</label>
+                        <input type="range" id="fov-horizontal" class="control-input" 
+                               min="30" max="360" step="5" value="180"
+                               oninput="updateFOV()">
+                        <div class="range-display">
+                            <span>30°</span>
+                            <span id="fov-h-value">180°</span>
+                            <span>360°</span>
+                        </div>
+                        
+                        <label for="fov-vertical">Vertical FOV (degrees)</label>
+                        <input type="range" id="fov-vertical" class="control-input" 
+                               min="20" max="180" step="5" value="90"
+                               oninput="updateFOV()">
+                        <div class="range-display">
+                            <span>20°</span>
+                            <span id="fov-v-value">90°</span>
+                            <span>180°</span>
+                        </div>
+                    </div>
+                    
+                    <div class="control-group">
+                        <h4>Trajectory Projection</h4>
+                        <div class="btn-group">
+                            <button id="trajectory-toggle" class="btn btn-success" onclick="toggleTrajectoryOverlay()">
+                                🚀 Enable Trajectories
+                            </button>
+                            <button class="btn btn-secondary" onclick="refreshTrajectories()">🔄 Refresh</button>
+                        </div>
+                        
+                        <div style="margin-top: 10px;">
+                            <label style="display: block; margin: 5px 0;">
+                                <input type="checkbox" id="show-satellites" checked onchange="updateTrajectorySettings()">
+                                Show Satellites
+                            </label>
+                            <label style="display: block; margin: 5px 0;">
+                                <input type="checkbox" id="show-aircraft" checked onchange="updateTrajectorySettings()">
+                                Show Aircraft (ADS-B)
+                            </label>
+                        </div>
+                        
+                        <div id="trajectory-status" style="margin-top: 10px; padding: 10px; border-radius: 5px; background: rgba(255,255,255,0.1);">
+                            <strong>Satellites Visible:</strong> <span id="sat-count">--</span><br>
+                            <strong>Aircraft Tracked:</strong> <span id="aircraft-count">--</span><br>
+                            <strong>Projection Status:</strong> <span id="projection-status">Disabled</span>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -2214,10 +2594,12 @@
     <script src="/static/js/pantilt-controls.js"></script>
     <script src="/static/js/tracking.js"></script>
     <script src="/static/js/feature-tracking.js"></script>
-    <script src="/static/js/adsb-tracker.js"></script>
+    <script src="/static/js/trajectory-overlay.js"></script>
+    <script src="/static/js/compass-trajectory.js"></script>
     <script src="/static/js/motion-detection.js"></script>
     <script src="/static/js/gallery.js"></script>
     <script src="/static/js/stacking-optimized.js"></script>
+    <script src="/static/js/adsb-tracker.js"></script>
     
     <script>
         // Server IP passed from Flask - needed by all modules
@@ -2846,8 +3228,8 @@
                         }).join('\n');
                         
                         const message = flightCount > 0 ? 
-                            `🛩️ ${flightCount} flights within 5 miles:\n\n${flightInfo}${flightCount > 5 ? '\n... and more' : ''}` :
-                            '📡 No flights detected within 5 miles';
+                            `🛩️ ${flightCount} flights within 10 miles:\n\n${flightInfo}${flightCount > 5 ? '\n... and more' : ''}` :
+                            '📡 No flights detected within 10 miles';
                             
                         alert(message);
                     } else {
@@ -2858,6 +3240,525 @@
                     alert('💥 Error fetching flight data: ' + error.message);
                 });
         }
+        
+        // Show detailed ADSB information in modal/alert
+        function showADSBDetails() {
+            fetch('/api/adsb/status')
+                .then(response => response.json())
+                .then(status => {
+                    const details = `🛩️ ADSB Flight Tracker Details
+
+📡 Connection Status: ${status.running ? 'Connected' : 'Disconnected'}
+🌐 PiAware URL: ${status.piaware_url}
+📊 Flights in Range: ${status.flight_count}
+📏 Max Range: ${status.max_distance_miles} miles
+🕒 Last Update: ${status.last_update ? new Date(status.last_update).toLocaleString() : 'Never'}
+
+📍 Observer Location:
+  Latitude: ${status.observer_location?.latitude}°
+  Longitude: ${status.observer_location?.longitude}°
+  Altitude: ${status.observer_location?.altitude_feet} ft
+
+✅ Status: ${status.enabled ? 'Enabled' : 'Disabled'}`;
+                    
+                    alert(details);
+                })
+                .catch(error => {
+                    alert('Error fetching ADSB details: ' + error.message);
+                });
+        }
+        
+        // Satellite Tracker Functions
+        function refreshSatelliteData() {
+            fetch('/api/satellite/status')
+                .then(response => response.json())
+                .then(data => {
+                    updateSatelliteWidget(data);
+                })
+                .catch(error => {
+                    console.error('Error fetching satellite data:', error);
+                    document.getElementById('satellite-connection-status').textContent = 'Error';
+                    document.getElementById('satellite-connection-status').style.color = '#dc3545';
+                });
+        }
+        
+        function updateSatelliteWidget(data) {
+            // Update status indicator based on new format
+            const statusEl = document.getElementById('satellite-connection-status');
+            
+            if (data.loading) {
+                statusEl.textContent = `Loading ${data.progress}%`;
+                statusEl.style.color = '#ffc107';
+            } else if (data.status === 'ready') {
+                statusEl.textContent = 'Active';
+                statusEl.style.color = '#28a745';
+            } else if (data.status === 'error') {
+                statusEl.textContent = 'Error';
+                statusEl.style.color = '#dc3545';
+            } else if (data.status === 'service_unavailable') {
+                statusEl.textContent = 'Service Offline';
+                statusEl.style.color = '#6c757d';
+            } else {
+                statusEl.textContent = 'Unknown';
+                statusEl.style.color = '#dc3545';
+            }
+            
+            // Update stats
+            document.getElementById('satellite-count').textContent = data.visible_count || 0;
+            document.getElementById('satellite-min-elevation').textContent = '10°'; // From config
+            
+            const lastUpdate = data.last_update ? new Date(data.last_update).toLocaleTimeString() : 'Never';
+            document.getElementById('satellite-last-update').textContent = lastUpdate;
+            
+            // Update satellite list based on loading status
+            if (data.loading) {
+                displayLoadingProgress(data);
+            } else if (data.status === 'ready') {
+                // Fetch and display satellite list
+                fetch('/api/satellite/overhead')
+                    .then(response => response.json())
+                    .then(satData => {
+                        displaySatelliteList(satData.satellites || []);
+                    })
+                    .catch(error => {
+                        console.error('Error fetching satellite list:', error);
+                        displayErrorMessage('Failed to fetch satellites');
+                    });
+            } else {
+                displayErrorMessage(data.error || 'Service unavailable');
+            }
+        }
+        
+        function displayLoadingProgress(data) {
+            const listEl = document.getElementById('satellite-list');
+            const progress = data.progress || 0;
+            const loadedCount = data.loaded_satellites || 0;
+            const totalCount = data.total_satellites || 0;
+            
+            let statusText = '';
+            if (data.status === 'initializing') {
+                statusText = 'Initializing satellite tracker...';
+            } else if (data.status === 'loading_satellites') {
+                statusText = `Loading satellites... ${loadedCount}/${totalCount}`;
+            } else {
+                statusText = 'Loading satellite data...';
+            }
+            
+            listEl.innerHTML = `
+                <div class="satellite-loading">
+                    <p>🛰️ ${statusText}</p>
+                    <div style="background: rgba(255,255,255,0.1); border-radius: 10px; padding: 3px; margin: 10px 0;">
+                        <div style="background: linear-gradient(90deg, #28a745, #20c997); height: 20px; border-radius: 7px; width: ${progress}%; transition: width 0.3s ease;"></div>
+                    </div>
+                    <small>${progress}% complete</small>
+                    ${data.next_update ? `<br><small>Next update: ${new Date(data.next_update * 1000).toLocaleTimeString()}</small>` : ''}
+                </div>
+            `;
+        }
+        
+        function displayErrorMessage(message) {
+            const listEl = document.getElementById('satellite-list');
+            listEl.innerHTML = `
+                <div class="satellite-loading">
+                    <p>❌ ${message}</p>
+                    <small>Check satellite service status</small>
+                </div>
+            `;
+        }
+
+        function displaySatelliteList(satellites) {
+            const listEl = document.getElementById('satellite-list');
+            
+            if (satellites.length === 0) {
+                listEl.innerHTML = '<div class="satellite-loading"><p>🛰️ No satellites above minimum elevation</p><small>Try lowering the elevation threshold</small></div>';
+                return;
+            }
+            
+            const html = satellites.map(sat => {
+                // Create tracking links based on NORAD ID (more reliable than name)
+                const noradId = sat.norad_id;
+                const satName = encodeURIComponent(sat.name);
+                
+                // Use NORAD ID if available, fallback to name search
+                const n2yoUrl = noradId ? 
+                    `https://www.n2yo.com/satellite/?s=${noradId}` : 
+                    `https://www.n2yo.com/satellites/search.php?keyword=${satName}`;
+                    
+                const celestrakUrl = noradId ? 
+                    `https://celestrak.org/satcat/search-results.php?CATNR=${noradId}` : 
+                    `https://celestrak.org/satcat/search-results.php?NAME=${satName}`;
+                    
+                const heavensAboveUrl = noradId ? 
+                    `https://heavens-above.com/SatInfo.aspx?satid=${noradId}&lat=0&lng=0&loc=Unspecified&alt=0&tz=UCT` :
+                    `https://heavens-above.com/SatSearch.aspx?searchstr=${satName}`;
+                
+                return `
+                    <div class="satellite-item">
+                        <div class="flight-header">
+                            <span class="satellite-name">${sat.name}</span>
+                            <span class="satellite-elevation">${Math.round(sat.elevation)}°</span>
+                        </div>
+                        <div class="satellite-details">
+                            <small>
+                                Alt: ${Math.round(sat.distance)} mi | 
+                                Az: ${Math.round(sat.azimuth)}° | Vel: ${Math.round(sat.velocity)} mph
+                            </small>
+                        </div>
+                        <div class="satellite-links" style="margin-top: 5px;">
+                            <small>
+                                <a href="${n2yoUrl}" target="_blank" style="color: #ffa500; margin-right: 8px;">N2YO</a>
+                                <a href="${celestrakUrl}" target="_blank" style="color: #ffa500; margin-right: 8px;">CelesTrak</a>
+                                <a href="${heavensAboveUrl}" target="_blank" style="color: #ffa500;">Heavens-Above</a>
+                            </small>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+            
+            listEl.innerHTML = html;
+        }
+        
+        function showSatelliteDetails() {
+            fetch('/api/satellite/status')
+                .then(response => response.json())
+                .then(status => {
+                    let statusText = status.status || 'unknown';
+                    if (status.loading) {
+                        statusText = `Loading (${status.progress}%)`;
+                    }
+                    
+                    const details = `🛰️ Satellite Tracker Details
+
+📡 Service Status: ${statusText}
+🌐 TLE Source: CelesTrak
+📊 Satellites Visible: ${status.visible_count || 0}
+📊 Total Loaded: ${status.loaded_satellites || 0}
+📊 Total Available: ${status.total_satellites || 0}
+📐 Min Elevation: 10°
+🕒 Last Update: ${status.last_update ? new Date(status.last_update).toLocaleString() : 'Never'}
+${status.next_update ? `🕒 Next Update: ${new Date(status.next_update * 1000).toLocaleString()}` : ''}
+${status.loading ? `\n⏳ Loading Progress: ${status.progress}%` : ''}
+${status.error ? `\n❌ Error: ${status.error}` : ''}
+
+🎯 Service runs on port 5003
+✅ Status: Satellite tracking separated from main API`;
+                    
+                    alert(details);
+                })
+                .catch(error => {
+                    alert('Error fetching satellite details: ' + error.message);
+                });
+        }
+        
+        function toggleSatelliteTracking() {
+            // Placeholder for toggle functionality
+            alert('🛰️ Satellite tracking toggle functionality would be implemented here');
+        }
+        
+        // Initialize satellite tracker when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            // Start periodic updates for satellite data
+            refreshSatelliteData();
+            setInterval(refreshSatelliteData, 30000); // Update every 30 seconds
+            
+            // Start periodic updates for compass data
+            refreshCompassData();
+            setInterval(refreshCompassData, 2000); // Update every 2 seconds
+        });
+        
+        // Motion Sensor Functions
+        function refreshMotionData() {
+            fetch('/api/motion/status')
+                .then(response => response.json())
+                .then(data => {
+                    updateMotionWidget(data);
+                })
+                .catch(error => {
+                    console.error('Error fetching motion data:', error);
+                    document.getElementById('motion-connection-status').textContent = 'Error';
+                    document.getElementById('motion-connection-status').style.color = '#dc3545';
+                });
+        }
+        
+        function updateMotionWidget(status) {
+            // Update status indicator
+            const statusEl = document.getElementById('motion-connection-status');
+            if (status.running) {
+                statusEl.textContent = 'Active';
+                statusEl.style.color = '#28a745';
+            } else {
+                statusEl.textContent = status.hardware_available ? 'Inactive' : 'Hardware N/A';
+                statusEl.style.color = '#dc3545';
+            }
+            
+            // Update basic stats
+            document.getElementById('motion-temperature').textContent = `${status.current_temperature || 0}°C`;
+            
+            // Fetch detailed motion data
+            fetch('/api/motion/data')
+                .then(response => response.json())
+                .then(motionData => {
+                    if (motionData.success) {
+                        displayMotionData(motionData.data, motionData.summary);
+                    } else {
+                        displayMotionError(motionData.error);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error fetching motion sensor data:', error);
+                    displayMotionError('Failed to fetch motion data');
+                });
+        }
+        
+        function displayMotionData(data, summary) {
+            const displayEl = document.getElementById('motion-data-display');
+            
+            // Update status and stability
+            const motionStatus = data.motion_detected ? 'MOTION' : 'STABLE';
+            document.getElementById('motion-status').textContent = motionStatus;
+            document.getElementById('motion-stability').textContent = `${summary.stability_score || 0}%`;
+            
+            if (!data.acceleration) {
+                displayEl.innerHTML = '<div class="motion-loading"><p>📱 No motion data available</p></div>';
+                return;
+            }
+            
+            const calibratedClass = data.calibrated ? 'calibrated' : 'uncalibrated';
+            const statusClass = data.motion_detected ? 'status-motion' : 'status-stable';
+            
+            const html = `
+                <div class="motion-data-item ${calibratedClass}">
+                    <div class="flight-header">
+                        <span>📱 MPU-6050 Sensor</span>
+                        <span>${data.calibrated ? 'Calibrated' : 'Uncalibrated'}</span>
+                    </div>
+                    <div style="margin-top: 4px;">
+                        <small>I2C Address: 0x68 | Sample Rate: 50Hz</small>
+                    </div>
+                </div>
+                
+                <div class="motion-data-item ${statusClass}">
+                    <div class="flight-header">
+                        <span>📐 Orientation</span>
+                        <span>Tilt: ${data.tilt_angle || 0}°</span>
+                    </div>
+                    <div style="margin-top: 4px;">
+                        <small>
+                            Pitch: ${data.orientation?.pitch || 0}° | 
+                            Roll: ${data.orientation?.roll || 0}° | 
+                            Yaw: ${data.orientation?.yaw || 0}°
+                        </small>
+                    </div>
+                </div>
+                
+                <div class="motion-data-item">
+                    <div class="flight-header">
+                        <span>⚡ Acceleration</span>
+                        <span>${motionStatus}</span>
+                    </div>
+                    <div style="margin-top: 4px;">
+                        <small>
+                            X: ${data.acceleration?.x || 0} m/s² | 
+                            Y: ${data.acceleration?.y || 0} m/s² | 
+                            Z: ${data.acceleration?.z || 0} m/s²
+                        </small>
+                    </div>
+                </div>
+                
+                <div class="motion-data-item">
+                    <div class="flight-header">
+                        <span>🌀 Gyroscope</span>
+                        <span>Vib: ${data.vibration_level || 0}°/s</span>
+                    </div>
+                    <div style="margin-top: 4px;">
+                        <small>
+                            X: ${data.gyroscope?.x || 0}°/s | 
+                            Y: ${data.gyroscope?.y || 0}°/s | 
+                            Z: ${data.gyroscope?.z || 0}°/s
+                        </small>
+                    </div>
+                </div>
+            `;
+            
+            displayEl.innerHTML = html;
+        }
+        
+        function displayMotionError(error) {
+            const displayEl = document.getElementById('motion-data-display');
+            displayEl.innerHTML = `<div class="motion-loading"><p>❌ ${error}</p><small>Check I2C connection and sensor wiring</small></div>`;
+            
+            // Reset stats
+            document.getElementById('motion-status').textContent = 'Error';
+            document.getElementById('motion-stability').textContent = '0%';
+        }
+        
+        function calibrateMotionSensor() {
+            if (confirm('Calibrate motion sensor? Keep the device stable during calibration.')) {
+                fetch('/api/motion/calibrate', { method: 'POST' })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            alert('✅ Motion sensor calibrated successfully!');
+                            refreshMotionData(); // Refresh data after calibration
+                        } else {
+                            alert('❌ Calibration failed: ' + data.error);
+                        }
+                    })
+                    .catch(error => {
+                        alert('💥 Calibration error: ' + error.message);
+                    });
+            }
+        }
+        
+        function showMotionDetails() {
+            fetch('/api/motion/status')
+                .then(response => response.json())
+                .then(status => {
+                    const details = `📱 Motion Sensor Details
+
+📡 Connection Status: ${status.running ? 'Active' : 'Inactive'}
+🔌 Hardware Available: ${status.hardware_available ? 'Yes' : 'No'}
+📐 Calibrated: ${status.calibrated ? 'Yes' : 'No'}
+📊 Sample Rate: ${status.sample_rate || 0} Hz
+🌡️ Temperature: ${status.current_temperature || 0}°C
+🕒 Last Update: ${status.last_update ? new Date(status.last_update).toLocaleString() : 'Never'}
+
+⚙️ Configuration:
+  I2C Address: ${status.i2c_address || '0x68'}
+  Motion Threshold: ${status.motion_threshold || 0} m/s²
+  Vibration Threshold: ${status.vibration_threshold || 0}°/s
+
+✅ Status: ${status.enabled ? 'Enabled' : 'Disabled'}`;
+                    
+                    alert(details);
+                })
+                .catch(error => {
+                    alert('Error fetching motion sensor details: ' + error.message);
+                });
+        }
+        
+        // Compass/MPU9250 Sensor Functions
+        function refreshCompassData() {
+            fetch('/api/sensor/data')
+                .then(response => response.json())
+                .then(result => {
+                    if (result.success) {
+                        updateCompassStatusBar(result.data);
+                    } else {
+                        console.error('Failed to fetch compass data:', result.error);
+                        updateCompassStatusBar(null);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error fetching compass data:', error);
+                    updateCompassStatusBar(null);
+                });
+        }
+        
+        function updateCompassStatusBar(data) {
+            const statusEl = document.getElementById('compass-status-bar');
+            const indicatorEl = document.getElementById('compass-indicator-bar');
+            
+            if (!data) {
+                // Error state
+                statusEl.textContent = 'Error';
+                statusEl.style.color = '#dc3545';
+                indicatorEl.style.backgroundColor = '#dc3545';
+                return;
+            }
+            
+            // Update status text with compass heading
+            const heading = data.compass?.heading || 0;
+            const calibrated = data.compass?.calibrated || false;
+            statusEl.textContent = `${Math.round(heading)}° ${calibrated ? '✓' : '⚠'}`;
+            statusEl.style.color = calibrated ? '#28a745' : '#ffc107';
+            indicatorEl.style.backgroundColor = calibrated ? '#28a745' : '#ffc107';
+        }
+        
+        function showCompassDetails() {
+            fetch('/api/sensor/status')
+                .then(response => response.json())
+                .then(result => {
+                    if (result.success) {
+                        const status = result.status;
+                        const details = `🧭 MPU9250 Compass Details
+
+📡 Connection Status: ${status.running ? 'Active' : 'Inactive'}
+🔌 Hardware Available: ${status.hardware_available ? 'Yes' : 'No'}
+📐 Calibrated: ${status.calibrated ? 'Yes' : 'No'}
+🧭 Compass Calibrated: ${status.compass_calibrated ? 'Yes' : 'No'}
+📊 Sample Rate: ${status.sample_rate || 0} Hz
+🌡️ Temperature: ${status.current_temperature || 0}°C
+🕒 Last Update: ${status.last_update ? new Date(status.last_update).toLocaleString() : 'Never'}
+
+⚙️ Configuration:
+  I2C Addresses: ${status.i2c_addresses ? status.i2c_addresses.join(', ') : '0x68, 0x0C'}
+  Motion Threshold: ${status.motion_threshold || 0} m/s²
+  Vibration Threshold: ${status.vibration_threshold || 0}°/s
+  Library: ${status.library || 'Unknown'}
+
+✅ Status: ${status.enabled ? 'Enabled' : 'Disabled'}`;
+                        
+                        alert(details);
+                    } else {
+                        alert('Error fetching compass details: ' + result.error);
+                    }
+                })
+                .catch(error => {
+                    alert('Error fetching compass details: ' + error.message);
+                });
+        }
+        
+        function calibrateCompass() {
+            if (confirm('This will start magnetometer calibration. Rotate the device in 3D figure-8 patterns for 60 seconds. Continue?')) {
+                fetch('/api/sensor/calibrate/magnetometer', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ duration: 60 })
+                })
+                .then(response => response.json())
+                .then(result => {
+                    if (result.success) {
+                        alert('✅ Compass calibration completed!');
+                        refreshCompassData(); // Refresh data after calibration
+                    } else {
+                        alert('❌ Calibration failed: ' + result.error);
+                    }
+                })
+                .catch(error => {
+                    alert('💥 Calibration error: ' + error.message);
+                });
+            }
+        }
+        
+        function setMagneticDeclination() {
+            const declination = parseFloat(prompt('Enter magnetic declination for your location (degrees):') || '0');
+            
+            fetch('/api/sensor/compass/set_declination', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ declination: declination })
+            })
+            .then(response => response.json())
+            .then(result => {
+                if (result.success) {
+                    alert(`✅ Magnetic declination set to ${declination}°`);
+                    refreshCompassData();
+                } else {
+                    alert('❌ Setting declination failed: ' + result.error);
+                }
+            })
+            .catch(error => {
+                alert('💥 Error setting magnetic declination: ' + error.message);
+            });
+        }
+        
+        // Initialize motion sensor when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            // Start periodic updates for motion sensor data
+            refreshMotionData();
+            setInterval(refreshMotionData, 2000); // Update every 2 seconds
+        });
     </script>
     <!-- Image Modal -->
     <div id="image-modal" class="image-modal" onclick="closeImageModal()">

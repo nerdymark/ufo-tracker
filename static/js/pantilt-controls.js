@@ -1,28 +1,117 @@
 // Pan/Tilt mechanism controls
 
 let panTiltAutoRefresh = null;
+let wasdKeysEnabled = false;
+let keyboardEventBound = false;
 
-// Pan/Tilt movement functions
-function movePanTilt(action, params = {}) {
-    const data = {
-        action: action,
-        ...params
-    };
+// Key bindings for WASD control
+const keyBindings = {
+    'KeyW': { action: 'tiltUp', name: 'W (Tilt Up)' },
+    'KeyA': { action: 'panLeft', name: 'A (Pan Left)' }, 
+    'KeyS': { action: 'tiltDown', name: 'S (Tilt Down)' },
+    'KeyD': { action: 'panRight', name: 'D (Pan Right)' }
+};
+
+// Track pressed keys to prevent key repeat
+let pressedKeys = new Set();
+
+// WASD Key event handlers
+function handleKeyDown(event) {
+    if (!wasdKeysEnabled) return;
     
-    // Use step size from slider for relative movements
-    if (action === 'move_relative') {
-        const stepSize = parseInt(document.getElementById('step-size')?.value || 5);
-        if (params.pan_steps) {
-            data.pan_steps = params.pan_steps * stepSize;
-        }
-        if (params.tilt_steps) {
-            data.tilt_steps = params.tilt_steps * stepSize;
+    // Prevent key repeat
+    if (pressedKeys.has(event.code)) return;
+    pressedKeys.add(event.code);
+    
+    // Check if it's a WASD key
+    if (keyBindings[event.code]) {
+        event.preventDefault();
+        const fineStep = event.shiftKey; // Shift for fine control
+        const binding = keyBindings[event.code];
+        
+        console.log(`Key pressed: ${binding.name}${fineStep ? ' (Fine Mode)' : ''}`);
+        
+        // Execute the movement
+        // Base step size - all movements use the same base step
+        const baseStep = 10; // 10 steps per key press for consistent movement
+        
+        switch(binding.action) {
+            case 'panLeft':
+                movePanTiltRelative(-baseStep, 0, fineStep);
+                break;
+            case 'panRight':
+                movePanTiltRelative(baseStep, 0, fineStep);
+                break;
+            case 'tiltUp':
+                // Invert tilt direction: W should tilt up (negative)
+                movePanTiltRelative(0, -baseStep, fineStep);
+                break;
+            case 'tiltDown':
+                // Invert tilt direction: S should tilt down (positive)
+                movePanTiltRelative(0, baseStep, fineStep);
+                break;
         }
     }
+}
+
+function handleKeyUp(event) {
+    pressedKeys.delete(event.code);
+}
+
+// Toggle WASD controls
+function toggleWASDControl() {
+    wasdKeysEnabled = !wasdKeysEnabled;
     
-    console.log('Sending pan/tilt command:', data);
+    // Update all WASD buttons
+    const buttons = [
+        document.getElementById('wasd-toggle-btn'),
+        document.getElementById('wasd-toggle-btn-live')
+    ];
     
-    fetch('/api/pan_tilt', {
+    if (wasdKeysEnabled) {
+        // Enable motors when starting WASD control
+        enablePanTiltMotors();
+        
+        buttons.forEach(button => {
+            if (button) {
+                button.innerHTML = '⌨️ WASD: ON';
+                button.classList.remove('btn-secondary');
+                button.classList.add('btn-primary');
+            }
+        });
+        showMessage('WASD controls enabled. Use W/A/S/D to control pan/tilt. Hold Shift for fine movement.', 'success');
+    } else {
+        buttons.forEach(button => {
+            if (button) {
+                button.innerHTML = '⌨️ WASD: OFF';
+                button.classList.remove('btn-primary');
+                button.classList.add('btn-secondary');
+            }
+        });
+        showMessage('WASD controls disabled', 'info');
+    }
+    
+    // Bind keyboard events if not already bound
+    if (!keyboardEventBound) {
+        document.addEventListener('keydown', handleKeyDown);
+        document.addEventListener('keyup', handleKeyUp);
+        keyboardEventBound = true;
+    }
+}
+
+// Pan/Tilt movement functions
+function movePanTiltRelative(panSteps, tiltSteps, fineStep = false) {
+    // For WASD control, use the steps directly without multiplying by slider value
+    // The steps are already calculated with the correct base step size
+    const data = {
+        pan_steps: panSteps,
+        tilt_steps: tiltSteps,
+        fine_step: fineStep
+    };
+    
+    console.log('Sending relative movement:', data);
+    
+    fetch('/api/pantilt/move_relative', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
@@ -32,12 +121,56 @@ function movePanTilt(action, params = {}) {
     .then(response => response.json())
     .then(data => {
         console.log('Pan/Tilt Response:', data);
+        if (!data.success) {
+            showMessage('Pan/Tilt Error: ' + (data.error || 'Unknown error'), 'error');
+        }
+        // Don't show success messages for WASD to avoid spam
+    })
+    .catch(error => {
+        console.error('Pan/Tilt Error:', error);
+        showMessage('Pan/Tilt Communication Error: ' + error, 'error');
+    });
+}
+
+// Legacy movement function for compatibility
+function movePanTilt(action, params = {}) {
+    let endpoint = '/api/pantilt/status';
+    let method = 'GET';
+    let data = {};
+    
+    switch(action) {
+        case 'move_relative':
+            endpoint = '/api/pantilt/move_relative';
+            method = 'POST';
+            data = params;
+            break;
+        case 'go_home':
+            endpoint = '/api/pantilt/home';
+            method = 'POST';
+            break;
+        case 'set_speed':
+            // Speed setting not implemented in new API
+            console.log('Speed setting not supported in new API');
+            return;
+        default:
+            console.log('Unknown action:', action);
+            return;
+    }
+    
+    console.log('Sending pan/tilt command:', data);
+    
+    fetch(endpoint, {
+        method: method,
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: method === 'POST' ? JSON.stringify(data) : undefined
+    })
+    .then(response => response.json())
+    .then(data => {
+        console.log('Pan/Tilt Response:', data);
         if (data.success) {
             showMessage(data.message || 'Movement completed', 'success');
-            if (data.position) {
-                updatePanTiltPosition(data.position.pan, data.position.tilt);
-            }
-            // Calibration status removed
             // Auto-refresh status after movement
             setTimeout(refreshPanTiltStatus, 500);
         } else {
@@ -46,7 +179,6 @@ function movePanTilt(action, params = {}) {
     })
     .catch(error => {
         console.error('Pan/Tilt Error:', error);
-        console.log('Full error details:', error);
         showMessage('Pan/Tilt Communication Error: ' + error, 'error');
     });
 }
@@ -62,30 +194,34 @@ function updatePanTiltPosition(pan, tilt) {
 
 // Status refresh
 function refreshPanTiltStatus() {
-    fetch('/api/pan_tilt')
+    fetch('/api/pantilt/status')
     .then(response => response.json())
     .then(data => {
-        if (data.position) {
-            updatePanTiltPosition(data.position.pan, data.position.tilt);
-        }
-        
-        // Update motor status
-        updateMotorStatus(data.motors_enabled);
-        
-        // Update keepalive status
-        if (data.hasOwnProperty('keepalive_enabled')) {
-            updateKeepaliveStatus(data.keepalive_enabled);
-        }
-        
-        // Update connection status
-        const statusIndicator = document.getElementById('pantilt-control-status');
-        if (statusIndicator) {
-            if (data.connected) {
-                statusIndicator.className = 'status-indicator active';
-                statusIndicator.textContent = 'Connected';
-            } else {
-                statusIndicator.className = 'status-indicator inactive';
-                statusIndicator.textContent = 'Disconnected';
+        if (data.success && data.status) {
+            const status = data.status;
+            
+            if (status.position) {
+                updatePanTiltPosition(status.position.pan, status.position.tilt);
+            }
+            
+            // Update motor status
+            updateMotorStatus(status.motors_enabled);
+            
+            // Update keepalive status
+            if (status.hasOwnProperty('keepalive_enabled')) {
+                updateKeepaliveStatus(status.keepalive_enabled);
+            }
+            
+            // Update connection status
+            const statusIndicator = document.getElementById('pantilt-control-status');
+            if (statusIndicator) {
+                if (status.connected) {
+                    statusIndicator.className = 'status-indicator active';
+                    statusIndicator.textContent = 'Connected';
+                } else {
+                    statusIndicator.className = 'status-indicator inactive';
+                    statusIndicator.textContent = 'Disconnected';
+                }
             }
         }
     })
@@ -146,21 +282,20 @@ function toggleMotors() {
     console.log('toggleMotors called, currently enabled:', isCurrentlyEnabled);
     console.log('Button element:', button);
     
-    fetch('/api/pan_tilt/motors', {
+    const endpoint = isCurrentlyEnabled ? '/api/pantilt/disable_motors' : '/api/pantilt/enable_motors';
+    
+    fetch(endpoint, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-            enabled: !isCurrentlyEnabled
-        })
+        }
     })
     .then(response => response.json())
     .then(data => {
         console.log('Motors toggle response:', data);
         if (data.success) {
-            updateMotorStatus(data.motors_enabled);
-            showMessage(data.message || `Motors ${data.motors_enabled ? 'enabled' : 'disabled'}`, 'success');
+            updateMotorStatus(!isCurrentlyEnabled);
+            showMessage(data.message || `Motors ${!isCurrentlyEnabled ? 'enabled' : 'disabled'}`, 'success');
         } else {
             showMessage('Motor toggle failed: ' + (data.error || 'Unknown error'), 'error');
         }
@@ -168,6 +303,26 @@ function toggleMotors() {
     .catch(error => {
         console.error('Motor toggle error:', error);
         showMessage('Error toggling motors: ' + error, 'error');
+    });
+}
+
+function enablePanTiltMotors() {
+    fetch('/api/pantilt/enable_motors', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            updateMotorStatus(true);
+        } else {
+            console.error('Motor enable failed:', data.error);
+        }
+    })
+    .catch(error => {
+        console.error('Motor enable error:', error);
     });
 }
 
@@ -201,21 +356,20 @@ function toggleKeepalive() {
     const button = document.getElementById('keepalive-toggle-btn');
     const isCurrentlyEnabled = button && button.textContent.includes('Disable');
     
-    fetch('/api/pan_tilt/keepalive', {
+    const endpoint = isCurrentlyEnabled ? '/api/pantilt/stop_keepalive' : '/api/pantilt/start_keepalive';
+    
+    fetch(endpoint, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-            enabled: !isCurrentlyEnabled
-        })
+        }
     })
     .then(response => response.json())
     .then(data => {
         console.log('Keepalive toggle response:', data);
         if (data.success) {
-            updateKeepaliveStatus(data.keepalive_enabled);
-            showMessage(data.message || `Keepalive ${data.keepalive_enabled ? 'enabled' : 'disabled'}`, 'success');
+            updateKeepaliveStatus(!isCurrentlyEnabled);
+            showMessage(data.message || `Keepalive ${!isCurrentlyEnabled ? 'enabled' : 'disabled'}`, 'success');
         } else {
             showMessage('Keepalive toggle failed: ' + (data.error || 'Unknown error'), 'error');
         }

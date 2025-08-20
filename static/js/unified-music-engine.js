@@ -18,6 +18,15 @@ class UnifiedMusicEngine {
         this.beatDuration = 60 / this.bpm;
         this.enhancedMode = false;
         
+        // Audio effects
+        this.effects = {
+            reverb: { enabled: true, level: 0.3, roomSize: 0.7 },
+            chorus: { enabled: false, level: 0.4, rate: 1.5, depth: 0.002 },
+            flanger: { enabled: false, level: 0.3, rate: 0.5, depth: 0.005 },
+            delay: { enabled: false, level: 0.2, time: 0.3, feedback: 0.4 },
+            filter: { enabled: false, frequency: 800, resonance: 1 }
+        };
+        
         // Musical scales and progressions
         this.keys = {
             'A': { root: 110, name: 'A', mode: 'minor' },    
@@ -88,43 +97,266 @@ class UnifiedMusicEngine {
     }
     
     async setupEffects() {
-        // Create reverb
-        this.reverb = await this.createReverb();
-        this.reverbGain = this.audioContext.createGain();
-        this.reverbGain.gain.value = 0.3;
-        this.reverbGain.connect(this.reverb);
-        this.reverb.connect(this.masterGain);
+        // Effects chain: Input -> Filter -> Chorus -> Flanger -> Delay -> Reverb -> Output
+        this.effectsChain = {
+            input: this.audioContext.createGain(),
+            filter: this.audioContext.createBiquadFilter(),
+            chorus: this.createChorus(),
+            flanger: this.createFlanger(),
+            delay: this.createDelay(),
+            reverb: await this.createReverb(),
+            output: this.audioContext.createGain()
+        };
         
-        // Create delay
-        this.delay = this.audioContext.createDelay(1.0);
-        this.delay.delayTime.value = 0.3;
-        this.delayGain = this.audioContext.createGain();
-        this.delayGain.gain.value = 0.2;
-        this.delay.connect(this.delayGain);
-        this.delayGain.connect(this.delay);
-        this.delayGain.connect(this.masterGain);
+        // Connect effects chain
+        this.effectsChain.input.connect(this.effectsChain.filter);
+        this.effectsChain.filter.connect(this.effectsChain.chorus.input);
+        this.effectsChain.chorus.output.connect(this.effectsChain.flanger.input);
+        this.effectsChain.flanger.output.connect(this.effectsChain.delay.input);
+        this.effectsChain.delay.output.connect(this.effectsChain.reverb.input);
+        this.effectsChain.reverb.output.connect(this.effectsChain.output);
+        this.effectsChain.output.connect(this.masterGain);
+        
+        // Configure default filter
+        this.effectsChain.filter.type = 'lowpass';
+        this.effectsChain.filter.frequency.value = this.effects.filter.frequency;
+        this.effectsChain.filter.Q.value = this.effects.filter.resonance;
+        
+        this.updateEffectsBypass();
     }
     
     async createReverb() {
+        const input = this.audioContext.createGain();
+        const output = this.audioContext.createGain();
+        const dry = this.audioContext.createGain();
+        const wet = this.audioContext.createGain();
         const convolver = this.audioContext.createConvolver();
-        const length = this.audioContext.sampleRate * 3;
+        
+        // Create impulse response for reverb
+        const roomSize = this.effects.reverb.roomSize;
+        const length = this.audioContext.sampleRate * (1 + roomSize * 3);
         const impulse = this.audioContext.createBuffer(2, length, this.audioContext.sampleRate);
         
         for (let channel = 0; channel < 2; channel++) {
             const channelData = impulse.getChannelData(channel);
             for (let i = 0; i < length; i++) {
-                channelData[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / length, 2);
+                const decay = Math.pow(1 - i / length, roomSize + 0.5);
+                channelData[i] = (Math.random() * 2 - 1) * decay;
             }
         }
         
         convolver.buffer = impulse;
-        return convolver;
+        
+        // Set up wet/dry mix
+        dry.gain.value = 1 - this.effects.reverb.level;
+        wet.gain.value = this.effects.reverb.level;
+        
+        // Connect reverb
+        input.connect(dry);
+        input.connect(convolver);
+        convolver.connect(wet);
+        dry.connect(output);
+        wet.connect(output);
+        
+        return { input, output, convolver, dry, wet };
+    }
+    
+    createChorus() {
+        const input = this.audioContext.createGain();
+        const output = this.audioContext.createGain();
+        const delay = this.audioContext.createDelay(0.02);
+        const lfo = this.audioContext.createOscillator();
+        const lfoGain = this.audioContext.createGain();
+        const dry = this.audioContext.createGain();
+        const wet = this.audioContext.createGain();
+        
+        // Configure chorus
+        delay.delayTime.value = 0.005; // Base delay
+        lfo.frequency.value = this.effects.chorus.rate;
+        lfo.type = 'sine';
+        lfoGain.gain.value = this.effects.chorus.depth;
+        
+        // Set wet/dry mix
+        dry.gain.value = 1 - this.effects.chorus.level;
+        wet.gain.value = this.effects.chorus.level;
+        
+        // Connect chorus
+        input.connect(dry);
+        input.connect(delay);
+        delay.connect(wet);
+        lfo.connect(lfoGain);
+        lfoGain.connect(delay.delayTime);
+        dry.connect(output);
+        wet.connect(output);
+        
+        lfo.start();
+        
+        return { input, output, delay, lfo, lfoGain, dry, wet };
+    }
+    
+    createFlanger() {
+        const input = this.audioContext.createGain();
+        const output = this.audioContext.createGain();
+        const delay = this.audioContext.createDelay(0.02);
+        const feedback = this.audioContext.createGain();
+        const lfo = this.audioContext.createOscillator();
+        const lfoGain = this.audioContext.createGain();
+        const dry = this.audioContext.createGain();
+        const wet = this.audioContext.createGain();
+        
+        // Configure flanger
+        delay.delayTime.value = 0.001; // Very short base delay
+        feedback.gain.value = 0.5;
+        lfo.frequency.value = this.effects.flanger.rate;
+        lfo.type = 'sine';
+        lfoGain.gain.value = this.effects.flanger.depth;
+        
+        // Set wet/dry mix
+        dry.gain.value = 1 - this.effects.flanger.level;
+        wet.gain.value = this.effects.flanger.level;
+        
+        // Connect flanger with feedback
+        input.connect(dry);
+        input.connect(delay);
+        delay.connect(feedback);
+        delay.connect(wet);
+        feedback.connect(delay);
+        lfo.connect(lfoGain);
+        lfoGain.connect(delay.delayTime);
+        dry.connect(output);
+        wet.connect(output);
+        
+        lfo.start();
+        
+        return { input, output, delay, feedback, lfo, lfoGain, dry, wet };
+    }
+    
+    createDelay() {
+        const input = this.audioContext.createGain();
+        const output = this.audioContext.createGain();
+        const delay = this.audioContext.createDelay(2.0);
+        const feedback = this.audioContext.createGain();
+        const dry = this.audioContext.createGain();
+        const wet = this.audioContext.createGain();
+        
+        // Configure delay
+        delay.delayTime.value = this.effects.delay.time;
+        feedback.gain.value = this.effects.delay.feedback;
+        
+        // Set wet/dry mix
+        dry.gain.value = 1 - this.effects.delay.level;
+        wet.gain.value = this.effects.delay.level;
+        
+        // Connect delay with feedback
+        input.connect(dry);
+        input.connect(delay);
+        delay.connect(feedback);
+        delay.connect(wet);
+        feedback.connect(delay);
+        dry.connect(output);
+        wet.connect(output);
+        
+        return { input, output, delay, feedback, dry, wet };
+    }
+    
+    updateEffectsBypass() {
+        if (!this.effectsChain) return;
+        
+        // Update effect levels based on enabled state
+        Object.keys(this.effects).forEach(effectName => {
+            const effect = this.effects[effectName];
+            const effectNode = this.effectsChain[effectName];
+            
+            if (effectNode && effectNode.dry && effectNode.wet) {
+                if (effect.enabled) {
+                    effectNode.dry.gain.value = 1 - effect.level;
+                    effectNode.wet.gain.value = effect.level;
+                } else {
+                    effectNode.dry.gain.value = 1;
+                    effectNode.wet.gain.value = 0;
+                }
+            }
+        });
+    }
+    
+    setEffectEnabled(effectName, enabled) {
+        if (this.effects[effectName]) {
+            this.effects[effectName].enabled = enabled;
+            this.updateEffectsBypass();
+        }
+    }
+    
+    setEffectParameter(effectName, parameter, value) {
+        if (this.effects[effectName] && this.effects[effectName].hasOwnProperty(parameter)) {
+            this.effects[effectName][parameter] = value;
+            
+            // Update audio nodes based on parameter changes
+            const effectNode = this.effectsChain[effectName];
+            if (effectNode) {
+                switch (effectName) {
+                    case 'reverb':
+                        if (parameter === 'level' && effectNode.dry && effectNode.wet) {
+                            effectNode.dry.gain.value = 1 - value;
+                            effectNode.wet.gain.value = value;
+                        }
+                        break;
+                    case 'chorus':
+                        if (parameter === 'rate' && effectNode.lfo) {
+                            effectNode.lfo.frequency.value = value;
+                        } else if (parameter === 'depth' && effectNode.lfoGain) {
+                            effectNode.lfoGain.gain.value = value;
+                        } else if (parameter === 'level' && effectNode.dry && effectNode.wet) {
+                            effectNode.dry.gain.value = 1 - value;
+                            effectNode.wet.gain.value = value;
+                        }
+                        break;
+                    case 'flanger':
+                        if (parameter === 'rate' && effectNode.lfo) {
+                            effectNode.lfo.frequency.value = value;
+                        } else if (parameter === 'depth' && effectNode.lfoGain) {
+                            effectNode.lfoGain.gain.value = value;
+                        } else if (parameter === 'level' && effectNode.dry && effectNode.wet) {
+                            effectNode.dry.gain.value = 1 - value;
+                            effectNode.wet.gain.value = value;
+                        }
+                        break;
+                    case 'delay':
+                        if (parameter === 'time' && effectNode.delay) {
+                            effectNode.delay.delayTime.value = value;
+                        } else if (parameter === 'feedback' && effectNode.feedback) {
+                            effectNode.feedback.gain.value = value;
+                        } else if (parameter === 'level' && effectNode.dry && effectNode.wet) {
+                            effectNode.dry.gain.value = 1 - value;
+                            effectNode.wet.gain.value = value;
+                        }
+                        break;
+                    case 'filter':
+                        if (parameter === 'frequency' && this.effectsChain.filter) {
+                            this.effectsChain.filter.frequency.value = value;
+                        } else if (parameter === 'resonance' && this.effectsChain.filter) {
+                            this.effectsChain.filter.Q.value = value;
+                        }
+                        break;
+                }
+            }
+        }
     }
     
     setEnhancedMode(enabled) {
         this.enhancedMode = enabled;
-        if (enabled && this.audioContext && !this.reverb) {
+        if (enabled && this.audioContext && !this.effectsChain) {
             this.setupEffects();
+        }
+        
+        // Enable some effects in enhanced mode
+        if (enabled) {
+            this.setEffectEnabled('reverb', true);
+            this.setEffectEnabled('chorus', true);
+            this.setEffectParameter('chorus', 'level', 0.3);
+        } else {
+            this.setEffectEnabled('chorus', false);
+            this.setEffectEnabled('flanger', false);
+            this.setEffectEnabled('delay', false);
         }
     }
     
@@ -267,8 +499,9 @@ class UnifiedMusicEngine {
             
             oscillator.connect(gainNode);
             
-            if (this.enhancedMode && this.reverb) {
-                gainNode.connect(this.reverbGain);
+            // Route through effects chain if available, otherwise direct to master
+            if (this.effectsChain) {
+                gainNode.connect(this.effectsChain.input);
             } else {
                 gainNode.connect(this.masterGain);
             }
@@ -296,7 +529,13 @@ class UnifiedMusicEngine {
         gainNode.gain.exponentialRampToValueAtTime(0.001, this.audioContext.currentTime + duration);
         
         oscillator.connect(gainNode);
-        gainNode.connect(this.masterGain);
+        
+        // Route bass through effects chain too
+        if (this.effectsChain) {
+            gainNode.connect(this.effectsChain.input);
+        } else {
+            gainNode.connect(this.masterGain);
+        }
         
         oscillator.start();
         oscillator.stop(this.audioContext.currentTime + duration);
@@ -353,7 +592,13 @@ class UnifiedMusicEngine {
         gainNode.gain.exponentialRampToValueAtTime(0.001, time + 0.1);
         
         oscillator.connect(gainNode);
-        gainNode.connect(this.masterGain);
+        
+        // Route drums through effects chain too  
+        if (this.effectsChain) {
+            gainNode.connect(this.effectsChain.input);
+        } else {
+            gainNode.connect(this.masterGain);
+        }
         
         oscillator.start(time);
         oscillator.stop(time + 0.1);
@@ -398,12 +643,66 @@ class UnifiedMusicEngine {
         });
     }
     
+    // Effect presets
+    setPresetEffects(presetName) {
+        switch (presetName) {
+            case 'ambient':
+                this.setEffectEnabled('reverb', true);
+                this.setEffectParameter('reverb', 'level', 0.4);
+                this.setEffectEnabled('chorus', false);
+                this.setEffectEnabled('flanger', false);
+                this.setEffectEnabled('delay', false);
+                break;
+            case 'space':
+                this.setEffectEnabled('reverb', true);
+                this.setEffectParameter('reverb', 'level', 0.6);
+                this.setEffectEnabled('delay', true);
+                this.setEffectParameter('delay', 'level', 0.3);
+                this.setEffectParameter('delay', 'time', 0.5);
+                this.setEffectParameter('delay', 'feedback', 0.3);
+                this.setEffectEnabled('chorus', false);
+                this.setEffectEnabled('flanger', false);
+                break;
+            case 'ethereal':
+                this.setEffectEnabled('reverb', true);
+                this.setEffectParameter('reverb', 'level', 0.5);
+                this.setEffectEnabled('chorus', true);
+                this.setEffectParameter('chorus', 'level', 0.4);
+                this.setEffectParameter('chorus', 'rate', 0.8);
+                this.setEffectEnabled('flanger', false);
+                this.setEffectEnabled('delay', false);
+                break;
+            case 'dreamy':
+                this.setEffectEnabled('reverb', true);
+                this.setEffectParameter('reverb', 'level', 0.4);
+                this.setEffectEnabled('chorus', true);
+                this.setEffectParameter('chorus', 'level', 0.3);
+                this.setEffectEnabled('flanger', true);
+                this.setEffectParameter('flanger', 'level', 0.2);
+                this.setEffectParameter('flanger', 'rate', 0.3);
+                this.setEffectEnabled('delay', false);
+                break;
+            case 'cosmic':
+                this.setEffectEnabled('reverb', true);
+                this.setEffectParameter('reverb', 'level', 0.7);
+                this.setEffectEnabled('delay', true);
+                this.setEffectParameter('delay', 'level', 0.4);
+                this.setEffectParameter('delay', 'time', 0.75);
+                this.setEffectParameter('delay', 'feedback', 0.5);
+                this.setEffectEnabled('flanger', true);
+                this.setEffectParameter('flanger', 'level', 0.2);
+                this.setEffectEnabled('chorus', false);
+                break;
+        }
+    }
+    
     getStatus() {
         return {
             playing: this.isPlaying,
             currentKey: this.currentKey,
             currentSection: this.currentSection,
             enhancedMode: this.enhancedMode,
+            effects: this.effects,
             audioContextState: this.audioContext ? this.audioContext.state : 'not initialized'
         };
     }
@@ -411,4 +710,5 @@ class UnifiedMusicEngine {
 
 // Global unified music engine instance
 const unifiedMusic = new UnifiedMusicEngine();
+window.unifiedMusic = unifiedMusic;
 console.log('Unified music engine loaded successfully');

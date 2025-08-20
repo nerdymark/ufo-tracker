@@ -93,3 +93,89 @@ class Config:
         'connection_timeout': 10,   # Connection timeout in seconds
         'retry_attempts': 3         # Number of retry attempts
     }
+    
+    # ADSB Flight Tracking Settings
+    ADSB = {
+        'enabled': True,            # Enable ADSB flight tracking
+        'piaware_url': 'http://10.0.1.249:8080/skyaware/data/aircraft.json',  # Local PiAware SkyAware ADSB feeder
+        'max_distance_miles': 5.0,  # Maximum distance for flight display (miles)
+        'update_interval': 10,      # Update interval in seconds
+        'altitude_filter': {
+            'min_feet': 0,          # Minimum altitude to display (feet)
+            'max_feet': 50000       # Maximum altitude to display (feet)
+        },
+        'observer_location': {
+            # Set your actual location coordinates here
+            'latitude': 37.7749,    # San Francisco Bay Area (update with your location)
+            'longitude': -122.4194,
+            'altitude_feet': 100    # Observer altitude above sea level
+        },
+        'display_settings': {
+            'show_all_flights': True,       # Show all flights within range
+            'show_only_nearby': False,      # Only show flights within max_distance_miles
+            'show_altitude_info': True,     # Show altitude and speed information
+            'refresh_rate': 15,             # Display refresh rate in seconds
+            'max_display_count': 20         # Maximum number of flights to display
+        }
+    }
+    
+    # Satellite Tracking Settings
+    SATELLITE = {
+        'enabled': True,            # Enable satellite tracking
+        'tle_url': 'https://celestrak.org/NORAD/elements/gp.php?GROUP=active&FORMAT=tle',  # CelesTrak TLE data source
+        'min_elevation': 10.0,      # Minimum elevation angle in degrees (0 = horizon)
+        'max_satellites': 1000,     # Maximum number of satellites to load (for performance)
+        'update_interval': 30,      # Update interval in seconds
+        'tle_refresh_hours': 6,     # How often to refresh TLE data (hours)
+        'observer_location': {
+            # Set your actual location coordinates here (should match ADSB location)
+            'latitude': 37.7749,    # San Francisco Bay Area (update with your location)
+            'longitude': -122.4194,
+            'altitude_km': 0.1      # Observer altitude above sea level in kilometers
+        },
+        'display_settings': {
+            'show_all_satellites': True,    # Show all satellites above min elevation
+            'show_space_stations': True,    # Highlight space stations (ISS, Tiangong, etc.)
+            'show_satellite_info': True,    # Show altitude, velocity, and category
+            'refresh_rate': 30,             # Display refresh rate in seconds
+            'max_display_count': 15         # Maximum number of satellites to display
+        },
+        'categories': {
+            'space_stations': ['ISS', 'TIANHE', 'TIANGONG', 'CSS'],
+            'navigation': ['GPS', 'GLONASS', 'GALILEO', 'BEIDOU'],
+            'communications': ['STARLINK', 'ONEWEB', 'IRIDIUM'],
+            'earth_observation': ['LANDSAT', 'SENTINEL', 'SPOT'],
+            'weather': ['WEATHER', 'GOES', 'NOAA'],
+            'science': ['HUBBLE', 'KEPLER', 'TESS']
+        }
+    }
+    
+    # Motion Sensor Settings (MPU-6050)
+    MOTION_SENSOR = {
+        'enabled': True,            # Enable MPU-6050 motion sensor
+        'sample_rate': 50,          # Samples per second (Hz)
+        'motion_threshold': 2.0,    # Motion detection threshold (m/s²)
+        'vibration_threshold': 10.0, # Vibration alert threshold (deg/s)
+        'calibration_samples': 100,  # Number of samples for calibration
+        'filter_alpha': 0.8,        # Low-pass filter coefficient (0-1)
+        'i2c_address': 0x68,        # I2C address of MPU-6050
+        'range_settings': {
+            'accelerometer': '±4g',  # ±2g, ±4g, ±8g, ±16g
+            'gyroscope': '±500°/s',  # ±250°/s, ±500°/s, ±1000°/s, ±2000°/s
+            'filter_bandwidth': '21Hz'  # 5Hz, 10Hz, 21Hz, 44Hz, 94Hz, 184Hz, 260Hz
+        },
+        'alert_thresholds': {
+            'tilt_angle': 45.0,     # Alert if tilt exceeds this angle (degrees)
+            'shock_threshold': 20.0, # Shock detection threshold (m/s²)
+            'temperature_min': 0.0,  # Minimum operating temperature (°C)
+            'temperature_max': 70.0  # Maximum operating temperature (°C)
+        },
+        'display_settings': {
+            'show_raw_data': True,       # Show raw accelerometer/gyro values
+            'show_orientation': True,    # Show pitch/roll/yaw
+            'show_motion_alerts': True,  # Show motion detection alerts
+            'show_temperature': True,    # Show sensor temperature
+            'update_rate': 2,           # Widget update rate (seconds)
+            'chart_history': 60         # Seconds of data to chart
+        }
+    }

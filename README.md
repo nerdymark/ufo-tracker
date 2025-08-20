@@ -13,7 +13,7 @@ A dual-camera system for detecting and tracking unidentified flying objects (UFO
   - Auto-tracking mode with client-side motion detection
   - Image gallery and browser
 - **Camera Controls**: Manual camera settings adjustment (exposure, gain, brightness, contrast)
-- **Pan-Tilt Mechanism**: Support for Waveshare stepper controller with 12V motors
+- **Pan-Tilt Mechanism**: Complete Waveshare HRB8825 stepper controller integration with WASD keyboard control
 - **Multi-viewer Support**: Concurrent camera access without conflicts
 - **System Monitoring**: Real-time status monitoring and system information
 
@@ -119,9 +119,10 @@ The unified dashboard provides several viewing modes:
 
 - **Live Cameras**: Real-time MJPEG streams from both cameras
 - **Camera Controls**: Manual adjustment of camera settings (exposure, gain, brightness, contrast)  
-- **Auto Tracking**: Client-side motion detection and tracking (motion detection disabled for performance)
+- **Auto Tracking**: Client-side motion detection and tracking with integrated WASD pan/tilt control
 - **Image Stacking**: Advanced image stacking with multiple blend modes for astrophotography and motion capture
 - **Image Browser**: Browse captured images with filtering and management
+- **Pan-Tilt Controls**: Live keyboard control using WASD keys with fine movement support
 - **System Settings**: Configuration and system monitoring
 
 #### Image Stacking Modes
@@ -162,6 +163,35 @@ The UFO Tracker includes sophisticated client-side image stacking capabilities w
 - Infinite Exposure runs continuously until manually stopped
 - All modes (except Infinite) support 2-100 frame stacking ranges
 
+#### WASD Pan-Tilt Control
+
+The UFO Tracker features intuitive keyboard control for the pan-tilt mechanism:
+
+**🎮 WASD Controls**
+- **W**: Tilt camera up
+- **S**: Tilt camera down  
+- **A**: Pan camera left
+- **D**: Pan camera right
+
+**🔧 Control Features**
+- **Fine Movement**: Hold `Shift` while pressing WASD for precise control (10% of normal step size)
+- **Auto Motor Enable**: Motors automatically enable when WASD control is activated
+- **Multi-View Access**: WASD controls available in both Live Cameras and Auto Tracking modes
+- **Visual Feedback**: Button shows ON/OFF status with color indication
+
+**⚙️ Advanced Features**
+- **Keepalive Mode**: Keep motors powered during long exposures to prevent position drift
+- **Home Position**: Return to center position with one click
+- **Step Size Control**: Adjustable step size for different movement ranges
+- **Safety Limits**: Hardware-enforced movement limits prevent damage
+
+**Usage:**
+1. Navigate to Live Cameras or Auto Tracking view
+2. Click "⌨️ WASD: OFF" button to enable keyboard control
+3. Use W/A/S/D keys to move the camera
+4. Hold Shift for fine adjustments
+5. Click button again to disable WASD control
+
 ### Service Management
 
 If you installed the systemd service:
@@ -185,15 +215,25 @@ sudo journalctl -u ufo-tracker -f
 ```
 ufo-tracker/
 ├── app.py                    # Main Flask application
+├── api_service.py            # API service with pan-tilt endpoints
+├── camera_service.py         # Camera streaming service
+├── frame_service.py          # Frame capture service
+├── satellite_service.py     # Satellite tracking service
+├── timelapse_service.py      # Timelapse functionality
 ├── setup.sh                  # Automated setup script
-├── run.sh                    # Application startup script  
+├── run.sh                    # Application startup script
+├── restart-ufo-services.sh   # Service restart script
 ├── requirements.txt          # Python dependencies
 ├── README.md                 # This file
 ├── CLAUDE.md                 # Development guidance for Claude Code
+├── MPU9250_SETUP.md         # Motion sensor setup guide
+├── CAMERA_FLIP_CHANGES.md   # Camera orientation changes
 ├── config/
 │   ├── __init__.py
 │   ├── config.py             # Configuration settings (created from example)
-│   └── config.example.py     # Example configuration template
+│   ├── config.example.py     # Example configuration template
+│   ├── compass_calibration.json # Compass calibration data
+│   └── mpu9250_calibration.json # Motion sensor calibration
 ├── camera/
 │   ├── __init__.py
 │   ├── camera_manager.py     # Camera initialization and management
@@ -209,11 +249,20 @@ ufo-tracker/
 │   └── image_processor.py    # Image processing and stacking
 ├── hardware/
 │   ├── __init__.py
-│   └── pan_tilt.py          # Pan-tilt mechanism placeholder
+│   └── pan_tilt.py          # Complete pan-tilt mechanism implementation
+├── services/
+│   ├── __init__.py
+│   ├── adsb_service.py       # ADSB flight tracking
+│   ├── adsb_tracker.py       # ADSB data processing
+│   ├── compass_service.py    # Compass functionality
+│   ├── color_generator.py    # Color utilities
+│   ├── mpu9250_sensor.py     # Motion sensor interface
+│   └── trajectory_projector.py # Trajectory calculations
 ├── templates/
 │   ├── unified_dashboard.html # Main web interface
 │   ├── index.html            # Alternative interface
 │   ├── viewer.html           # Camera viewer page
+│   ├── frame_viewer.html     # Frame viewer
 │   └── error.html            # Error page template
 ├── static/
 │   ├── css/
@@ -223,11 +272,22 @@ ufo-tracker/
 │       ├── navigation.js     # Navigation controls
 │       ├── camera-feeds.js   # Camera feed handling
 │       ├── camera-controls.js# Camera settings controls
-│       ├── pantilt-controls.js# Pan-tilt controls
+│       ├── pantilt-controls.js# Pan-tilt WASD controls
 │       ├── tracking.js       # Motion tracking
+│       ├── feature-tracking.js# Feature-based tracking
+│       ├── trajectory-overlay.js# Trajectory visualization
+│       ├── compass-trajectory.js# Compass trajectory
+│       ├── motion-detection.js# Motion detection
 │       ├── gallery.js        # Image gallery
+│       ├── stacking-optimized.js# Optimized image stacking
 │       ├── stacking.js       # Image stacking
+│       ├── unified-music-engine.js# Audio system
+│       ├── mood-music.js     # Background music
+│       ├── adsb-tracker.js   # ADSB flight tracking
+│       ├── mpu9250-sensor.js # Motion sensor interface
+│       ├── viewer.js         # Viewer functionality
 │       └── utils.js          # Utility functions
+├── cache/                    # Cache directory
 ├── detections/               # Detection images storage
 └── logs/                     # Application logs
     └── .gitkeep              
@@ -248,10 +308,17 @@ ufo-tracker/
 - `/api/camera_auto_tune/<camera_type>` - Auto-tune camera settings
 - `/api/capture/<camera_type>` - Capture single image
 
-### Pan-Tilt Controls (Placeholder)
-- `/api/pan_tilt` - Pan-tilt status and movement commands
-- `/api/pan_tilt/motors` - Motor enable/disable
-- `/api/pan_tilt/keepalive` - Keepalive enable/disable
+### Pan-Tilt Controls
+- `/api/pantilt/status` - Get pan-tilt controller status and position
+- `/api/pantilt/move_relative` - Move relative to current position (WASD control)
+- `/api/pantilt/enable_motors` - Enable stepper motors (turn on holding torque)
+- `/api/pantilt/disable_motors` - Disable stepper motors (save power)
+- `/api/pantilt/start_keepalive` - Start keepalive pulses for long exposures
+- `/api/pantilt/stop_keepalive` - Stop keepalive pulses
+- `/api/pantilt/home` - Home mechanism to center position
+- `/api/pan_tilt` - Legacy pan-tilt status and movement commands
+- `/api/pan_tilt/motors` - Legacy motor enable/disable
+- `/api/pan_tilt/keepalive` - Legacy keepalive enable/disable
 
 ### System Status
 - `/api/system_status` - Overall system and component status
@@ -321,9 +388,21 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 
 For development with Claude Code, see `CLAUDE.md` for detailed setup instructions and architectural notes.
 
+## Recent Updates
+
+### Pan-Tilt Control Implementation ✅
+- Complete Waveshare HRB8825 stepper controller integration
+- WASD keyboard control with fine movement support
+- New API endpoints for comprehensive motor control
+- Auto motor enable/disable and keepalive functionality
+- Multi-view integration (Live Cameras and Auto Tracking modes)
+
+### Template Cleanup ✅
+- Removed orphaned test templates (stacked_test.html, test_stream.html)
+- Streamlined template structure for better maintainability
+
 ## Current Limitations
 
 - **Motion detection**: Currently disabled for performance (auto-tracking uses client-side detection)
-- **Pan-tilt mechanism**: Placeholder implementation only - hardware integration pending
 - **Timelapse features**: Disabled for performance optimization
 - **Image stacking**: Basic implementation - may need performance tuning for large images

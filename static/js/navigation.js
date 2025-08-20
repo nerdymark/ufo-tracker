@@ -11,18 +11,18 @@ function showSection(sectionId) {
     }
     
     // Hide all sections first
-    const sections = ['cameras', 'controls', 'detection', 'browser', 'autotrack', 'stacked', 'gallery'];
+    const sections = ['cameras', 'controls', 'motion', 'browser', 'autotrack', 'stacked', 'gallery', 'settings'];
     sections.forEach(id => {
         const element = document.getElementById(id);
         if (element) {
-            element.style.display = 'none';
+            element.classList.remove('active');
         }
     });
     
     // Show the requested section
     const targetSection = document.getElementById(sectionId);
     if (targetSection) {
-        targetSection.style.display = 'block';
+        targetSection.classList.add('active');
     }
     
     // Update navigation tabs
@@ -40,6 +40,18 @@ function showSection(sectionId) {
         setupStackedImageHandlers();
     } else if (sectionId === 'gallery') {
         refreshGallery();
+    } else if (sectionId === 'motion') {
+        // Initialize motion detection feeds
+        initializeMotionFeeds();
+    }
+    
+    // Refresh trajectory overlays for new section if enabled
+    if (typeof trajectoryEnabled !== 'undefined' && trajectoryEnabled) {
+        setTimeout(() => {
+            if (typeof createOverlaysForNewSection === 'function') {
+                createOverlaysForNewSection();
+            }
+        }, 500); // Wait for elements to be visible
     }
     
     // Start/stop auto refresh based on section
@@ -99,10 +111,48 @@ function setViewMode(mode) {
         }
     }
     
+    // Refresh trajectory overlays for new view mode if enabled
+    if (typeof trajectoryEnabled !== 'undefined' && trajectoryEnabled) {
+        setTimeout(() => {
+            if (typeof createOverlaysForNewSection === 'function') {
+                createOverlaysForNewSection();
+            }
+        }, 500); // Wait for elements to be visible
+    }
+    
     // Start appropriate auto refresh
     startAutoRefresh(mode);
     
     console.log('View mode changed to:', mode);
+}
+
+// Initialize motion detection feeds
+function initializeMotionFeeds() {
+    console.log('Initializing motion detection feeds');
+    
+    // Get server IP (should be available globally from main HTML)
+    const serverIP = window.serverIP || window.location.hostname;
+    
+    // Set up IR motion feed - use port 5001 for camera service
+    const irFeed = document.getElementById('motion-ir-feed');
+    if (irFeed) {
+        irFeed.src = `http://${serverIP}:5001/ir_feed?t=${Date.now()}`;
+        console.log('IR motion feed initialized with:', irFeed.src);
+    }
+    
+    // Set up HQ motion feed - use port 5001 for camera service
+    const hqFeed = document.getElementById('motion-hq-feed');
+    if (hqFeed) {
+        hqFeed.src = `http://${serverIP}:5001/hq_feed?t=${Date.now()}`;
+        console.log('HQ motion feed initialized with:', hqFeed.src);
+    }
+    
+    // Initialize motion detection canvases if the function exists
+    if (typeof initializeMotionDetection === 'function') {
+        setTimeout(() => {
+            initializeMotionDetection();
+        }, 1000); // Small delay to let images load
+    }
 }
 
 // Update view mode button states

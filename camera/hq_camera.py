@@ -10,6 +10,7 @@ import cv2
 import numpy as np
 from typing import Optional, Tuple
 from picamera2 import Picamera2
+from libcamera import Transform
 
 from .streaming import StreamingOutput
 from config.config import Config
@@ -70,7 +71,9 @@ class HQCamera:
             config = self._camera.create_video_configuration(
                 main={"format": "RGB888", "size": max_resolution},  # High-res for still capture
                 lores={"format": "RGB888", "size": self.resolution},  # Lower res for streaming
-                controls=controls
+                controls=controls,
+                # Apply 180-degree rotation for upside-down camera mounting
+                transform=Transform(hflip=1, vflip=1)
             )
             
             self._camera.configure(config)
@@ -658,7 +661,9 @@ class HQCamera:
                 # Temporarily switch to still configuration for maximum quality
                 still_config = self._camera.create_still_configuration(
                     main={"size": (4056, 3040)},  # Full IMX477 sensor resolution
-                    raw={"size": (4056, 3040)}
+                    raw={"size": (4056, 3040)},
+                    # Apply 180-degree rotation for upside-down camera mounting
+                    transform=Transform(hflip=1, vflip=1)
                 )
                 
                 # Capture with the still configuration

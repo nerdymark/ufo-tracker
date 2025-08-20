@@ -44,7 +44,8 @@
       "Bash(for i in {1..5})",
       "Bash(do echo \"Check $i:\")",
       "Bash(done)",
-      "Bash(sudo:*)"
+      "Bash(sudo:*)",
+      "Bash(systemctl status:*)"
     ],
     "deny": []
   }

@@ -33,6 +33,9 @@ const motionState = {
     }
 };
 
+// Make motionState available globally for other modules
+window.motionState = motionState;
+
 // Initialize motion detection canvases
 function initializeMotionDetection() {
     // IR camera canvases
@@ -80,6 +83,7 @@ function startClientMotionDetection() {
     
     console.log('Starting client-side motion detection');
     motionDetectionActive = true;
+    window.motionDetectionActive = motionDetectionActive;  // Keep window object synchronized
     
     // Initialize canvases
     initializeMotionDetection();
@@ -108,6 +112,7 @@ function stopClientMotionDetection() {
     
     console.log('Stopping client-side motion detection');
     motionDetectionActive = false;
+    window.motionDetectionActive = motionDetectionActive;  // Keep window object synchronized
     
     // Clear detection loop
     if (motionDetectionInterval) {
@@ -529,6 +534,83 @@ function updateDetectionStats(motionAreas = []) {
     if (motionObjectsElement) {
         motionObjectsElement.textContent = motionAreas.length;
     }
+    
+    // Auto-capture if enabled and sufficient motion detected
+    if (motionAreas.length >= autoCapture.threshold && autoCapture.enabled) {
+        captureMotionSnapshot(motionAreas);
+    }
+}
+
+// Auto-capture settings
+let autoCapture = {
+    enabled: false,  // Disabled by default to prevent save errors
+    threshold: 2,
+    lastCapture: 0,
+    minInterval: 5000  // Minimum 5 seconds between captures
+};
+
+// Capture motion detection snapshot with annotations
+function captureMotionSnapshot(motionAreas = [], camera = 'hq') {
+    // Prevent too frequent captures
+    const now = Date.now();
+    if (now - autoCapture.lastCapture < autoCapture.minInterval) {
+        return;
+    }
+    
+    autoCapture.lastCapture = now;
+    
+    // Prepare detection info
+    const detectionInfo = {
+        'Processing FPS': processingFPS,
+        'Sensitivity': motionSensitivity,
+        'Auto Capture': autoCapture.enabled ? 'Yes' : 'No'
+    };
+    
+    // Send to server for annotation and saving
+    fetch('/api/motion/capture_with_annotations', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            camera: camera,
+            motionAreas: motionAreas,
+            detectionInfo: detectionInfo
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showMessage(`Motion snapshot saved: ${data.filename}`, 'success');
+            console.log(`Captured motion snapshot: ${data.filename} (${data.objects_detected} objects)`);
+            
+            // Refresh gallery if visible
+            if (typeof refreshGallery === 'function' && document.getElementById('gallery-content')) {
+                refreshGallery();
+            }
+        } else {
+            console.error('Failed to capture motion snapshot:', data.error);
+            // Only show error message if this was a manual capture (not auto-capture)
+            if (!autoCapture.enabled) {
+                showMessage(`Failed to capture snapshot: ${data.error}`, 'error');
+            }
+        }
+    })
+    .catch(error => {
+        console.error('Error capturing motion snapshot:', error);
+        // Only show error message if this was a manual capture (not auto-capture)
+        if (!autoCapture.enabled) {
+            showMessage('Error capturing motion snapshot', 'error');
+        }
+    });
+}
+
+// Manual capture function for button
+function manualMotionCapture() {
+    const camera = document.getElementById('motion-camera-select')?.value || 'hq';
+    const currentMotionAreas = motionState.ir.motionAreas || [];
+    
+    captureMotionSnapshot(currentMotionAreas, camera);
 }
 
 // Hook into existing tracking functions

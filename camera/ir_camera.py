@@ -10,6 +10,7 @@ import cv2
 import numpy as np
 from typing import Optional, Tuple
 from picamera2 import Picamera2
+from libcamera import Transform
 
 from .streaming import StreamingOutput
 from config.config import Config
@@ -65,7 +66,9 @@ class IRCamera:
             config = self._camera.create_video_configuration(
                 main={"format": "RGB888", "size": max_resolution},  # High-res for still capture
                 lores={"format": "RGB888", "size": self.resolution},  # Lower res for streaming
-                controls=controls
+                controls=controls,
+                # Apply 180-degree rotation for upside-down camera mounting
+                transform=Transform(hflip=1, vflip=1)
             )
             
             self._camera.configure(config)
@@ -654,7 +657,9 @@ class IRCamera:
                 # Switch to still configuration for full resolution capture
                 still_config = self._camera.create_still_configuration(
                     main={"size": (3280, 2464)},  # Full IMX219 sensor resolution
-                    raw={"size": (3280, 2464)}
+                    raw={"size": (3280, 2464)},
+                    # Apply 180-degree rotation for upside-down camera mounting
+                    transform=Transform(hflip=1, vflip=1)
                 )
                 # Capture with the still configuration
                 self._camera.switch_mode_and_capture_file(still_config, filepath)

@@ -2,6 +2,8 @@
 // Instead of storing frames, we incrementally update a single canvas
 
 let stackedImageHandlers = false;
+let fullscreenStackingActive = false;
+let fullscreenStackingImages = { ir: null, hq: null }; // Track fullscreen images
 let stackingCanvases = { ir: null, hq: null };
 let stackingContexts = { ir: null, hq: null };
 let stackingFrameCounts = { ir: 0, hq: 0 };
@@ -47,6 +49,33 @@ function setupStackedImageHandlers() {
     // Initialize display values
     updateStackCount('ir');
     updateStackCount('hq');
+    
+    // Handle fullscreen events to ensure stacking continues
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+    document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
+    document.addEventListener('mozfullscreenchange', handleFullscreenChange);
+    document.addEventListener('MSFullscreenChange', handleFullscreenChange);
+}
+
+function handleFullscreenChange() {
+    const isFullscreen = !!(document.fullscreenElement || 
+                           document.webkitFullscreenElement || 
+                           document.mozFullScreenElement || 
+                           document.msFullscreenElement);
+    
+    if (isFullscreen) {
+        fullscreenStackingActive = true;
+        // Ensure stacking continues during fullscreen
+        for (const camera in stackingIntervals) {
+            if (stackingIntervals[camera]) {
+                // Restart interval to ensure it's active during fullscreen
+                stopAutoStackingForCamera(camera);
+                startAutoStackingForCamera(camera);
+            }
+        }
+    } else {
+        fullscreenStackingActive = false;
+    }
 }
 
 function startStacking(camera) {
@@ -446,10 +475,10 @@ function updateStackedImage(camera) {
             const maxWidth = Math.floor(containerRect.width);
             const maxHeight = Math.floor(containerRect.height);
             
-            // Scale to fill the full width (crop if necessary to eliminate black bars)
+            // Scale to fit the entire image (preserve aspect ratio, no cropping)
             const scaleWidth = maxWidth / canvas.width;
             const scaleHeight = maxHeight / canvas.height;
-            const scale = scaleWidth;  // Use width scale to fill horizontally
+            const scale = Math.min(scaleWidth, scaleHeight);  // Use smaller scale to fit entire image
             
             displayCanvas.width = canvas.width * scale;
             displayCanvas.height = canvas.height * scale;
@@ -466,14 +495,17 @@ function updateStackedImage(camera) {
             
             // Set the preview to the scaled version
             preview.src = displayCanvas.toDataURL('image/jpeg', 0.95);
-            preview.style.width = 'auto';
-            preview.style.height = 'auto';
-            preview.style.maxWidth = '100%';
-            preview.style.maxHeight = '100%';
-            preview.style.objectFit = 'contain';
+            preview.style.width = '100%';
+            preview.style.height = '100%';
+            preview.style.objectFit = 'cover';
             preview.style.imageRendering = 'auto';
             preview.style.cursor = 'pointer';
             preview.dataset.fullResolution = canvas.toDataURL('image/jpeg', 0.95); // Store full res for saving
+            
+            // Update fullscreen image if it exists
+            if (fullscreenStackingImages[camera]) {
+                fullscreenStackingImages[camera].src = canvas.toDataURL('image/jpeg', 0.95);
+            }
             
             // Add click handler for fullscreen
             preview.onclick = function() {
@@ -525,6 +557,9 @@ function toggleStackedFullscreen(camera) {
     // Create a temporary image element with the full resolution data
     const fullscreenImg = document.createElement('img');
     fullscreenImg.src = preview.dataset.fullResolution;
+    
+    // Store reference for live updates
+    fullscreenStackingImages[camera] = fullscreenImg;
     fullscreenImg.style.width = '100%';
     fullscreenImg.style.height = '100%';
     fullscreenImg.style.objectFit = 'contain';
@@ -552,6 +587,8 @@ function toggleStackedFullscreen(camera) {
         if (fullscreenImg.parentNode) {
             fullscreenImg.parentNode.removeChild(fullscreenImg);
         }
+        // Clear the reference so updates stop
+        fullscreenStackingImages[camera] = null;
     }
     
     // Add to DOM and set up event listeners

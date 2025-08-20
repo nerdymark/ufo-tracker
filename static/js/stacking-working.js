@@ -1,13 +1,16 @@
 // Image stacking and processing functionality
 
 let stackedImageHandlers = false;
-let fullscreenStackingActive = false;
 let stackingBuffers = { ir: [], hq: [] };
 let stackingSettings = {
-    ir: { count: 5, longExposure: false, juicedExposure: false, infiniteExposure: false },
-    hq: { count: 5, longExposure: false, juicedExposure: false, infiniteExposure: false }
+    ir: { count: 5, longExposure: false, juicedExposure: false, ignoreCount: false },
+    hq: { count: 5, longExposure: false, juicedExposure: false, ignoreCount: false }
 };
 let stackingIntervals = { ir: null, hq: null };
+// Track total frames processed for proper blending
+let stackingFrameCounts = { ir: 0, hq: 0 };
+// Persistent canvases for long exposure mode
+let longExposureCanvases = { ir: null, hq: null };
 
 // Image stacking controls
 function setupStackedImageHandlers() {
@@ -257,42 +260,27 @@ function toggleJuicedExposure(camera) {
     }
 }
 
-function toggleInfiniteExposure(camera) {
-    const checkbox = document.getElementById(`${camera}-infinite-exposure`);
+function toggleIgnoreCount(camera) {
+    const checkbox = document.getElementById(`${camera}-ignore-count`);
     const slider = document.getElementById(`${camera}-stack-count`);
     
     if (checkbox) {
-        stackingSettings[camera].infiniteExposure = checkbox.checked;
+        stackingSettings[camera].ignoreCount = checkbox.checked;
         
         if (checkbox.checked) {
-            // Lock the slider and disable other modes
+            // Disable the slider when ignoring count
             if (slider) {
                 slider.disabled = true;
                 slider.style.opacity = '0.5';
             }
-            
-            // Disable other exposure modes
-            const longExposureCheckbox = document.getElementById(`${camera}-long-exposure`);
-            const juicedExposureCheckbox = document.getElementById(`${camera}-juiced-exposure`);
-            if (longExposureCheckbox) {
-                longExposureCheckbox.checked = false;
-                stackingSettings[camera].longExposure = false;
-            }
-            if (juicedExposureCheckbox) {
-                juicedExposureCheckbox.checked = false;
-                stackingSettings[camera].juicedExposure = false;
-            }
-            
-            // Clear existing buffer and start infinite stacking
-            clearStackingBuffer(camera);
-            showMessage(`Infinite exposure mode enabled for ${camera.toUpperCase()} camera - stacking continuously`, 'info');
+            showMessage(`Ignore count enabled for ${camera.toUpperCase()} camera - stacking all frames`, 'info');
         } else {
-            // Unlock the slider
+            // Enable the slider when respecting count
             if (slider) {
                 slider.disabled = false;
                 slider.style.opacity = '1';
             }
-            showMessage(`Infinite exposure mode disabled for ${camera.toUpperCase()} camera`, 'info');
+            showMessage(`Ignore count disabled for ${camera.toUpperCase()} camera`, 'info');
         }
     }
 }
@@ -315,18 +303,20 @@ function updateStackedImage(camera) {
             reader.onload = function(e) {
                 const imageData = e.target.result;
                 
-                // Add to stacking buffer
+                // Increment total frame count for proper blending
+                stackingFrameCounts[camera]++;
+                
+                // Memory-efficient approach: limit buffer size more aggressively
                 stackingBuffers[camera].push({
                     data: imageData,
                     timestamp: Date.now()
                 });
                 
-                // Keep only the specified number of frames (unless infinite exposure)
-                if (!stackingSettings[camera].infiniteExposure) {
-                    const maxFrames = stackingSettings[camera].count;
-                    if (stackingBuffers[camera].length > maxFrames) {
-                        stackingBuffers[camera] = stackingBuffers[camera].slice(-maxFrames);
-                    }
+                // Keep only a small rolling buffer (max 3 frames) to prevent memory issues
+                const maxBufferFrames = stackingSettings[camera].ignoreCount ? 5 : 3;
+                if (stackingBuffers[camera].length > maxBufferFrames) {
+                    // Remove oldest frame to prevent memory accumulation
+                    stackingBuffers[camera].shift();
                 }
                 
                 // Perform client-side stacking
@@ -344,6 +334,11 @@ function updateStackedImage(camera) {
 
 function clearStackingBuffer(camera) {
     stackingBuffers[camera] = [];
+    stackingFrameCounts[camera] = 0;
+    // Clear long exposure canvas
+    if (longExposureCanvases[camera]) {
+        longExposureCanvases[camera] = null;
+    }
     
     // Clear the preview image
     const preview = document.getElementById(`stacked-${camera}-preview`);
@@ -362,8 +357,6 @@ function performClientSideStacking(camera) {
         console.log(`No frames in ${camera} buffer for stacking`);
         return;
     }
-    
-    // Performing client-side stacking
     
     // Create canvas for stacking operations
     const canvas = document.createElement('canvas');
@@ -389,22 +382,26 @@ function processFramesSequentially(camera, canvas, ctx, buffer, settings, frameI
             
             // Clear canvas for first frame
             ctx.clearRect(0, 0, canvas.width, canvas.height);
-            
-            // Set initial composite mode
-            if (settings.infiniteExposure) {
-                // True infinite exposure uses lighten mode like long exposure
-                ctx.globalCompositeOperation = 'lighten';
-                ctx.globalAlpha = 1.0;
-            } else if (settings.juicedExposure) {
-                ctx.globalCompositeOperation = 'lighter';
-                // Reduced alpha to prevent overexposure - each frame adds 30% brightness
-                ctx.globalAlpha = 0.3;
-            } else if (settings.longExposure) {
-                ctx.globalCompositeOperation = 'lighten';
-                ctx.globalAlpha = 1.0;
-            } else {
-                ctx.globalCompositeOperation = 'source-over';
+        }
+        
+        // Set composite mode for EVERY frame, not just the first
+        if (settings.juicedExposure) {
+            ctx.globalCompositeOperation = 'lighter';
+            // Reduced alpha to prevent overexposure - each frame adds 30% brightness
+            ctx.globalAlpha = 0.3;
+        } else if (settings.longExposure) {
+            ctx.globalCompositeOperation = 'lighten';
+            ctx.globalAlpha = 1.0;
+        } else {
+            ctx.globalCompositeOperation = 'source-over';
+            // Use total frame count for proper averaging, not buffer length
+            const totalFrames = stackingFrameCounts[camera];
+            if (settings.ignoreCount) {
+                // Ignore count mode - use rolling average with buffer length
                 ctx.globalAlpha = 1.0 / buffer.length;
+            } else {
+                // Standard mode - respect max frame count
+                ctx.globalAlpha = 1.0 / Math.min(totalFrames, settings.count);
             }
         }
         

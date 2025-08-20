@@ -21,8 +21,9 @@ class UFOTrackerViewer {
     
     bindEvents() {
         // Handle visibility change for performance optimization
+        // Don't pause updates during fullscreen mode
         document.addEventListener('visibilitychange', () => {
-            if (document.hidden) {
+            if (document.hidden && !document.fullscreenElement) {
                 this.stopPeriodicUpdates();
             } else {
                 this.startPeriodicUpdates();

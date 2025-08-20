@@ -33,6 +33,21 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+# Import new services
+try:
+    from services.adsb_service import adsb_service
+    from services.trajectory_projector import trajectory_projector
+    from services.mpu9250_sensor import MPU9250Sensor
+    logger.info("Successfully imported trajectory and sensor services")
+except ImportError as e:
+    logger.warning(f"Could not import trajectory/sensor services: {e}")
+    adsb_service = None
+    trajectory_projector = None
+    MPU9250Sensor = None
+
+# Initialize compass service after MPU9250 sensor is available
+compass_service = None
+
 app = Flask(__name__)
 app.config.from_object(Config)
 
@@ -91,10 +106,11 @@ motion_detector = None
 image_processor = None
 pan_tilt = None
 auto_tracker = None
+mpu9250_sensor = None
 
 def initialize_components():
     """Initialize camera manager and other components"""
-    global camera_manager, motion_detector, image_processor, pan_tilt, auto_tracker
+    global camera_manager, motion_detector, image_processor, pan_tilt, auto_tracker, mpu9250_sensor, compass_service
     
     try:
         # Initialize camera manager with timeout
@@ -112,12 +128,12 @@ def initialize_components():
         image_processor = ImageProcessor()
         logger.info("Image processor initialized successfully")
         
-        # Motion detection disabled per user request
-        motion_detector = None
-        logger.info("Motion detector disabled")
+        # Initialize motion detector for server-side auto-tracking
+        motion_detector = MotionDetector(camera_manager.ir_camera)
+        logger.info("Motion detector initialized successfully")
         
-        # Initialize auto tracker (without motion detector) - but don't start it by default
-        auto_tracker = AutoTracker(camera_manager, None)
+        # Initialize auto tracker with motion detector - but don't start it by default
+        auto_tracker = AutoTracker(camera_manager, motion_detector)
         logger.info("Auto tracker initialized successfully (not started by default)")
         
         # Auto tracker will be started only when user navigates to Auto Tracking mode
@@ -126,6 +142,32 @@ def initialize_components():
         # Initialize pan-tilt controller (placeholder)
         pan_tilt = PanTiltController()
         logger.info("Pan-tilt controller initialized (placeholder)")
+        
+        # Initialize MPU9250 sensor
+        if MPU9250Sensor:
+            mpu9250_sensor = MPU9250Sensor()
+            if mpu9250_sensor.start():
+                logger.info("MPU9250 sensor initialized and started successfully")
+            else:
+                logger.warning("MPU9250 sensor failed to start")
+        else:
+            logger.warning("MPU9250Sensor class not available")
+        
+        # Initialize compass service with MPU9250 sensor
+        try:
+            from services.compass_service import CompassService
+            compass_service = CompassService(mpu9250_sensor)
+            logger.info("Compass service initialized with MPU9250 sensor")
+        except ImportError as e:
+            logger.warning(f"Could not import compass service: {e}")
+        
+        # Initialize trajectory projector with MPU9250 sensor
+        try:
+            from services.trajectory_projector import TrajectoryProjector
+            trajectory_projector = TrajectoryProjector(mpu9250_sensor=mpu9250_sensor)
+            logger.info("Trajectory projector initialized with MPU9250 sensor")
+        except ImportError as e:
+            logger.warning(f"Could not import trajectory projector: {e}")
         
         # Start periodic cleanup thread to prevent memory leaks
         def cleanup_resources():
@@ -1573,6 +1615,28 @@ def stacked_feed():
     """Server-side stacking disabled - use client-side stacking instead"""
     return "Server-side stacking disabled - use client-side JavaScript stacking", 404
 
+@app.route('/proxy/<camera>_frame')
+def proxy_frame(camera):
+    """Proxy frames from frame service to avoid CORS issues"""
+    import requests
+    try:
+        response = requests.get(f'http://localhost:5002/{camera}_frame', timeout=5)
+        if response.status_code == 200:
+            return Response(
+                response.content,
+                mimetype='image/jpeg',
+                headers={
+                    'Cache-Control': 'no-cache, no-store, must-revalidate',
+                    'Pragma': 'no-cache',
+                    'Expires': '0'
+                }
+            )
+        else:
+            return Response("Frame not available", status=503, mimetype='text/plain')
+    except Exception as e:
+        logger.error(f"Error proxying {camera} frame: {e}")
+        return Response("Frame proxy error", status=503, mimetype='text/plain')
+
 @app.route('/aligned_frame')
 def aligned_frame():
     """Get feature-aligned camera frames (placeholder)"""
@@ -2170,6 +2234,510 @@ def serve_gallery_image(filename):
         logger.error(f"Error serving gallery image {filename}: {e}")
         return "Error serving image", 500
 
+# ============= COMPASS AND TRAJECTORY ENDPOINTS =============
+
+@app.route('/api/compass/calibrate', methods=['POST'])
+def calibrate_compass():
+    """Set north reference for compass calibration"""
+    try:
+        if compass_service is None:
+            return jsonify({'error': 'Compass service not available'}), 503
+        
+        data = request.get_json()
+        current_heading = data.get('current_heading', 0)
+        
+        compass_service.set_north_reference(current_heading)
+        
+        return jsonify({
+            'success': True,
+            'message': 'Compass calibrated to north',
+            'calibration_offset': compass_service.calibration_offset
+        })
+        
+    except Exception as e:
+        logger.error(f"Error calibrating compass: {e}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/compass/status')
+def get_compass_status():
+    """Get current compass status and orientation"""
+    try:
+        if compass_service is None:
+            return jsonify({'error': 'Compass service not available'}), 503
+        
+        return jsonify(compass_service.get_orientation_data())
+        
+    except Exception as e:
+        logger.error(f"Error getting compass status: {e}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/compass/update', methods=['POST'])
+def update_compass():
+    """Update compass readings"""
+    try:
+        if compass_service is None:
+            return jsonify({'error': 'Compass service not available'}), 503
+        
+        data = request.get_json()
+        heading = data.get('heading', 0)
+        tilt_x = data.get('tilt_x', 0)
+        tilt_y = data.get('tilt_y', 0)
+        
+        compass_service.update_heading(heading, tilt_x, tilt_y)
+        
+        return jsonify({
+            'success': True,
+            'true_heading': compass_service.get_true_heading()
+        })
+        
+    except Exception as e:
+        logger.error(f"Error updating compass: {e}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/satellites/visible')
+def get_visible_satellites():
+    """Get currently visible satellites with trajectory data"""
+    try:
+        import requests
+        
+        # Try to get satellite data from the satellite service
+        try:
+            response = requests.get('http://localhost:5003/satellites', timeout=2)
+            if response.ok:
+                return jsonify(response.json())
+        except:
+            pass
+        
+        # Fallback response if satellite service is not running
+        return jsonify({
+            'satellites': [],
+            'count': 0,
+            'error': 'Satellite service not available'
+        })
+        
+    except Exception as e:
+        logger.error(f"Error getting satellites: {e}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/aircraft')
+def get_aircraft():
+    """Get currently tracked aircraft"""
+    try:
+        if adsb_service is None:
+            return jsonify({
+                'aircraft': [],
+                'count': 0,
+                'error': 'ADSB service not available'
+            })
+        
+        # Start service if not running
+        if not adsb_service.running:
+            adsb_service.start()
+        
+        aircraft = adsb_service.get_aircraft()
+        
+        return jsonify({
+            'aircraft': aircraft,
+            'count': len(aircraft),
+            'last_update': adsb_service.last_update.isoformat() if adsb_service.last_update else None
+        })
+        
+    except Exception as e:
+        logger.error(f"Error getting aircraft: {e}")
+        return jsonify({'error': str(e), 'aircraft': []}), 500
+
+@app.route('/api/trajectories/project', methods=['POST'])
+def project_trajectories():
+    """Project satellite and aircraft trajectories onto camera view"""
+    try:
+        if trajectory_projector is None or compass_service is None:
+            return jsonify({'error': 'Trajectory services not available'}), 503
+        
+        data = request.get_json()
+        
+        # Update projector settings
+        fov_h = data.get('fov_horizontal', 180)
+        fov_v = data.get('fov_vertical', 90)
+        trajectory_projector.set_fov(fov_h, fov_v)
+        
+        # Get current compass orientation
+        orientation = compass_service.get_orientation_data()
+        trajectory_projector.set_camera_orientation(
+            orientation['heading'],
+            orientation['tilt_x'],
+            orientation['tilt_y']
+        )
+        
+        # Get objects to project
+        satellites = data.get('satellites', [])
+        aircraft = data.get('aircraft', [])
+        
+        screen_width = data.get('screen_width', 1920)
+        screen_height = data.get('screen_height', 1080)
+        
+        projections = []
+        
+        # Project satellite trajectories
+        for sat in satellites:
+            trajectory = trajectory_projector.calculate_satellite_trajectory(sat)
+            projected = trajectory_projector.project_trajectory(
+                trajectory, screen_width, screen_height
+            )
+            if projected:
+                projections.append({
+                    'type': 'satellite',
+                    'name': sat.get('name'),
+                    'points': projected
+                })
+        
+        # Project aircraft trajectories
+        for ac in aircraft:
+            trajectory = trajectory_projector.calculate_aircraft_trajectory(ac)
+            projected = trajectory_projector.project_trajectory(
+                trajectory, screen_width, screen_height
+            )
+            if projected:
+                projections.append({
+                    'type': 'aircraft',
+                    'name': ac.get('callsign'),
+                    'points': projected
+                })
+        
+        return jsonify({
+            'projections': projections,
+            'compass_heading': orientation['heading'],
+            'fov': {'horizontal': fov_h, 'vertical': fov_v}
+        })
+        
+    except Exception as e:
+        logger.error(f"Error projecting trajectories: {e}")
+        return jsonify({'error': str(e)}), 500
+
+# ============= TIMELAPSE ENDPOINTS (DISABLED) =============
+
+@app.route('/api/sensor/data')
+def get_sensor_data():
+    """Get current MPU9250 sensor data"""
+    if not mpu9250_sensor:
+        return jsonify({"error": "MPU9250 sensor not available"}), 503
+    
+    try:
+        data = mpu9250_sensor.get_current_data()
+        return jsonify({
+            "success": True,
+            "data": data
+        })
+    except Exception as e:
+        logger.error(f"Error reading sensor data: {e}")
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/api/sensor/compass')
+def get_compass_data():
+    """Get compass-specific data from MPU9250"""
+    if not mpu9250_sensor:
+        return jsonify({"error": "MPU9250 sensor not available"}), 503
+    
+    try:
+        data = mpu9250_sensor.get_compass_data()
+        return jsonify({
+            "success": True,
+            "data": data
+        })
+    except Exception as e:
+        logger.error(f"Error reading compass data: {e}")
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/api/sensor/data')
+def get_sensor_data():
+    """Get current MPU9250 sensor data"""
+    if not mpu9250_sensor:
+        return jsonify({"error": "MPU9250 sensor not available"}), 503
+    
+    try:
+        data = mpu9250_sensor.get_current_data()
+        return jsonify({
+            "success": True,
+            "data": data
+        })
+    except Exception as e:
+        logger.error(f"Error reading sensor data: {e}")
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/api/sensor/compass')
+def get_compass_data():
+    """Get compass-specific data from MPU9250"""
+    if not mpu9250_sensor:
+        return jsonify({"error": "MPU9250 sensor not available"}), 503
+    
+    try:
+        compass_data = mpu9250_sensor.get_compass_data()
+        return jsonify({
+            "success": True,
+            "data": compass_data
+        })
+    except Exception as e:
+        logger.error(f"Error reading compass data: {e}")
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/api/sensor/status')
+def get_sensor_status():
+    """Get MPU9250 sensor status"""
+    if not mpu9250_sensor:
+        return jsonify({"error": "MPU9250 sensor not available"}), 503
+    
+    try:
+        status = mpu9250_sensor.get_status()
+        return jsonify({
+            "success": True,
+            "status": status
+        })
+    except Exception as e:
+        logger.error(f"Error reading sensor status: {e}")
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/api/sensor/calibrate/accelerometer', methods=['POST'])
+def calibrate_accelerometer():
+    """Calibrate accelerometer and gyroscope"""
+    if not mpu9250_sensor:
+        return jsonify({"error": "MPU9250 sensor not available"}), 503
+    
+    try:
+        data = request.get_json() if request.is_json else {}
+        samples = data.get('samples', 1000)
+        
+        success = mpu9250_sensor.calibrate_accelerometer_gyroscope(samples)
+        return jsonify({
+            "success": success,
+            "message": "Accelerometer and gyroscope calibration completed" if success else "Calibration failed"
+        })
+    except Exception as e:
+        logger.error(f"Error calibrating accelerometer: {e}")
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/api/sensor/calibrate/magnetometer', methods=['POST'])
+def calibrate_magnetometer():
+    """Calibrate magnetometer for compass functionality"""
+    if not mpu9250_sensor:
+        return jsonify({"error": "MPU9250 sensor not available"}), 503
+    
+    try:
+        data = request.get_json() if request.is_json else {}
+        duration = data.get('duration', 60)
+        
+        success = mpu9250_sensor.calibrate_magnetometer(duration)
+        return jsonify({
+            "success": success,
+            "message": f"Magnetometer calibration completed in {duration}s" if success else "Calibration failed"
+        })
+    except Exception as e:
+        logger.error(f"Error calibrating magnetometer: {e}")
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/api/sensor/compass/set_declination', methods=['POST'])
+def set_magnetic_declination():
+    """Set magnetic declination for true north calculation"""
+    if not mpu9250_sensor:
+        return jsonify({"error": "MPU9250 sensor not available"}), 503
+    
+    try:
+        data = request.get_json()
+        if not data or 'declination' not in data:
+            return jsonify({"error": "Declination value required"}), 400
+        
+        declination = float(data['declination'])
+        mpu9250_sensor.set_magnetic_declination(declination)
+        
+        return jsonify({
+            "success": True,
+            "message": f"Magnetic declination set to {declination}°"
+        })
+    except Exception as e:
+        logger.error(f"Error setting magnetic declination: {e}")
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/api/sensor/compass/set_north', methods=['POST'])
+def set_compass_north():
+    """Set current heading as north reference"""
+    if not mpu9250_sensor:
+        return jsonify({"error": "MPU9250 sensor not available"}), 503
+    
+    try:
+        data = request.get_json() if request.is_json else {}
+        current_heading = data.get('current_heading')
+        
+        if current_heading is None:
+            # Use current heading from sensor
+            compass_data = mpu9250_sensor.get_compass_data()
+            current_heading = compass_data['heading']
+        
+        mpu9250_sensor.set_compass_north_reference(current_heading)
+        
+        return jsonify({
+            "success": True,
+            "message": f"North reference set to current heading: {current_heading}°"
+        })
+    except Exception as e:
+        logger.error(f"Error setting compass north reference: {e}")
+        return jsonify({"error": str(e)}), 500
+
+# ============= PAN-TILT CONTROL ENDPOINTS =============
+
+@app.route('/api/pantilt/status')
+def get_pantilt_status():
+    """Get pan-tilt controller status"""
+    if not pan_tilt:
+        return jsonify({"error": "Pan-tilt controller not available"}), 503
+    
+    try:
+        status = pan_tilt.get_status()
+        return jsonify({
+            "success": True,
+            "status": status
+        })
+    except Exception as e:
+        logger.error(f"Error getting pan-tilt status: {e}")
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/api/pantilt/move', methods=['POST'])
+def move_pantilt():
+    """Move pan-tilt to specific position"""
+    if not pan_tilt:
+        return jsonify({"error": "Pan-tilt controller not available"}), 503
+    
+    try:
+        data = request.json
+        pan = data.get('pan', 0)
+        tilt = data.get('tilt', 0)
+        
+        # Ensure motors are enabled before movement
+        if not pan_tilt.get_motors_enabled():
+            pan_tilt.enable_motors()
+        
+        success = pan_tilt.move_to(pan, tilt)
+        
+        return jsonify({
+            "success": success,
+            "message": f"Movement to pan={pan}, tilt={tilt} {'started' if success else 'failed'}"
+        })
+    except Exception as e:
+        logger.error(f"Error moving pan-tilt: {e}")
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/api/pantilt/move_relative', methods=['POST'])
+def move_pantilt_relative():
+    """Move pan-tilt relative to current position"""
+    if not pan_tilt:
+        return jsonify({"error": "Pan-tilt controller not available"}), 503
+    
+    try:
+        data = request.json
+        pan_steps = data.get('pan_steps', 0)
+        tilt_steps = data.get('tilt_steps', 0)
+        fine_step = data.get('fine_step', False)  # For shift key modifier
+        
+        # Apply fine step modifier (10% of normal step)
+        if fine_step:
+            pan_steps = int(pan_steps * 0.1)
+            tilt_steps = int(tilt_steps * 0.1)
+        
+        # Ensure motors are enabled before movement
+        if not pan_tilt.get_motors_enabled():
+            pan_tilt.enable_motors()
+        
+        success = pan_tilt.move_relative(pan_steps, tilt_steps)
+        
+        return jsonify({
+            "success": success,
+            "message": f"Relative movement pan_steps={pan_steps}, tilt_steps={tilt_steps} {'started' if success else 'failed'}"
+        })
+    except Exception as e:
+        logger.error(f"Error moving pan-tilt relative: {e}")
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/api/pantilt/enable_motors', methods=['POST'])
+def enable_pantilt_motors():
+    """Enable pan-tilt stepper motors"""
+    if not pan_tilt:
+        return jsonify({"error": "Pan-tilt controller not available"}), 503
+    
+    try:
+        success = pan_tilt.enable_motors()
+        return jsonify({
+            "success": success,
+            "message": "Motors enabled" if success else "Failed to enable motors"
+        })
+    except Exception as e:
+        logger.error(f"Error enabling pan-tilt motors: {e}")
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/api/pantilt/disable_motors', methods=['POST'])
+def disable_pantilt_motors():
+    """Disable pan-tilt stepper motors"""
+    if not pan_tilt:
+        return jsonify({"error": "Pan-tilt controller not available"}), 503
+    
+    try:
+        success = pan_tilt.disable_motors()
+        return jsonify({
+            "success": success,
+            "message": "Motors disabled" if success else "Failed to disable motors"
+        })
+    except Exception as e:
+        logger.error(f"Error disabling pan-tilt motors: {e}")
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/api/pantilt/start_keepalive', methods=['POST'])
+def start_pantilt_keepalive():
+    """Start pan-tilt keepalive pulses during long exposures"""
+    if not pan_tilt:
+        return jsonify({"error": "Pan-tilt controller not available"}), 503
+    
+    try:
+        success = pan_tilt.start_keepalive()
+        return jsonify({
+            "success": success,
+            "message": "Keepalive started" if success else "Failed to start keepalive"
+        })
+    except Exception as e:
+        logger.error(f"Error starting pan-tilt keepalive: {e}")
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/api/pantilt/stop_keepalive', methods=['POST'])
+def stop_pantilt_keepalive():
+    """Stop pan-tilt keepalive pulses"""
+    if not pan_tilt:
+        return jsonify({"error": "Pan-tilt controller not available"}), 503
+    
+    try:
+        pan_tilt.stop_keepalive()
+        return jsonify({
+            "success": True,
+            "message": "Keepalive stopped"
+        })
+    except Exception as e:
+        logger.error(f"Error stopping pan-tilt keepalive: {e}")
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/api/pantilt/home', methods=['POST'])
+def home_pantilt():
+    """Home the pan-tilt mechanism to center position"""
+    if not pan_tilt:
+        return jsonify({"error": "Pan-tilt controller not available"}), 503
+    
+    try:
+        # Ensure motors are enabled before movement
+        if not pan_tilt.get_motors_enabled():
+            pan_tilt.enable_motors()
+        
+        success = pan_tilt.home()
+        return jsonify({
+            "success": success,
+            "message": "Homing completed" if success else "Homing failed"
+        })
+    except Exception as e:
+        logger.error(f"Error homing pan-tilt: {e}")
+        return jsonify({"error": str(e)}), 500
+
 # ============= TIMELAPSE ENDPOINTS (DISABLED) =============
 
 @app.route('/api/timelapses')
@@ -2236,6 +2804,9 @@ def cleanup():
     
     if pan_tilt:
         pan_tilt.cleanup()
+    
+    if mpu9250_sensor:
+        mpu9250_sensor.stop()
 
 if __name__ == '__main__':
     try:

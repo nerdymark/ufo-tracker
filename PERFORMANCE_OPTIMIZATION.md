@@ -146,8 +146,8 @@ Key changes:
    - Added `POST /api/sensor/calibrate/level_north` endpoint
    - Added `GET /api/sensor/is_level` endpoint
 
-3. **`config/config.py`** (new file)
-   - Created from `config.example.py` with optimizations
+3. **`config/config.example.py`**
+   - Modified to include optimizations
    - Reduced sensor sample rate to 10Hz
    - Updated ADSB refresh rate to 10s
 

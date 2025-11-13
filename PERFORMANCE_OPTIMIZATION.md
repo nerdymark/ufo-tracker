@@ -60,7 +60,7 @@ Multiple performance bottlenecks were overloading the Raspberry Pi 5:
 - **Before**: 50 Hz (20ms intervals) - 50 I2C reads/second
 - **After**: 10 Hz (100ms intervals) - 10 I2C reads/second
 - **Impact**: 80% reduction in I2C bus utilization
-- **File**: `config/config.py` line 168
+- **File**: `config/config.example.py` line 158
 
 **Why 10Hz is optimal:**
 - Still very responsive (100ms latency)

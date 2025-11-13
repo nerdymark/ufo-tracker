@@ -38,9 +38,10 @@ class APICache {
         // Check cache
         if (this.cache.has(key)) {
             const cached = this.cache.get(key);
+            const entryTTL = cached.ttl || this.defaultTTL;
 
             // Check if still valid
-            if (now - cached.timestamp < cacheTTL) {
+            if (now - cached.timestamp < entryTTL) {
                 this.stats.hits++;
                 return cached.data;
             } else {
@@ -64,7 +65,8 @@ class APICache {
             // Store in cache
             this.cache.set(key, {
                 data: data,
-                timestamp: now
+                timestamp: now,
+                ttl: cacheTTL
             });
             this.stats.sets++;
 
@@ -136,7 +138,8 @@ class APICache {
         let removed = 0;
 
         for (const [key, value] of this.cache.entries()) {
-            if (now - value.timestamp >= this.defaultTTL) {
+            const entryTTL = value.ttl || this.defaultTTL;
+            if (now - value.timestamp >= entryTTL) {
                 this.cache.delete(key);
                 removed++;
             }
@@ -153,12 +156,14 @@ class APICache {
      * Set a custom cache entry (manual caching)
      * @param {string} key - Cache key
      * @param {any} data - Data to cache
-     * @param {number} ttl - Time to live (optional)
+     * @param {number} ttl - Time to live (optional, uses defaultTTL if not provided)
      */
     set(key, data, ttl = null) {
+        const cacheTTL = ttl !== null ? ttl : this.defaultTTL;
         this.cache.set(key, {
             data: data,
-            timestamp: Date.now()
+            timestamp: Date.now(),
+            ttl: cacheTTL
         });
         this.stats.sets++;
     }
@@ -171,8 +176,9 @@ class APICache {
         if (this.cache.has(key)) {
             const cached = this.cache.get(key);
             const now = Date.now();
+            const entryTTL = cached.ttl || this.defaultTTL;
 
-            if (now - cached.timestamp < this.defaultTTL) {
+            if (now - cached.timestamp < entryTTL) {
                 this.stats.hits++;
                 return cached.data;
             } else {

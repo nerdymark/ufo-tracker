@@ -2979,24 +2979,70 @@ def set_compass_north():
     """Set current heading as north reference"""
     if not mpu9250_sensor:
         return jsonify({"error": "MPU9250 sensor not available"}), 503
-    
+
     try:
         data = request.get_json() if request.is_json else {}
         current_heading = data.get('current_heading')
-        
+
         if current_heading is None:
             # Use current heading from sensor
             compass_data = mpu9250_sensor.get_compass_data()
             current_heading = compass_data['heading']
-        
+
         mpu9250_sensor.set_compass_north_reference(current_heading)
-        
+
         return jsonify({
             "success": True,
             "message": f"North reference set to current heading: {current_heading}°"
         })
     except Exception as e:
         logger.error(f"Error setting compass north reference: {e}")
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/api/sensor/calibrate/level_north', methods=['POST'])
+def calibrate_level_north():
+    """Auto-calibrate compass: Level device and point north"""
+    if not mpu9250_sensor:
+        return jsonify({"error": "MPU9250 sensor not available"}), 503
+
+    try:
+        data = request.get_json() if request.is_json else {}
+        samples = data.get('samples', 100)
+        tolerance = data.get('tolerance', 5.0)
+
+        result = mpu9250_sensor.calibrate_level_and_north(samples, tolerance)
+
+        if result['success']:
+            return jsonify(result)
+        else:
+            return jsonify(result), 400
+
+    except Exception as e:
+        logger.error(f"Error in level-and-north calibration: {e}")
+        return jsonify({
+            "success": False,
+            "error": str(e)
+        }), 500
+
+@app.route('/api/sensor/is_level', methods=['GET'])
+def check_is_level():
+    """Check if device is currently level"""
+    if not mpu9250_sensor:
+        return jsonify({"error": "MPU9250 sensor not available"}), 503
+
+    try:
+        tolerance = request.args.get('tolerance', 5.0, type=float)
+        is_level, tilt_angle = mpu9250_sensor.is_level(tolerance)
+
+        return jsonify({
+            "success": True,
+            "is_level": is_level,
+            "tilt_angle": round(tilt_angle, 2),
+            "tolerance": tolerance,
+            "message": f"Device is {'level' if is_level else 'not level'} (tilt={tilt_angle:.1f}°)"
+        })
+    except Exception as e:
+        logger.error(f"Error checking level status: {e}")
         return jsonify({"error": str(e)}), 500
 
 def cleanup_on_exit():

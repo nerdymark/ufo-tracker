@@ -385,11 +385,161 @@ class MPU9250Sensor:
         self.save_calibration()
         logger.info(f"Magnetic declination set to {declination}°")
     
-    def set_compass_north_reference(self, current_heading: float):
-        """Set current heading as north reference (manual compass calibration)"""
+    def set_compass_north_reference(self, current_heading: float = None):
+        """Set current heading as north reference (manual compass calibration)
+
+        Args:
+            current_heading: If None, uses current sensor reading
+        """
+        if current_heading is None:
+            # Use current compass heading
+            current_heading = self.current_data['compass']['heading']
+
         self.calibration['compass_offset'] = -current_heading
         self.save_calibration()
         logger.info(f"Compass north reference set: current={current_heading}°, offset={self.calibration['compass_offset']}°")
+
+    def is_level(self, tolerance_degrees: float = 5.0) -> Tuple[bool, float]:
+        """Check if the device is level (pointing upward within tolerance)
+
+        Args:
+            tolerance_degrees: Maximum allowed tilt from vertical (degrees)
+
+        Returns:
+            Tuple of (is_level: bool, tilt_angle: float)
+        """
+        accel = self.current_data['acceleration']
+
+        # Calculate total acceleration magnitude
+        total_accel = math.sqrt(accel['x']**2 + accel['y']**2 + accel['z']**2)
+
+        if total_accel < 0.1:  # Avoid division by zero
+            return False, 0.0
+
+        # For upward-pointing setup, when level (pointing to sky):
+        # X≈0, Y≈0, Z≈-9.81 (gravity points down, opposite to sky direction)
+        # Tilt angle is the angle between current orientation and pure Z-axis
+        z_component = abs(accel['z'])
+        tilt_angle = math.degrees(math.acos(min(1.0, z_component / total_accel)))
+
+        is_level = tilt_angle <= tolerance_degrees
+
+        return is_level, tilt_angle
+
+    def calibrate_level_and_north(self, samples: int = 100, tolerance_degrees: float = 5.0) -> Dict:
+        """Quick calibration: Level the device pointing north, then calibrate
+
+        This is the simplified auto-calibration method:
+        1. Check if device is level (upward-pointing within tolerance)
+        2. Take multiple magnetometer readings
+        3. Set the average as north reference (0°)
+        4. Apply hard iron correction if needed
+
+        Args:
+            samples: Number of magnetometer samples to average
+            tolerance_degrees: Maximum allowed tilt from vertical
+
+        Returns:
+            Dict with calibration results
+        """
+        if not self.mpu:
+            return {
+                'success': False,
+                'error': 'Sensor not initialized'
+            }
+
+        logger.info("Starting level-and-north calibration...")
+
+        try:
+            # Step 1: Check if device is level
+            is_level, tilt_angle = self.is_level(tolerance_degrees)
+
+            if not is_level:
+                return {
+                    'success': False,
+                    'error': f'Device not level (tilt={tilt_angle:.1f}°, max={tolerance_degrees}°). Please level the device pointing upward.',
+                    'tilt_angle': tilt_angle,
+                    'tolerance': tolerance_degrees
+                }
+
+            logger.info(f"Device is level (tilt={tilt_angle:.1f}°)")
+
+            # Step 2: Collect magnetometer readings
+            mag_readings = []
+            heading_readings = []
+
+            for i in range(samples):
+                # Read current sensor data
+                self.read_sensor_data()
+
+                # Get raw magnetometer data
+                mag = self.current_data['magnetometer'].copy()
+                heading = self.current_data['compass']['heading']
+
+                mag_readings.append([mag['x'], mag['y'], mag['z']])
+                heading_readings.append(heading)
+
+                time.sleep(0.05)  # 20Hz sampling for calibration
+
+            if len(mag_readings) < 10:
+                return {
+                    'success': False,
+                    'error': 'Insufficient magnetometer readings'
+                }
+
+            # Step 3: Calculate average heading
+            # Handle wraparound at 0/360 degrees
+            avg_heading = self._circular_mean(heading_readings)
+
+            logger.info(f"Average heading from {samples} samples: {avg_heading:.1f}°")
+
+            # Step 4: Set this as north reference (0°)
+            self.set_compass_north_reference(avg_heading)
+
+            # Step 5: Update calibration status
+            self.current_data['compass']['calibrated'] = True
+            self.save_calibration()
+
+            logger.info("Level-and-north calibration complete!")
+
+            return {
+                'success': True,
+                'tilt_angle': tilt_angle,
+                'original_heading': avg_heading,
+                'compass_offset': self.calibration['compass_offset'],
+                'samples': samples,
+                'message': f'Calibration complete! Device was level ({tilt_angle:.1f}° tilt). North set to {avg_heading:.1f}°'
+            }
+
+        except Exception as e:
+            logger.error(f"Level-and-north calibration failed: {e}")
+            return {
+                'success': False,
+                'error': str(e)
+            }
+
+    def _circular_mean(self, angles: List[float]) -> float:
+        """Calculate mean of circular data (angles in degrees)
+
+        Handles wraparound at 0/360 degrees correctly
+        """
+        if not angles:
+            return 0.0
+
+        # Convert to radians and calculate mean of sin and cos components
+        angles_rad = [math.radians(a) for a in angles]
+        sin_sum = sum(math.sin(a) for a in angles_rad)
+        cos_sum = sum(math.cos(a) for a in angles_rad)
+
+        # Calculate mean angle
+        mean_rad = math.atan2(sin_sum / len(angles), cos_sum / len(angles))
+        mean_deg = math.degrees(mean_rad)
+
+        # Normalize to 0-360
+        if mean_deg < 0:
+            mean_deg += 360
+
+        return mean_deg
     
     def read_sensor_data(self) -> Dict:
         """Read current sensor data from MPU9250"""

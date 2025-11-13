@@ -114,7 +114,7 @@ class Config:
             'show_all_flights': True,       # Show all flights within range
             'show_only_nearby': False,      # Only show flights within max_distance_miles
             'show_altitude_info': True,     # Show altitude and speed information
-            'refresh_rate': 15,             # Display refresh rate in seconds
+            'refresh_rate': 10,             # OPTIMIZED: Display refresh rate (was 15s, now matches backend)
             'max_display_count': 20         # Maximum number of flights to display
         }
     }
@@ -150,15 +150,17 @@ class Config:
         }
     }
     
-    # Motion Sensor Settings (MPU-6050)
+    # Motion Sensor Settings (MPU9250)
+    # PERFORMANCE OPTIMIZED: Sample rate reduced from 50Hz to 10Hz
+    # This reduces I2C bus traffic by 80% while maintaining responsive tracking
     MOTION_SENSOR = {
-        'enabled': True,            # Enable MPU-6050 motion sensor
-        'sample_rate': 50,          # Samples per second (Hz)
+        'enabled': True,            # Enable MPU9250 motion sensor
+        'sample_rate': 10,          # OPTIMIZED: Samples per second (was 50Hz, now 10Hz = 80% reduction in I2C traffic)
         'motion_threshold': 2.0,    # Motion detection threshold (m/s²)
         'vibration_threshold': 10.0, # Vibration alert threshold (deg/s)
         'calibration_samples': 100,  # Number of samples for calibration
         'filter_alpha': 0.8,        # Low-pass filter coefficient (0-1)
-        'i2c_address': 0x68,        # I2C address of MPU-6050
+        'i2c_address': 0x68,        # I2C address of MPU9250
         'range_settings': {
             'accelerometer': '±4g',  # ±2g, ±4g, ±8g, ±16g
             'gyroscope': '±500°/s',  # ±250°/s, ±500°/s, ±1000°/s, ±2000°/s

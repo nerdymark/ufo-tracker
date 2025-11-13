@@ -9,10 +9,19 @@ let compassUpdateInterval = null;
 document.addEventListener('DOMContentLoaded', function() {
     // Initialize overlays for both camera feeds
     initializeTrajectoryOverlays();
-    
+
     // Start compass status updates
     updateCompassStatus();
-    setInterval(updateCompassStatus, 5000);
+
+    // Register with update manager if available (better performance)
+    if (typeof updateManager !== 'undefined') {
+        updateManager.register('compassStatus', updateCompassStatus, 3, false);
+        updateManager.register('levelStatus', updateLevelStatus, 2, false);
+    } else {
+        // Fallback to setInterval
+        setInterval(updateCompassStatus, 3000);
+        setInterval(updateLevelStatus, 2000);
+    }
 });
 
 function initializeTrajectoryOverlays() {
@@ -72,15 +81,15 @@ async function calibrateCompassNorth() {
 async function setMagneticDeclination() {
     try {
         const declination = parseFloat(prompt('Enter magnetic declination for your location (degrees):') || '0');
-        
+
         const response = await fetch('/api/sensor/compass/set_declination', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ declination: declination })
         });
-        
+
         const data = await response.json();
-        
+
         if (data.success) {
             showNotification(`Magnetic declination set to ${declination}°`, 'success');
             updateCompassStatus();
@@ -90,6 +99,79 @@ async function setMagneticDeclination() {
     } catch (error) {
         console.error('Error setting magnetic declination:', error);
         showNotification('Error setting magnetic declination', 'error');
+    }
+}
+
+async function calibrateLevelAndNorth() {
+    try {
+        // First check if device is level
+        const levelResponse = await fetch('/api/sensor/is_level?tolerance=5');
+        const levelData = await levelResponse.json();
+
+        if (!levelData.success) {
+            showNotification('Error checking level status', 'error');
+            return;
+        }
+
+        if (!levelData.is_level) {
+            showNotification(
+                `Device is not level (tilt=${levelData.tilt_angle.toFixed(1)}°). Please level the device pointing upward and try again.`,
+                'error'
+            );
+            return;
+        }
+
+        // Device is level, proceed with calibration
+        showNotification('Device is level! Starting north calibration...', 'info');
+
+        const response = await fetch('/api/sensor/calibrate/level_north', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                samples: 100,
+                tolerance: 5.0
+            })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            showNotification(data.message || 'Level-and-north calibration completed!', 'success');
+            updateCompassStatus();
+
+            // Invalidate compass cache to force refresh
+            if (typeof apiCache !== 'undefined') {
+                apiCache.invalidatePattern(/sensor.*compass/);
+            }
+        } else {
+            showNotification('Calibration failed: ' + (data.error || 'Unknown error'), 'error');
+        }
+    } catch (error) {
+        console.error('Error in level-and-north calibration:', error);
+        showNotification('Error during calibration', 'error');
+    }
+}
+
+async function updateLevelStatus() {
+    try {
+        const response = await fetch('/api/sensor/is_level?tolerance=5');
+        const data = await response.json();
+
+        if (data.success) {
+            const levelElement = document.getElementById('level-status');
+            const tiltElement = document.getElementById('tilt-angle');
+
+            if (levelElement) {
+                levelElement.textContent = data.is_level ? '✓ Level' : '✗ Not Level';
+                levelElement.className = data.is_level ? 'badge badge-success' : 'badge badge-warning';
+            }
+
+            if (tiltElement) {
+                tiltElement.textContent = `${data.tilt_angle.toFixed(1)}°`;
+            }
+        }
+    } catch (error) {
+        console.warn('Level status not available:', error.message);
     }
 }
 

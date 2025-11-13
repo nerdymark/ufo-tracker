@@ -124,7 +124,7 @@ const data = await cachedFetch('/api/sensor/mpu9250', {}, 200);
 
 ### 3. Configuration Updates
 
-**File**: `config/config.py`
+**File**: `config/config.example.py` (copy to `config/config.py` and update as needed)
 
 Key changes:
 - `MOTION_SENSOR['sample_rate']`: `50` → `10` (Hz)
